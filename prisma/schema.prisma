@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -10,4 +5,464 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  DEVELOPER
+  TESTER
+  CUSTOMER
+  GUEST
+}
+
+enum UserTheme {
+  LIGHT
+  DARK
+  SYSTEM
+}
+
+enum AppStatus {
+  DEVELOPMENT
+  TESTING
+  PRODUCTION
+  ARCHIVED
+  MAINTENANCE
+}
+
+enum ReleaseType {
+  MAJOR
+  MINOR
+  PATCH
+  HOTFIX
+  PRERELEASE
+}
+
+enum ChangelogType {
+  ADDED
+  CHANGED
+  FIXED
+  REMOVED
+  SECURITY
+  DEPRECATED
+}
+
+enum DocPageType {
+  MANUAL
+  FAQ
+  API
+  OTHER
+}
+
+enum TechnologyCategory {
+  FRONTEND
+  BACKEND
+  DATABASE
+  INFRASTRUCTURE
+  TOOL
+  LANGUAGE
+  OTHER
+}
+
+enum RelationshipType {
+  REQUIRES
+  USES_API
+  USES_SERVICE
+  CONTAINS
+  PLANNED
+}
+
+// ─────────────────────────────────────────────
+// Modul 4 — Benutzer
+// ─────────────────────────────────────────────
+
+model User {
+  id           String    @id @default(uuid())
+  name         String    @db.VarChar(100)
+  email        String    @unique @db.VarChar(200)
+  passwordHash String?   @db.VarChar(200) @map("password_hash")
+  avatarUrl    String?   @db.VarChar(500) @map("avatar_url")
+  theme        UserTheme @default(SYSTEM)
+  role         UserRole  @default(GUEST)
+  lastLoginAt  DateTime? @map("last_login_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  createdApps     App[]              @relation("AppCreator")
+  favorites       UserFavorite[]
+  releases        Release[]          @relation("ReleaseCreator")
+  changelogEntries ChangelogEntry[]  @relation("ChangelogCreator")
+  docPages        DocPage[]          @relation("DocPageCreator")
+  wikiSections    WikiSection[]      @relation("WikiSectionEditor")
+  wikiHistory     WikiHistory[]      @relation("WikiHistoryAuthor")
+  screenshots     Screenshot[]       @relation("ScreenshotUploader")
+  statusHistory   AppStatusHistory[] @relation("StatusChanger")
+  activityLogs    ActivityLog[]      @relation("ActivityUser")
+
+  @@map("users")
+}
+
+// ─────────────────────────────────────────────
+// Modul 3 — Kategorien
+// ─────────────────────────────────────────────
+
+model Category {
+  id          String   @id @default(uuid())
+  name        String   @unique @db.VarChar(100)
+  slug        String   @unique @db.VarChar(100)
+  description String?  @db.VarChar(255)
+  icon        String?  @db.VarChar(50)
+  color       String   @db.VarChar(7)
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  apps AppCategory[]
+
+  @@map("categories")
+}
+
+// ─────────────────────────────────────────────
+// Modul 12 — Tags
+// ─────────────────────────────────────────────
+
+model Tag {
+  id        String   @id @default(uuid())
+  name      String   @unique @db.VarChar(50)
+  slug      String   @unique @db.VarChar(50)
+  color     String   @default("#6B7280") @db.VarChar(7)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  apps AppTag[]
+
+  @@map("tags")
+}
+
+// ─────────────────────────────────────────────
+// Modul 36 — Technologien & Stacks
+// ─────────────────────────────────────────────
+
+model Technology {
+  id          String             @id @default(uuid())
+  name        String             @unique @db.VarChar(100)
+  slug        String             @unique @db.VarChar(100)
+  category    TechnologyCategory @default(OTHER)
+  logoUrl     String?            @db.VarChar(500) @map("logo_url")
+  websiteUrl  String?            @db.VarChar(500) @map("website_url")
+  createdAt   DateTime           @default(now()) @map("created_at")
+
+  stacks           StackTechnology[]
+  apps             AppTechnology[]
+
+  @@map("technologies")
+}
+
+model Stack {
+  id          String   @id @default(uuid())
+  name        String   @unique @db.VarChar(100)
+  slug        String   @unique @db.VarChar(100)
+  description String?  @db.VarChar(255)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  technologies StackTechnology[]
+  apps         AppStack[]
+
+  @@map("stacks")
+}
+
+model StackTechnology {
+  stackId      String @map("stack_id")
+  technologyId String @map("technology_id")
+
+  stack      Stack      @relation(fields: [stackId], references: [id], onDelete: Cascade)
+  technology Technology @relation(fields: [technologyId], references: [id], onDelete: Cascade)
+
+  @@id([stackId, technologyId])
+  @@map("stack_technologies")
+}
+
+// ─────────────────────────────────────────────
+// Modul 2 — Apps (Kern)
+// ─────────────────────────────────────────────
+
+model App {
+  id              String    @id @default(uuid())
+  name            String    @unique @db.VarChar(100)
+  slug            String    @unique @db.VarChar(100)
+  shortDesc       String    @db.VarChar(255) @map("short_desc")
+  longDesc        String?   @map("long_desc")
+  logoUrl         String?   @db.VarChar(500) @map("logo_url")
+  urlProd         String?   @db.VarChar(500) @map("url_prod")
+  urlStaging      String?   @db.VarChar(500) @map("url_staging")
+  urlDev          String?   @db.VarChar(500) @map("url_dev")
+  status          AppStatus @default(DEVELOPMENT)
+  maintenanceNote String?   @db.VarChar(500) @map("maintenance_note")
+  maintenanceEnd  DateTime? @map("maintenance_end")
+  repoUrl         String?   @db.VarChar(500) @map("repo_url")
+  dockerImage     String?   @db.VarChar(200) @map("docker_image")
+  apiEndpoint     String?   @db.VarChar(500) @map("api_endpoint")
+  language        String?   @db.VarChar(50)
+  dbType          String?   @db.VarChar(50) @map("db_type")
+  supportEmail    String?   @db.VarChar(200) @map("support_email")
+  contactName     String?   @db.VarChar(100) @map("contact_name")
+  createdById     String    @map("created_by")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  // Relations
+  createdBy      User               @relation("AppCreator", fields: [createdById], references: [id])
+  categories     AppCategory[]
+  tags           AppTag[]
+  stacks         AppStack[]
+  technologies   AppTechnology[]
+  favorites      UserFavorite[]
+  releases       Release[]
+  changelogEntries ChangelogEntry[]
+  docPages       DocPage[]
+  wikiSections   WikiSection[]
+  screenshots    Screenshot[]
+  statusHistory  AppStatusHistory[]
+  activityLogs   ActivityLog[]
+
+  @@map("apps")
+}
+
+// N:M Verknüpfungen Apps
+model AppCategory {
+  appId      String @map("app_id")
+  categoryId String @map("category_id")
+
+  app      App      @relation(fields: [appId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([appId, categoryId])
+  @@map("app_categories")
+}
+
+model AppTag {
+  appId String @map("app_id")
+  tagId String @map("tag_id")
+
+  app App @relation(fields: [appId], references: [id], onDelete: Cascade)
+  tag Tag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([appId, tagId])
+  @@map("app_tags")
+}
+
+model AppStack {
+  appId   String @map("app_id")
+  stackId String @map("stack_id")
+
+  app   App   @relation(fields: [appId], references: [id], onDelete: Cascade)
+  stack Stack @relation(fields: [stackId], references: [id], onDelete: Cascade)
+
+  @@id([appId, stackId])
+  @@map("app_stacks")
+}
+
+model AppTechnology {
+  appId        String @map("app_id")
+  technologyId String @map("technology_id")
+
+  app        App        @relation(fields: [appId], references: [id], onDelete: Cascade)
+  technology Technology @relation(fields: [technologyId], references: [id], onDelete: Cascade)
+
+  @@id([appId, technologyId])
+  @@map("app_technologies")
+}
+
+// ─────────────────────────────────────────────
+// Modul 6 — Favoriten
+// ─────────────────────────────────────────────
+
+model UserFavorite {
+  userId    String   @map("user_id")
+  appId     String   @map("app_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  app  App  @relation(fields: [appId], references: [id], onDelete: Cascade)
+
+  @@id([userId, appId])
+  @@map("user_favorites")
+}
+
+// ─────────────────────────────────────────────
+// Modul 10 — Versionsverwaltung
+// ─────────────────────────────────────────────
+
+model Release {
+  id          String      @id @default(uuid())
+  appId       String      @map("app_id")
+  version     String      @db.VarChar(20)
+  releaseType ReleaseType @default(PATCH) @map("release_type")
+  releasedAt  DateTime    @map("released_at")
+  description String?
+  isCurrent   Boolean     @default(false) @map("is_current")
+  createdById String      @map("created_by")
+  createdAt   DateTime    @default(now()) @map("created_at")
+
+  app             App              @relation(fields: [appId], references: [id], onDelete: Cascade)
+  createdBy       User             @relation("ReleaseCreator", fields: [createdById], references: [id])
+  changelogEntries ChangelogEntry[]
+
+  @@unique([appId, version])
+  @@map("releases")
+}
+
+// ─────────────────────────────────────────────
+// Modul 11 — Changelog
+// ─────────────────────────────────────────────
+
+model ChangelogEntry {
+  id          String        @id @default(uuid())
+  appId       String        @map("app_id")
+  releaseId   String?       @map("release_id")
+  type        ChangelogType
+  description String
+  entryDate   DateTime      @default(now()) @map("entry_date") @db.Date
+  createdById String        @map("created_by")
+  createdAt   DateTime      @default(now()) @map("created_at")
+
+  app       App      @relation(fields: [appId], references: [id], onDelete: Cascade)
+  release   Release? @relation(fields: [releaseId], references: [id], onDelete: SetNull)
+  createdBy User     @relation("ChangelogCreator", fields: [createdById], references: [id])
+
+  @@map("changelog_entries")
+}
+
+// ─────────────────────────────────────────────
+// Modul 8 — Dokumentation
+// ─────────────────────────────────────────────
+
+model DocPage {
+  id          String      @id @default(uuid())
+  appId       String      @map("app_id")
+  parentId    String?     @map("parent_id")
+  title       String      @db.VarChar(200)
+  slug        String      @db.VarChar(200)
+  content     String
+  type        DocPageType @default(MANUAL)
+  isPublic    Boolean     @default(false) @map("is_public")
+  sortOrder   Int         @default(0) @map("sort_order")
+  createdById String      @map("created_by")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  app       App       @relation(fields: [appId], references: [id], onDelete: Cascade)
+  parent    DocPage?  @relation("DocPageHierarchy", fields: [parentId], references: [id])
+  children  DocPage[] @relation("DocPageHierarchy")
+  createdBy User      @relation("DocPageCreator", fields: [createdById], references: [id])
+
+  @@unique([appId, slug])
+  @@map("doc_pages")
+}
+
+// ─────────────────────────────────────────────
+// Modul 38 — Produkt-Wiki
+// ─────────────────────────────────────────────
+
+model WikiSection {
+  id         String   @id @default(uuid())
+  appId      String   @map("app_id")
+  sectionKey String   @db.VarChar(50) @map("section_key")
+  title      String   @db.VarChar(200)
+  content    String   @default("")
+  sortOrder  Int      @default(0) @map("sort_order")
+  isPublic   Boolean  @default(false) @map("is_public")
+  updatedById String? @map("updated_by")
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at")
+
+  app       App           @relation(fields: [appId], references: [id], onDelete: Cascade)
+  updatedBy User?         @relation("WikiSectionEditor", fields: [updatedById], references: [id])
+  history   WikiHistory[]
+
+  @@unique([appId, sectionKey])
+  @@map("wiki_sections")
+}
+
+model WikiHistory {
+  id         String   @id @default(uuid())
+  sectionId  String   @map("section_id")
+  content    String
+  changedById String  @map("changed_by")
+  changedAt  DateTime @default(now()) @map("changed_at")
+
+  section   WikiSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  changedBy User        @relation("WikiHistoryAuthor", fields: [changedById], references: [id])
+
+  @@map("wiki_history")
+}
+
+// ─────────────────────────────────────────────
+// Modul 9 — Screenshots
+// ─────────────────────────────────────────────
+
+model Screenshot {
+  id          String   @id @default(uuid())
+  appId       String   @map("app_id")
+  title       String?  @db.VarChar(200)
+  description String?  @db.VarChar(500)
+  fileUrl     String   @db.VarChar(500) @map("file_url")
+  fileSize    Int?     @map("file_size")
+  width       Int?
+  height      Int?
+  sortOrder   Int      @default(0) @map("sort_order")
+  uploadedById String  @map("uploaded_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  app        App  @relation(fields: [appId], references: [id], onDelete: Cascade)
+  uploadedBy User @relation("ScreenshotUploader", fields: [uploadedById], references: [id])
+
+  @@map("screenshots")
+}
+
+// ─────────────────────────────────────────────
+// Modul 7 — App-Status-Historie
+// ─────────────────────────────────────────────
+
+model AppStatusHistory {
+  id          String   @id @default(uuid())
+  appId       String   @map("app_id")
+  oldStatus   String?  @db.VarChar(50) @map("old_status")
+  newStatus   String   @db.VarChar(50) @map("new_status")
+  changedById String   @map("changed_by")
+  note        String?  @db.VarChar(500)
+  changedAt   DateTime @default(now()) @map("changed_at")
+
+  app       App  @relation(fields: [appId], references: [id], onDelete: Cascade)
+  changedBy User @relation("StatusChanger", fields: [changedById], references: [id])
+
+  @@map("app_status_history")
+}
+
+// ─────────────────────────────────────────────
+// Modul 23 — Aktivitätsprotokoll
+// ─────────────────────────────────────────────
+
+model ActivityLog {
+  id         String   @id @default(uuid())
+  appId      String?  @map("app_id")
+  userId     String?  @map("user_id")
+  action     String   @db.VarChar(100)
+  entityType String?  @db.VarChar(50) @map("entity_type")
+  entityId   String?  @map("entity_id")
+  metadata   Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  app  App?  @relation(fields: [appId], references: [id], onDelete: SetNull)
+  user User? @relation("ActivityUser", fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([appId])
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("activity_log")
 }
