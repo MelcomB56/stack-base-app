@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
-import { apiError } from "@/lib/utils";
+import { apiError } from "@/lib/server-utils";
 import { createReleaseSchema } from "@/lib/validations/release";
 
 type Params = { params: Promise<{ slug: string }> };

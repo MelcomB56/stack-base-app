@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
-import { apiError, uniqueAppSlug } from "@/lib/utils";
+import { apiError, uniqueAppSlug } from "@/lib/server-utils";
 import { createAppSchema } from "@/lib/validations/app";
 
 const APP_INCLUDE = {

@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
-import { apiError, slugify } from "@/lib/utils";
+import { apiError, slugify } from "@/lib/server-utils";
 import { updateCategorySchema } from "@/lib/validations/category";
 
 type Params = { params: Promise<{ id: string }> };

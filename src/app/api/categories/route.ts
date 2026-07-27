@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
-import { apiError, slugify } from "@/lib/utils";
+import { apiError, slugify } from "@/lib/server-utils";
 import { createCategorySchema } from "@/lib/validations/category";
 
 export async function GET() {

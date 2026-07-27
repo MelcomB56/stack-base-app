@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
-import { apiError } from "@/lib/utils";
+import { apiError } from "@/lib/server-utils";
 import { changeStatusSchema } from "@/lib/validations/app";
 
 // PATCH /api/apps/[slug]/status
