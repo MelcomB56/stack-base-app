@@ -1,11 +1,10 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { Bell, Search } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export function Topbar({ title }: { title?: string }) {
+export function Topbar() {
   const { data: session } = useSession();
   const [q, setQ] = useState("");
   const router = useRouter();
@@ -20,37 +19,78 @@ export function Topbar({ title }: { title?: string }) {
   }
 
   return (
-    <header className="h-14 flex items-center gap-4 px-6 border-b border-border sticky top-0 z-30"
-      style={{ background: "rgba(11,18,32,0.85)", backdropFilter: "blur(8px)" }}>
-      {/* Page title */}
-      {title && (
-        <h1 className="text-sm font-semibold text-foreground whitespace-nowrap">{title}</h1>
-      )}
+    <header style={{
+      height: 56,
+      display: "flex",
+      alignItems: "center",
+      gap: 16,
+      padding: "0 24px",
+      borderBottom: "1px solid #1E3050",
+      background: "rgba(11,18,32,0.85)",
+      backdropFilter: "blur(8px)",
+      flexShrink: 0,
+    }}>
+      <div style={{ flex: 1 }} />
 
-      {/* Spacer */}
-      <div className="flex-1" />
-
-      {/* Global Search */}
-      <form onSubmit={handleSearch} className="relative hidden sm:block">
-        <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+      {/* Suche */}
+      <form onSubmit={handleSearch} style={{ position: "relative", display: "flex", alignItems: "center" }}>
+        <svg
+          style={{ position: "absolute", left: 10, color: "#7A8BA6", pointerEvents: "none" }}
+          width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+        >
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Suchen…"
-          className="w-56 pl-8 pr-3 py-1.5 text-sm bg-card border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary transition-all focus:w-72"
+          style={{
+            width: 220,
+            padding: "7px 12px 7px 32px",
+            background: "#111C2D",
+            border: "1px solid #1E3050",
+            borderRadius: 8,
+            color: "#EDF2F7",
+            fontSize: 13,
+            outline: "none",
+            fontFamily: "inherit",
+          }}
+          onFocus={(e) => { e.currentTarget.style.borderColor = "#2563E8"; }}
+          onBlur={(e) => { e.currentTarget.style.borderColor = "#1E3050"; }}
         />
       </form>
 
-      {/* Notifications */}
-      <button className="relative w-8 h-8 flex items-center justify-center rounded-lg hover:bg-card text-muted-foreground hover:text-foreground transition-colors">
-        <Bell size={16} />
-        {/* Badge */}
-        <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-warning border-2 border-background" />
+      {/* Bell */}
+      <button
+        style={{
+          position: "relative", width: 32, height: 32,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          borderRadius: 8, color: "#7A8BA6",
+          background: "none", border: "none", cursor: "pointer",
+          transition: "background 150ms",
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = "#111C2D"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 01-3.46 0"/>
+        </svg>
+        <span style={{
+          position: "absolute", top: 6, right: 6,
+          width: 8, height: 8, borderRadius: "50%",
+          background: "#F59E0B", border: "2px solid #0B1220",
+        }} />
       </button>
 
-      {/* User Avatar */}
-      <div className="w-8 h-8 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center cursor-pointer hover:bg-primary/30 transition-colors">
-        <span className="text-[10px] font-bold text-primary">{initials}</span>
+      {/* Avatar */}
+      <div style={{
+        width: 32, height: 32, borderRadius: "50%",
+        background: "rgba(37,99,232,0.15)", border: "1px solid rgba(37,99,232,0.3)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontSize: 10, fontWeight: 700, color: "#2563E8", cursor: "pointer",
+      }}>
+        {initials}
       </div>
     </header>
   );

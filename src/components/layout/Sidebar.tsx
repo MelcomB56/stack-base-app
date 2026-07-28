@@ -4,79 +4,80 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useState, useEffect } from "react";
-import {
-  LayoutDashboard, Grid2X2, Heart, Tag, Layers, Cpu,
-  Settings, Search, ChevronLeft, ChevronRight, LogOut,
-} from "lucide-react";
+import { LogOut, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+// Exakte SVG-Icons aus dem Artifact
+const Icons = {
+  dashboard: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+      <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+    </svg>
+  ),
+  apps: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
+    </svg>
+  ),
+  heart: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z"/>
+    </svg>
+  ),
+  search: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+    </svg>
+  ),
+  categories: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M20 7H4a2 2 0 00-2 2v6a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/>
+      <path d="M16 3v4M8 3v4M12 12v.01"/>
+    </svg>
+  ),
+  stacks: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+      <polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>
+    </svg>
+  ),
+  technologies: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/>
+      <rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/>
+    </svg>
+  ),
+  settings: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M12 20a8 8 0 100-16 8 8 0 000 16z"/>
+      <path d="M12 14a2 2 0 100-4 2 2 0 000 4z"/>
+      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+    </svg>
+  ),
+};
+
 const NAV = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/apps",      label: "Apps",       icon: Grid2X2 },
-  { href: "/favorites", label: "Favoriten",  icon: Heart },
-  { href: "/search",    label: "Suche",      icon: Search },
+  { href: "/dashboard",   label: "Dashboard",    icon: Icons.dashboard },
+  { href: "/apps",        label: "Apps",         icon: Icons.apps },
+  { href: "/favorites",   label: "Favoriten",    icon: Icons.heart },
+  { href: "/search",      label: "Suche",        icon: Icons.search },
 ] as const;
 
 const NAV_ADMIN = [
-  { href: "/categories",   label: "Kategorien",   icon: Tag },
-  { href: "/stacks",       label: "Stacks",        icon: Layers },
-  { href: "/technologies", label: "Technologien",  icon: Cpu },
-  { href: "/settings",     label: "Einstellungen", icon: Settings },
+  { href: "/categories",   label: "Kategorien",   icon: Icons.categories },
+  { href: "/stacks",       label: "Stacks",       icon: Icons.stacks },
+  { href: "/technologies", label: "Technologien", icon: Icons.technologies },
+  { href: "/settings",     label: "Einstellungen",icon: Icons.settings },
 ] as const;
 
-type NavItem = { href: string; label: string; icon: React.ElementType };
-
-function StackBaseLogo({ collapsed }: { collapsed: boolean }) {
+function HexLogo() {
   return (
-    <Link href="/dashboard" className="flex items-center gap-3 px-1 min-w-0">
-      {/* Hexagon-Icon */}
-      <div className="shrink-0 w-8 h-8 relative flex items-center justify-center">
-        <svg viewBox="0 0 32 32" className="w-8 h-8" fill="none">
-          <path
-            d="M16 2L28 9V23L16 30L4 23V9L16 2Z"
-            fill="oklch(0.530 0.220 262)"
-            stroke="oklch(0.735 0.155 194)"
-            strokeWidth="1"
-          />
-          <path
-            d="M16 7L23 11V19L16 23L9 19V11L16 7Z"
-            fill="none"
-            stroke="rgba(255,255,255,0.3)"
-            strokeWidth="1"
-          />
-          <text x="16" y="20" textAnchor="middle" fontSize="9" fontWeight="700" fill="white" fontFamily="sans-serif">SB</text>
-        </svg>
-      </div>
-      {!collapsed && (
-        <div className="overflow-hidden">
-          <p className="text-sm font-bold tracking-wide text-foreground whitespace-nowrap">STACK·BASE</p>
-          <p style={{ fontSize: "8px", letterSpacing: ".15em", textTransform: "uppercase", color: "#7A8BA6", marginTop: "1px", whiteSpace: "nowrap" }}>One Platform. All Ops.</p>
-        </div>
-      )}
-    </Link>
-  );
-}
-
-function NavLink({ item, active, collapsed }: { item: NavItem; active: boolean; collapsed: boolean }) {
-  const Icon = item.icon;
-  return (
-    <Link
-      href={item.href}
-      title={collapsed ? item.label : undefined}
-      className={cn(
-        "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 group",
-        collapsed && "justify-center px-2",
-        active
-          ? "bg-primary/15 text-primary border border-primary/20"
-          : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground border border-transparent"
-      )}
-    >
-      <Icon size={17} className="shrink-0" />
-      {!collapsed && <span className="truncate flex-1">{item.label}</span>}
-      {!collapsed && active && (
-        <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-      )}
-    </Link>
+    <svg viewBox="0 0 32 32" width="32" height="32" fill="none">
+      <path d="M16 2L28 9V23L16 30L4 23V9Z" fill="#2563E8" stroke="#22D3EE" strokeWidth="1"/>
+      <path d="M16 7L23 11V19L16 23L9 19V11Z" fill="none" stroke="rgba(255,255,255,.28)" strokeWidth="1"/>
+      <text x="16" y="20" textAnchor="middle" fontSize="9" fontWeight="700" fill="white" fontFamily="sans-serif">SB</text>
+    </svg>
   );
 }
 
@@ -95,80 +96,207 @@ export function Sidebar() {
 
   return (
     <aside
-      className={cn(
-        "flex flex-col h-screen bg-sidebar border-r border-sidebar-border shrink-0 fixed top-0 left-0 z-40 transition-all duration-200",
-        collapsed ? "w-[60px]" : "w-[220px]"
-      )}
+      style={{
+        width: collapsed ? 60 : 220,
+        minHeight: "100vh",
+        background: "#060D18",
+        borderRight: "1px solid #1E3050",
+        display: "flex",
+        flexDirection: "column",
+        flexShrink: 0,
+        transition: "width 200ms",
+        overflow: "hidden",
+      }}
     >
       {/* Logo */}
-      <div className={cn("flex items-center border-b border-sidebar-border py-4", collapsed ? "px-2 justify-center" : "px-4")}>
-        <StackBaseLogo collapsed={collapsed} />
+      <div style={{
+        padding: 16,
+        borderBottom: "1px solid #1E3050",
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        justifyContent: collapsed ? "center" : "flex-start",
+      }}>
+        <Link href="/dashboard" style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none" }}>
+          <div style={{ flexShrink: 0 }}><HexLogo /></div>
+          {!collapsed && (
+            <div>
+              <p style={{ fontSize: 13, fontWeight: 700, letterSpacing: ".06em", color: "#EDF2F7", margin: 0 }}>STACK·BASE</p>
+              <p style={{ fontSize: 8, letterSpacing: ".15em", textTransform: "uppercase", color: "#7A8BA6", marginTop: 1 }}>
+                One Platform. All Ops.
+              </p>
+            </div>
+          )}
+        </Link>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
-        {NAV.map((item) => (
-          <NavLink
-            key={item.href}
-            item={item}
-            active={pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href))}
-            collapsed={collapsed}
-          />
-        ))}
+      <nav style={{ flex: 1, padding: "12px 8px", display: "flex", flexDirection: "column", gap: 2, overflowY: "auto" }}>
+        {NAV.map((item) => {
+          const active = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              title={collapsed ? item.label : undefined}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: collapsed ? 0 : 10,
+                padding: collapsed ? "9px 10px" : "9px 12px",
+                borderRadius: 8,
+                fontSize: 13,
+                fontWeight: 500,
+                textDecoration: "none",
+                border: "1px solid",
+                borderColor: active ? "rgba(37,99,232,0.2)" : "transparent",
+                background: active ? "rgba(37,99,232,0.15)" : "transparent",
+                color: active ? "#2563E8" : "#8FA3BE",
+                transition: "all 150ms",
+                justifyContent: collapsed ? "center" : "flex-start",
+              }}
+              onMouseEnter={(e) => {
+                if (!active) {
+                  e.currentTarget.style.background = "#1A2640";
+                  e.currentTarget.style.color = "#EDF2F7";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!active) {
+                  e.currentTarget.style.background = "transparent";
+                  e.currentTarget.style.color = "#8FA3BE";
+                }
+              }}
+            >
+              <span style={{ width: 16, height: 16, flexShrink: 0, opacity: active ? 1 : 0.7, display: "flex" }}>
+                {item.icon}
+              </span>
+              {!collapsed && <span style={{ flex: 1 }}>{item.label}</span>}
+              {!collapsed && active && (
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#2563E8" }} />
+              )}
+            </Link>
+          );
+        })}
 
-        <div className="my-2.5 border-t border-sidebar-border" />
+        {/* Separator */}
+        <div style={{ borderTop: "1px solid #1E3050", margin: "10px 4px" }} />
 
         {!collapsed && (
-          <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+          <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: ".15em", textTransform: "uppercase", color: "#7A8BA6", padding: "0 12px 4px" }}>
             Verwaltung
           </p>
         )}
 
-        {NAV_ADMIN.map((item) => (
-          <NavLink
-            key={item.href}
-            item={item}
-            active={pathname.startsWith(item.href)}
-            collapsed={collapsed}
-          />
-        ))}
+        {NAV_ADMIN.map((item) => {
+          const active = pathname.startsWith(item.href);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              title={collapsed ? item.label : undefined}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: collapsed ? 0 : 10,
+                padding: collapsed ? "9px 10px" : "9px 12px",
+                borderRadius: 8,
+                fontSize: 13,
+                fontWeight: 500,
+                textDecoration: "none",
+                border: "1px solid",
+                borderColor: active ? "rgba(37,99,232,0.2)" : "transparent",
+                background: active ? "rgba(37,99,232,0.15)" : "transparent",
+                color: active ? "#2563E8" : "#8FA3BE",
+                transition: "all 150ms",
+                justifyContent: collapsed ? "center" : "flex-start",
+              }}
+              onMouseEnter={(e) => {
+                if (!active) {
+                  e.currentTarget.style.background = "#1A2640";
+                  e.currentTarget.style.color = "#EDF2F7";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!active) {
+                  e.currentTarget.style.background = "transparent";
+                  e.currentTarget.style.color = "#8FA3BE";
+                }
+              }}
+            >
+              <span style={{ width: 16, height: 16, flexShrink: 0, opacity: active ? 1 : 0.7, display: "flex" }}>
+                {item.icon}
+              </span>
+              {!collapsed && <span style={{ flex: 1 }}>{item.label}</span>}
+              {!collapsed && active && (
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#2563E8" }} />
+              )}
+            </Link>
+          );
+        })}
       </nav>
 
       {/* Footer */}
-      <div className="border-t border-sidebar-border px-2 py-2 space-y-1">
-        {/* User */}
+      <div style={{ borderTop: "1px solid #1E3050", padding: 8 }}>
         {session?.user && !collapsed && (
-          <div className="flex items-center gap-2.5 px-3 py-2 rounded-lg">
-            <div className="w-7 h-7 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center shrink-0">
-              <span className="text-[10px] font-bold text-primary">{initials}</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 8 }}>
+            <div style={{
+              width: 28, height: 28, borderRadius: "50%",
+              background: "rgba(37,99,232,0.15)", border: "1px solid rgba(37,99,232,0.3)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 10, fontWeight: 700, color: "#2563E8", flexShrink: 0,
+            }}>
+              {initials}
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold truncate text-foreground">{session.user.name}</p>
-              <p className="text-[10px] text-muted-foreground truncate">{session.user.email}</p>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: 12, fontWeight: 600, color: "#EDF2F7", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", margin: 0 }}>
+                {session.user.name}
+              </p>
+              <p style={{ fontSize: 10, color: "#7A8BA6", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", margin: 0 }}>
+                {session.user.email}
+              </p>
             </div>
           </div>
         )}
 
-        {/* Logout */}
         <button
           onClick={() => signOut({ callbackUrl: "/login" })}
           title={collapsed ? "Abmelden" : undefined}
-          className={cn(
-            "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-destructive transition-all",
-            collapsed && "justify-center px-2"
-          )}
+          style={{
+            width: "100%", display: "flex", alignItems: "center",
+            gap: collapsed ? 0 : 10,
+            padding: collapsed ? "8px 0" : "8px 12px",
+            justifyContent: collapsed ? "center" : "flex-start",
+            borderRadius: 8, fontSize: 12, color: "#7A8BA6",
+            background: "none", border: "none", cursor: "pointer",
+            transition: "all 150ms",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "#1A2640";
+            e.currentTarget.style.color = "#EF4444";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "none";
+            e.currentTarget.style.color = "#7A8BA6";
+          }}
         >
-          <LogOut size={15} className="shrink-0" />
+          <LogOut size={15} style={{ flexShrink: 0 }} />
           {!collapsed && <span>Abmelden</span>}
         </button>
 
-        {/* Collapse-Toggle */}
         <button
           onClick={() => setCollapsed((v) => !v)}
-          className={cn(
-            "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all",
-            collapsed && "justify-center px-2"
-          )}
+          style={{
+            width: "100%", display: "flex", alignItems: "center",
+            gap: collapsed ? 0 : 10,
+            padding: collapsed ? "8px 0" : "8px 12px",
+            justifyContent: collapsed ? "center" : "flex-start",
+            borderRadius: 8, fontSize: 11, color: "#7A8BA6",
+            background: "none", border: "none", cursor: "pointer",
+            transition: "all 150ms",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "#1A2640"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
         >
           {collapsed ? <ChevronRight size={14} /> : (
             <>
@@ -179,7 +307,7 @@ export function Sidebar() {
         </button>
 
         {!collapsed && (
-          <p className="px-3 text-[10px] text-muted-foreground">v0.2.0-dev</p>
+          <p style={{ padding: "4px 12px 2px", fontSize: 10, color: "#7A8BA6", margin: 0 }}>v0.3.3-dev</p>
         )}
       </div>
     </aside>

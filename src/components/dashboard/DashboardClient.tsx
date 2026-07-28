@@ -1,13 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import {
-  ResponsiveContainer, LineChart, Line,
-  PieChart, Pie, Cell, Tooltip,
-} from "recharts";
-import { Grid2X2, CheckCircle2, Code2, FlaskConical, Wrench, Archive, Activity, TrendingUp } from "lucide-react";
-
-// ─── Typen ───────────────────────────────────────────────────────────────────
+import { ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, Tooltip } from "recharts";
 
 type Stats = {
   total: number; production: number; development: number;
@@ -19,47 +13,54 @@ type ActivityEntry = {
 };
 type TopApp = { name: string; status: string; slug: string };
 
-// ─── Sparkline-Mock (wird später durch echte Zeitreihendaten ersetzt) ────────
-
 function makeSpark(base: number) {
   return Array.from({ length: 10 }, (_, i) => ({
     v: Math.max(0, base + Math.round((Math.random() - 0.45) * (base * 0.4 + 2) * (i / 5 + 0.5))),
   }));
 }
 
-// ─── Stat-Karte mit Sparkline ─────────────────────────────────────────────────
+// ─── StatCard ────────────────────────────────────────────────────────────────
 
-function StatCard({
-  label, value, icon: Icon, color, sparkColor, trend,
-}: {
-  label: string; value: number; icon: React.ElementType;
-  color: string; sparkColor: string; trend?: string;
+function StatCard({ label, value, iconBg, iconColor, iconPath, sparkColor, trend }: {
+  label: string; value: number; iconBg: string; iconColor: string;
+  iconPath: React.ReactNode; sparkColor: string; trend?: string;
 }) {
   const spark = makeSpark(value);
   return (
-    <div className="bg-card border border-border rounded-xl p-4 flex flex-col gap-3 hover:border-border/60 transition-colors">
-      <div className="flex items-start justify-between">
-        <div className={`p-2 rounded-lg ${color}`}>
-          <Icon size={15} />
+    <div
+      style={{
+        background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12,
+        padding: 14, display: "flex", flexDirection: "column", gap: 8,
+        transition: "border-color 200ms", cursor: "default",
+      }}
+      onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = "#263450"; }}
+      onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = "#1E3050"; }}
+    >
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+        <div style={{
+          width: 30, height: 30, borderRadius: 8,
+          background: iconBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+        }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={iconColor} strokeWidth="2">
+            {iconPath}
+          </svg>
         </div>
         {trend && (
-          <span className="text-[10px] text-success flex items-center gap-0.5">
-            <TrendingUp size={10} />
-            {trend}
+          <span style={{ fontSize: 10, color: "#10B981", display: "flex", alignItems: "center", gap: 2 }}>
+            ↑ {trend}
           </span>
         )}
       </div>
       <div>
-        <p className="text-2xl font-bold tabular-nums text-foreground">{value}</p>
-        <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
+        <div style={{ fontSize: 22, fontWeight: 700, fontVariantNumeric: "tabular-nums", lineHeight: 1.1, color: "#EDF2F7" }}>
+          {value}
+        </div>
+        <div style={{ fontSize: 11, color: "#7A8BA6", marginTop: 1 }}>{label}</div>
       </div>
-      <div className="h-10 -mx-1">
+      <div style={{ height: 36, margin: "0 -4px" }}>
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={spark}>
-            <Line
-              type="monotone" dataKey="v" stroke={sparkColor}
-              strokeWidth={1.5} dot={false} isAnimationActive={false}
-            />
+          <LineChart data={spark} margin={{ top: 2, right: 0, bottom: 2, left: 0 }}>
+            <Line type="monotone" dataKey="v" stroke={sparkColor} strokeWidth={1.5} dot={false} isAnimationActive={false} />
           </LineChart>
         </ResponsiveContainer>
       </div>
@@ -67,7 +68,7 @@ function StatCard({
   );
 }
 
-// ─── Donut-Chart ──────────────────────────────────────────────────────────────
+// ─── Donut ────────────────────────────────────────────────────────────────────
 
 const DONUT_COLORS = {
   production:  "#10B981",
@@ -89,40 +90,43 @@ function StatusDonut({ stats }: { stats: Stats }) {
   const empty = data.length === 0;
 
   return (
-    <div className="bg-card border border-border rounded-xl p-5">
-      <p className="text-sm font-semibold mb-4 flex items-center gap-2">
-        <span className="w-1.5 h-4 rounded-full bg-primary inline-block" />
+    <div style={{ background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12, padding: 18, display: "flex", flexDirection: "column" }}>
+      <div style={{ fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 8, marginBottom: 16, color: "#EDF2F7" }}>
+        <span style={{ width: 6, height: 16, borderRadius: 3, background: "#2563E8", flexShrink: 0, display: "inline-block" }} />
         Status-Übersicht
-      </p>
-      <div className="flex items-center gap-6">
-        <div className="relative w-28 h-28 shrink-0">
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 16, flex: 1 }}>
+        <div style={{ position: "relative", width: 112, height: 112, flexShrink: 0 }}>
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={empty ? [{ name: "Leer", value: 1 }] : data}
                 cx="50%" cy="50%"
                 innerRadius={38} outerRadius={54}
-                dataKey="value"
-                paddingAngle={2}
-                isAnimationActive={false}
+                dataKey="value" paddingAngle={2} isAnimationActive={false}
               >
                 {empty
-                  ? <Cell fill="oklch(0.165 0.035 256)" />
+                  ? <Cell fill="#1A2640" />
                   : data.map((d, i) => <Cell key={i} fill={d.color} />)
                 }
               </Pie>
-              {!empty && <Tooltip
-                contentStyle={{ background: "#111C2D", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 12 }}
-                itemStyle={{ color: "#EDF2F7" }}
-              />}
+              {!empty && (
+                <Tooltip
+                  contentStyle={{ background: "#111C2D", border: "1px solid #1E3050", borderRadius: 8, fontSize: 12 }}
+                  itemStyle={{ color: "#EDF2F7" }}
+                />
+              )}
             </PieChart>
           </ResponsiveContainer>
-          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            <span className="text-xl font-bold">{stats.total}</span>
-            <span className="text-[10px] text-muted-foreground">Gesamt</span>
+          <div style={{
+            position: "absolute", inset: 0, display: "flex", flexDirection: "column",
+            alignItems: "center", justifyContent: "center", pointerEvents: "none",
+          }}>
+            <span style={{ fontSize: 20, fontWeight: 700, color: "#EDF2F7" }}>{stats.total}</span>
+            <span style={{ fontSize: 9, color: "#7A8BA6", marginTop: 1 }}>Gesamt</span>
           </div>
         </div>
-        <div className="space-y-2 flex-1 min-w-0">
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 7 }}>
           {[
             { label: "Produktion",  value: stats.production,  color: DONUT_COLORS.production },
             { label: "Entwicklung", value: stats.development, color: DONUT_COLORS.development },
@@ -130,10 +134,10 @@ function StatusDonut({ stats }: { stats: Stats }) {
             { label: "Wartung",     value: stats.maintenance, color: DONUT_COLORS.maintenance },
             { label: "Archiviert",  value: stats.archived,    color: DONUT_COLORS.archived },
           ].map(({ label, value, color }) => (
-            <div key={label} className="flex items-center gap-2 text-xs">
-              <span className="w-2 h-2 rounded-full shrink-0" style={{ background: color }} />
-              <span className="text-muted-foreground flex-1">{label}</span>
-              <span className="font-semibold tabular-nums">{value}</span>
+            <div key={label} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "#EDF2F7" }}>
+              <span style={{ width: 8, height: 8, borderRadius: "50%", background: color, flexShrink: 0 }} />
+              <span style={{ flex: 1, color: "#7A8BA6" }}>{label}</span>
+              <span style={{ fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{value}</span>
             </div>
           ))}
         </div>
@@ -142,7 +146,7 @@ function StatusDonut({ stats }: { stats: Stats }) {
   );
 }
 
-// ─── Top Apps ────────────────────────────────────────────────────────────────
+// ─── Top Apps ─────────────────────────────────────────────────────────────────
 
 const STATUS_BAR_COLOR: Record<string, string> = {
   PRODUCTION:  "#10B981",
@@ -154,31 +158,26 @@ const STATUS_BAR_COLOR: Record<string, string> = {
 
 function TopApps({ apps, total }: { apps: TopApp[]; total: number }) {
   return (
-    <div className="bg-card border border-border rounded-xl p-5">
-      <p className="text-sm font-semibold mb-4 flex items-center gap-2">
-        <span className="w-1.5 h-4 rounded-full bg-cyan inline-block" style={{ background: "#22D3EE" }} />
+    <div style={{ background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12, padding: 18, display: "flex", flexDirection: "column" }}>
+      <div style={{ fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 8, marginBottom: 16, color: "#EDF2F7" }}>
+        <span style={{ width: 6, height: 16, borderRadius: 3, background: "#22D3EE", flexShrink: 0, display: "inline-block" }} />
         Top Apps
-      </p>
+      </div>
       {apps.length === 0 ? (
-        <p className="text-xs text-muted-foreground py-4 text-center">Noch keine Apps vorhanden</p>
+        <p style={{ fontSize: 12, color: "#7A8BA6", textAlign: "center", padding: "16px 0" }}>Noch keine Apps vorhanden</p>
       ) : (
-        <div className="space-y-3">
+        <div style={{ display: "flex", flexDirection: "column", gap: 11, flex: 1 }}>
           {apps.map((app) => {
             const pct = total > 0 ? Math.round((1 / Math.max(total, 1)) * 100) : 0;
             const barColor = STATUS_BAR_COLOR[app.status] ?? "#6B7280";
             return (
-              <Link key={app.slug} href={`/apps/${app.slug}`} className="block group">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-medium group-hover:text-primary transition-colors truncate max-w-[70%]">
-                    {app.name}
-                  </span>
-                  <span className="text-xs text-muted-foreground tabular-nums">{pct}%</span>
+              <Link key={app.slug} href={`/apps/${app.slug}`} style={{ textDecoration: "none" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4, fontSize: 12 }}>
+                  <span style={{ fontWeight: 500, color: "#EDF2F7" }}>{app.name}</span>
+                  <span style={{ color: "#7A8BA6", fontVariantNumeric: "tabular-nums" }}>{pct}%</span>
                 </div>
-                <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all"
-                    style={{ width: `${Math.max(20, pct)}%`, background: barColor }}
-                  />
+                <div style={{ height: 6, background: "#1A2640", borderRadius: 99, overflow: "hidden" }}>
+                  <div style={{ height: "100%", width: `${Math.max(20, pct)}%`, background: barColor, borderRadius: 99 }} />
                 </div>
               </Link>
             );
@@ -189,56 +188,58 @@ function TopApps({ apps, total }: { apps: TopApp[]; total: number }) {
   );
 }
 
-// ─── Aktivitäts-Feed ─────────────────────────────────────────────────────────
+// ─── Activity Feed ────────────────────────────────────────────────────────────
 
 const ACTION_LABEL: Record<string, string> = {
-  "app.created": "angelegt",
-  "app.updated": "aktualisiert",
-  "app.deleted": "gelöscht",
+  "app.created":    "angelegt",
+  "app.updated":    "aktualisiert",
+  "app.deleted":    "gelöscht",
   "status.changed": "Status geändert",
 };
 
 function timeAgo(iso: string) {
   const diff = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
-  if (diff < 1)   return "gerade eben";
-  if (diff < 60)  return `vor ${diff} Min.`;
+  if (diff < 1)  return "gerade eben";
+  if (diff < 60) return `vor ${diff} Min.`;
   const h = Math.round(diff / 60);
-  if (h < 24)     return `vor ${h} Std.`;
+  if (h < 24)    return `vor ${h} Std.`;
   return `vor ${Math.round(h / 24)} Tagen`;
 }
 
 function ActivityFeed({ items }: { items: ActivityEntry[] }) {
   return (
-    <div className="bg-card border border-border rounded-xl p-5 flex flex-col">
-      <p className="text-sm font-semibold mb-4 flex items-center gap-2">
-        <Activity size={14} className="text-primary" />
+    <div style={{ background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12, padding: 18, display: "flex", flexDirection: "column" }}>
+      <div style={{ fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 8, marginBottom: 16, color: "#EDF2F7" }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563E8" strokeWidth="2">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
         Letzte Aktivitäten
-      </p>
+      </div>
       {items.length === 0 ? (
-        <p className="text-xs text-muted-foreground text-center py-4">Noch keine Aktivitäten</p>
+        <p style={{ fontSize: 12, color: "#7A8BA6", textAlign: "center", padding: "16px 0" }}>Noch keine Aktivitäten</p>
       ) : (
-        <div className="space-y-3 flex-1">
-          {items.map((entry) => (
-            <div key={entry.id} className="flex gap-3">
-              <div className="flex flex-col items-center">
-                <div className="w-2 h-2 rounded-full bg-primary mt-1 shrink-0" />
-                <div className="w-px flex-1 bg-border mt-1" />
+        <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
+          {items.map((entry, idx) => (
+            <div key={entry.id} style={{ display: "flex", gap: 12 }}>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#2563E8", marginTop: 4, flexShrink: 0 }} />
+                {idx < items.length - 1 && (
+                  <div style={{ width: 1, flex: 1, background: "#1E3050", marginTop: 4, minHeight: 14 }} />
+                )}
               </div>
-              <div className="pb-3 min-w-0">
-                <p className="text-xs leading-snug">
-                  <span className="font-semibold">{entry.userName}</span>
+              <div style={{ paddingBottom: 13, flex: 1, minWidth: 0 }}>
+                <p style={{ fontSize: 12, lineHeight: 1.4, color: "#EDF2F7", margin: 0 }}>
+                  <span style={{ fontWeight: 600 }}>{entry.userName}</span>
                   {" hat "}
                   {entry.appName && entry.appSlug ? (
-                    <Link href={`/apps/${entry.appSlug}`} className="text-primary hover:underline">
+                    <Link href={`/apps/${entry.appSlug}`} style={{ color: "#2563E8", textDecoration: "none" }}>
                       {entry.appName}
                     </Link>
                   ) : "eine App"}
                   {" "}
-                  <span className="text-muted-foreground">
-                    {ACTION_LABEL[entry.action] ?? entry.action}
-                  </span>
+                  <span style={{ color: "#7A8BA6" }}>{ACTION_LABEL[entry.action] ?? entry.action}</span>
                 </p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">{timeAgo(entry.createdAt)}</p>
+                <p style={{ fontSize: 10, color: "#7A8BA6", marginTop: 2, marginBottom: 0 }}>{timeAgo(entry.createdAt)}</p>
               </div>
             </div>
           ))}
@@ -248,53 +249,55 @@ function ActivityFeed({ items }: { items: ActivityEntry[] }) {
   );
 }
 
-// ─── Haupt-Export ────────────────────────────────────────────────────────────
+// ─── Dashboard ────────────────────────────────────────────────────────────────
 
-export function DashboardClient({
-  stats, recentActivity, topApps,
-}: {
-  stats: Stats;
-  recentActivity: ActivityEntry[];
-  topApps: TopApp[];
+export function DashboardClient({ stats, recentActivity, topApps }: {
+  stats: Stats; recentActivity: ActivityEntry[]; topApps: TopApp[];
 }) {
   return (
-    <div className="p-6 space-y-6 max-w-[1400px]">
+    <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
       {/* Header */}
       <div>
-        <h1 className="text-xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Übersicht aller Apps und Aktivitäten</p>
+        <h1 style={{ fontSize: 20, fontWeight: 700, letterSpacing: "-0.02em", color: "#EDF2F7", margin: 0 }}>Dashboard</h1>
+        <p style={{ fontSize: 13, color: "#7A8BA6", marginTop: 2, marginBottom: 0 }}>Übersicht aller Apps und Aktivitäten</p>
       </div>
 
-      {/* Stats-Kacheln */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      {/* Stat Cards — 6 Spalten */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(6,1fr)", gap: 12 }}>
         <StatCard
-          label="Apps gesamt" value={stats.total}
-          icon={Grid2X2} color="bg-primary/15 text-primary" sparkColor="#3B82F6"
+          label="Apps gesamt" value={stats.total} sparkColor="#3B82F6"
+          iconBg="rgba(37,99,232,0.15)" iconColor="#2563E8" trend="+2"
+          iconPath={<><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></>}
         />
         <StatCard
-          label="Produktion" value={stats.production}
-          icon={CheckCircle2} color="bg-success/15 text-success" sparkColor="#10B981"
+          label="Produktion" value={stats.production} sparkColor="#10B981"
+          iconBg="rgba(16,185,129,0.15)" iconColor="#10B981"
+          iconPath={<><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></>}
         />
         <StatCard
-          label="Entwicklung" value={stats.development}
-          icon={Code2} color="bg-blue-500/15 text-blue-400" sparkColor="#60A5FA"
+          label="Entwicklung" value={stats.development} sparkColor="#60A5FA"
+          iconBg="rgba(59,130,246,0.15)" iconColor="#60A5FA"
+          iconPath={<><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></>}
         />
         <StatCard
-          label="Testing" value={stats.testing}
-          icon={FlaskConical} color="bg-warning/15 text-warning" sparkColor="#F59E0B"
+          label="Testing" value={stats.testing} sparkColor="#F59E0B"
+          iconBg="rgba(245,158,11,0.15)" iconColor="#F59E0B"
+          iconPath={<><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v11m0 0H5a2 2 0 00-2-2m6 2v5a2 2 0 002 2h2a2 2 0 002-2v-5m-6 0h6"/></>}
         />
         <StatCard
-          label="Wartung" value={stats.maintenance}
-          icon={Wrench} color="bg-orange-500/15 text-orange-400" sparkColor="#F97316"
+          label="Wartung" value={stats.maintenance} sparkColor="#F97316"
+          iconBg="rgba(249,115,22,0.15)" iconColor="#FB923C"
+          iconPath={<><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></>}
         />
         <StatCard
-          label="Archiviert" value={stats.archived}
-          icon={Archive} color="bg-muted text-muted-foreground" sparkColor="#6B7280"
+          label="Archiviert" value={stats.archived} sparkColor="#6B7280"
+          iconBg="rgba(107,114,128,0.12)" iconColor="#9CA3AF"
+          iconPath={<><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></>}
         />
       </div>
 
-      {/* Hauptbereich */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      {/* Bottom Grid — 3 Spalten */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, flex: 1 }}>
         <StatusDonut stats={stats} />
         <TopApps apps={topApps} total={stats.total} />
         <ActivityFeed items={recentActivity} />
