@@ -3,6 +3,16 @@
 Alle wesentlichen Änderungen an Stack-Base werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/).
 
+## [0.3.1-dev] — 2026-07-28
+
+### Added
+
+**Favoriten-Toggle (App-Detail-Seite)**
+- `FavoriteButton` Client Component mit optimistischem State-Update
+- Gefülltes Herz + rote Farbe wenn favorisiert, Outline wenn nicht
+- `disabled` während des laufenden API-Calls, Revert bei Netzwerkfehler
+- Detail-Seite lädt `isFavorited` parallel zu App-Daten (kein Extra-Waterfall)
+
 ## [0.3.0-dev] — 2026-07-28
 
 ### Added
