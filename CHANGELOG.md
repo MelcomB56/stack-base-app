@@ -3,6 +3,17 @@
 Alle wesentlichen Änderungen an Stack-Base werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/).
 
+## [0.3.2-dev] — 2026-07-28
+
+### Fixed
+
+**Design-Sichtbarkeit**
+- `--border` war `oklch(1 0 0 / 9%)` (fast transparentes Weiß) → jetzt festes `oklch(0.218 0.040 256)` (sichtbares Dunkelblau)
+- `--card` Lightness von 10.8% auf 14% erhöht — deutlicher Kontrast zum Background (7.5%)
+- `--sidebar-border` und `--sidebar-accent` auf feste Farben statt Alpha-Werte
+- `.dark`-Block vollständig mit `:root`-Werten synchronisiert
+- Topbar: `bg-background/80 backdrop-blur` → `bg-card` (war visuell identisch mit Seiteninhalt → unsichtbar)
+
 ## [0.3.1-dev] — 2026-07-28
 
 ### Added
