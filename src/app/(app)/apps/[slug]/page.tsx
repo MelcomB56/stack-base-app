@@ -1,6 +1,8 @@
 import { db } from "@/lib/db";
+import { auth } from "@/auth";
 import { notFound } from "next/navigation";
 import { AppStatusBadge } from "@/components/apps/AppStatusBadge";
+import { FavoriteButton } from "@/components/apps/FavoriteButton";
 import { AppStatus } from "@/generated/prisma/client";
 import {
   ExternalLink,
@@ -85,8 +87,15 @@ export default async function AppDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const app = await getApp(slug);
+  const [app, session] = await Promise.all([getApp(slug), auth()]);
   if (!app) notFound();
+
+  const userId = session?.user?.id;
+  const isFavorited = userId
+    ? !!(await db.userFavorite.findUnique({
+        where: { userId_appId: { userId, appId: app.id } },
+      }))
+    : false;
 
   const currentRelease = app.releases.find((r) => r.isCurrent);
   const accentColor = STATUS_ACCENT[app.status] ?? "#6B7280";
@@ -134,6 +143,7 @@ export default async function AppDetailPage({
 
               {/* Quick-Links */}
               <div className="flex items-center gap-2 mt-3 flex-wrap">
+                <FavoriteButton appId={app.id} initialFavorited={isFavorited} />
                 {app.urlProd && (
                   <a
                     href={app.urlProd}
