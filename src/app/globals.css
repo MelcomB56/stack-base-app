@@ -162,3 +162,16 @@
   color: #EDF2F7 !important;
   background: rgba(26,38,64,0.5) !important;
 }
+
+/* Hover-Karten für Server Components (kein JS) */
+.ds-card-hover {
+  background: #111C2D;
+  border: 1px solid #1E3050;
+  border-radius: 12px;
+  transition: border-color 150ms, box-shadow 150ms;
+  cursor: pointer;
+}
+.ds-card-hover:hover {
+  border-color: rgba(37,99,232,0.35);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+}
