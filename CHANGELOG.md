@@ -3,7 +3,7 @@
 Alle wesentlichen Änderungen an Stack-Base werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/).
 
-## [0.3.2-dev] — 2026-07-28
+## [0.3.3-dev] — 2026-07-28
 
 ### Fixed
 
