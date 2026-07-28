@@ -20,7 +20,7 @@ export function Topbar({ title }: { title?: string }) {
   }
 
   return (
-    <header className="h-14 flex items-center gap-4 px-6 border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-30">
+    <header className="h-14 flex items-center gap-4 px-6 border-b border-border bg-card sticky top-0 z-30">
       {/* Page title */}
       {title && (
         <h1 className="text-sm font-semibold text-foreground whitespace-nowrap">{title}</h1>
