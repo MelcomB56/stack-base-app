@@ -5,6 +5,37 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Loader2, Lock, Mail } from "lucide-react";
 
+function HexLogo() {
+  return (
+    <svg viewBox="0 0 40 40" width="40" height="40" fill="none">
+      <path d="M20 2L35 11V29L20 38L5 29V11Z" fill="#2563E8" stroke="#22D3EE" strokeWidth="1.2" />
+      <path d="M20 8L29 13V23L20 28L11 23V13Z" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="1" />
+      <text x="20" y="24" textAnchor="middle" fontSize="11" fontWeight="700" fill="white" fontFamily="sans-serif">SB</text>
+    </svg>
+  );
+}
+
+function DSInput({ icon, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { icon: React.ReactNode }) {
+  return (
+    <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+      <span style={{ position: "absolute", left: 12, color: "#7A8BA6", pointerEvents: "none", display: "flex" }}>
+        {icon}
+      </span>
+      <input
+        {...props}
+        style={{
+          width: "100%", padding: "10px 14px 10px 38px",
+          background: "#1A2640", border: "1px solid #1E3050", borderRadius: 9,
+          color: "#EDF2F7", fontSize: 14, outline: "none", fontFamily: "inherit",
+          transition: "border-color 150ms",
+        }}
+        onFocus={(e) => { e.currentTarget.style.borderColor = "#2563E8"; props.onFocus?.(e); }}
+        onBlur={(e) => { e.currentTarget.style.borderColor = "#1E3050"; props.onBlur?.(e); }}
+      />
+    </div>
+  );
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -33,112 +64,122 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
-      {/* Ambient-Glow */}
-      <div
-        className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[700px] h-[350px] rounded-full blur-3xl pointer-events-none"
-        style={{ background: "radial-gradient(ellipse, rgba(37,99,232,0.12) 0%, transparent 70%)" }}
-      />
+    <div style={{
+      minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
+      background: "#0B1220", position: "relative", overflow: "hidden",
+    }}>
+      {/* Ambient Glow */}
+      <div style={{
+        position: "absolute", top: "30%", left: "50%", transform: "translateX(-50%)",
+        width: 600, height: 320, borderRadius: "50%",
+        background: "radial-gradient(ellipse, rgba(37,99,232,0.14) 0%, transparent 70%)",
+        pointerEvents: "none",
+      }} />
 
-      <div className="relative w-full max-w-sm px-4">
-        {/* Logo */}
-        <div className="flex flex-col items-center mb-8 gap-3">
-          <div className="flex items-center gap-3">
-            <svg viewBox="0 0 32 32" className="w-10 h-10 shrink-0" fill="none">
-              <path
-                d="M16 2L28 9V23L16 30L4 23V9L16 2Z"
-                fill="oklch(0.530 0.220 262)"
-                stroke="oklch(0.735 0.155 194)"
-                strokeWidth="1"
-              />
-              <path
-                d="M16 7L23 11V19L16 23L9 19V11L16 7Z"
-                fill="none"
-                stroke="rgba(255,255,255,0.3)"
-                strokeWidth="1"
-              />
-              <text x="16" y="20" textAnchor="middle" fontSize="9" fontWeight="700" fill="white" fontFamily="sans-serif">
-                SB
-              </text>
-            </svg>
+      <div style={{ position: "relative", width: "100%", maxWidth: 400, padding: "0 20px" }}>
+
+        {/* Logo + Titel */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 32, gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <HexLogo />
             <div>
-              <p className="text-sm font-bold tracking-wide text-foreground">STACK·BASE</p>
-              <p className="text-[9px] text-muted-foreground tracking-widest uppercase">One Platform. All Ops.</p>
+              <p style={{ fontSize: 15, fontWeight: 700, letterSpacing: ".06em", color: "#EDF2F7", margin: 0 }}>
+                STACK·BASE
+              </p>
+              <p style={{ fontSize: 9, letterSpacing: ".15em", textTransform: "uppercase", color: "#7A8BA6", margin: "3px 0 0" }}>
+                One Platform. All Ops.
+              </p>
             </div>
           </div>
-          <p className="text-sm text-muted-foreground">Melde dich an um fortzufahren</p>
+          <p style={{ fontSize: 13, color: "#7A8BA6", margin: 0 }}>
+            Melde dich an um fortzufahren
+          </p>
         </div>
 
-        {/* Card */}
-        <div className="rounded-2xl border border-border bg-card/80 backdrop-blur-sm p-6 space-y-5">
-          <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Login-Card */}
+        <div style={{
+          background: "#111C2D", border: "1px solid #1E3050", borderRadius: 14,
+          padding: 28, backdropFilter: "blur(8px)",
+        }}>
+          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
             {/* E-Mail */}
-            <div className="space-y-1.5">
-              <label htmlFor="email" className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+            <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+              <label style={{ fontSize: 10, fontWeight: 600, color: "#7A8BA6", textTransform: "uppercase", letterSpacing: ".1em" }}>
                 E-Mail
               </label>
-              <div className="relative">
-                <Mail size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  placeholder="admin@example.de"
-                  className="w-full pl-9 pr-3 py-2.5 text-sm bg-background/60 border border-border rounded-lg text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/60 transition-all"
-                />
-              </div>
+              <DSInput
+                id="email" name="email" type="email"
+                autoComplete="email" required placeholder="admin@example.de"
+                icon={<Mail size={14} />}
+              />
             </div>
 
             {/* Passwort */}
-            <div className="space-y-1.5">
-              <label htmlFor="password" className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+            <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+              <label style={{ fontSize: 10, fontWeight: 600, color: "#7A8BA6", textTransform: "uppercase", letterSpacing: ".1em" }}>
                 Passwort
               </label>
-              <div className="relative">
-                <Lock size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  className="w-full pl-9 pr-3 py-2.5 text-sm bg-background/60 border border-border rounded-lg text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/60 transition-all"
-                />
-              </div>
+              <DSInput
+                id="password" name="password" type="password"
+                autoComplete="current-password" required
+                icon={<Lock size={14} />}
+              />
             </div>
 
             {/* Fehler */}
             {error && (
-              <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-destructive/10 border border-destructive/30 text-sm text-destructive">
-                <span className="w-1.5 h-1.5 rounded-full bg-destructive shrink-0" />
+              <div style={{
+                display: "flex", alignItems: "center", gap: 8,
+                padding: "10px 14px", borderRadius: 8,
+                background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)",
+                fontSize: 13, color: "#F87171",
+              }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#EF4444", flexShrink: 0 }} />
                 {error}
               </div>
             )}
 
-            {/* Anmelden */}
+            {/* Submit */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed transition-all mt-1"
+              style={{
+                width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                padding: "11px 16px", borderRadius: 9,
+                background: "#2563E8", color: "#ffffff",
+                fontSize: 14, fontWeight: 600, border: "none",
+                cursor: loading ? "not-allowed" : "pointer",
+                opacity: loading ? 0.7 : 1,
+                transition: "opacity 150ms",
+                marginTop: 2,
+              }}
             >
-              {loading && <Loader2 size={14} className="animate-spin" />}
+              {loading && <Loader2 size={15} className="animate-spin" />}
               Anmelden
             </button>
           </form>
 
           {process.env.NEXT_PUBLIC_AUTHENTIK_ENABLED === "true" && (
             <>
-              <div className="flex items-center gap-3">
-                <div className="flex-1 h-px bg-border" />
-                <span className="text-[10px] text-muted-foreground uppercase tracking-widest">oder</span>
-                <div className="flex-1 h-px bg-border" />
+              <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "20px 0" }}>
+                <div style={{ flex: 1, height: 1, background: "#1E3050" }} />
+                <span style={{ fontSize: 10, color: "#7A8BA6", textTransform: "uppercase", letterSpacing: ".12em" }}>
+                  oder
+                </span>
+                <div style={{ flex: 1, height: 1, background: "#1E3050" }} />
               </div>
               <button
                 type="button"
                 onClick={() => signIn("authentik", { callbackUrl: "/dashboard" })}
-                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg border border-border text-sm font-medium text-muted-foreground hover:border-primary/40 hover:text-foreground transition-all"
+                style={{
+                  width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                  padding: "11px 16px", borderRadius: 9,
+                  background: "transparent", color: "#7A8BA6",
+                  fontSize: 13, fontWeight: 500, border: "1px solid #1E3050",
+                  cursor: "pointer", transition: "border-color 150ms, color 150ms",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(37,99,232,0.4)"; e.currentTarget.style.color = "#EDF2F7"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#1E3050"; e.currentTarget.style.color = "#7A8BA6"; }}
               >
                 Mit Authentik SSO anmelden
               </button>
