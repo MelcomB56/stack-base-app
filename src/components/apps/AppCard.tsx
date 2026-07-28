@@ -26,65 +26,94 @@ export function AppCard({ app }: AppCardProps) {
   const accentColor = STATUS_COLOR[app.status] ?? "#6B7280";
 
   return (
-    <Link href={`/apps/${app.slug}`} className="block group">
-      <div className="relative rounded-xl border border-border bg-card overflow-hidden h-full flex flex-col hover:border-primary/30 hover:shadow-[0_0_0_1px_rgba(37,99,232,0.15),0_4px_20px_rgba(0,0,0,0.25)] transition-all duration-200">
+    <Link href={`/apps/${app.slug}`} style={{ textDecoration: "none", display: "block" }}>
+      <div
+        className="ds-appcard"
+        style={{
+          position: "relative",
+          background: "#111C2D",
+          border: "1px solid #1E3050",
+          borderRadius: 12,
+          overflow: "hidden",
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          transition: "border-color 200ms, box-shadow 200ms",
+        }}
+      >
         {/* Status-Akzentstreifen */}
-        <div className="h-0.5 w-full shrink-0" style={{ background: accentColor }} />
+        <div style={{ height: 3, width: "100%", flexShrink: 0, background: accentColor }} />
 
-        <div className="p-4 flex flex-col gap-3 flex-1">
-          {/* Header */}
-          <div className="flex items-start gap-3">
+        <div style={{ padding: 18, display: "flex", flexDirection: "column", gap: 14, flex: 1 }}>
+          {/* Header: Logo + Name + Status */}
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
             {app.logoUrl ? (
               <img
                 src={app.logoUrl}
                 alt={app.name}
-                className="w-10 h-10 rounded-lg object-contain shrink-0"
+                style={{ width: 44, height: 44, borderRadius: 10, objectFit: "contain", flexShrink: 0 }}
               />
             ) : (
               <div
-                className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
-                style={{ background: `${accentColor}22` }}
+                style={{
+                  width: 44, height: 44, borderRadius: 10,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  flexShrink: 0, background: `${accentColor}22`,
+                }}
               >
-                <Globe size={16} style={{ color: accentColor }} />
+                <Globe size={20} style={{ color: accentColor }} />
               </div>
             )}
 
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-sm text-foreground truncate group-hover:text-primary transition-colors">
+            <div style={{ flex: 1, minWidth: 0, paddingTop: 2 }}>
+              <p style={{
+                fontSize: 14, fontWeight: 600, color: "#EDF2F7",
+                margin: "0 0 3px", overflow: "hidden",
+                textOverflow: "ellipsis", whiteSpace: "nowrap",
+              }}>
                 {app.name}
-              </h3>
+              </p>
               {app.urlProd ? (
-                <span className="text-[11px] text-muted-foreground truncate flex items-center gap-1">
+                <span style={{ fontSize: 11, color: "#7A8BA6", display: "flex", alignItems: "center", gap: 4 }}>
                   <ExternalLink size={9} />
                   {app.urlProd.replace(/^https?:\/\//, "")}
                 </span>
               ) : (
-                <span className="text-[11px] text-muted-foreground/50">keine URL</span>
+                <span style={{ fontSize: 11, color: "#4A5A72" }}>keine URL</span>
               )}
             </div>
 
-            <AppStatusBadge status={app.status} showDot />
+            <div style={{ flexShrink: 0, paddingTop: 2 }}>
+              <AppStatusBadge status={app.status} showDot />
+            </div>
           </div>
 
           {/* Beschreibung */}
-          <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed flex-1">
+          <p style={{
+            fontSize: 13, color: "#7A8BA6", lineHeight: 1.55,
+            margin: 0, flex: 1,
+            display: "-webkit-box", WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical", overflow: "hidden",
+          }}>
             {app.shortDesc || "Keine Beschreibung"}
           </p>
 
           {/* Kategorien */}
           {app.categories && app.categories.length > 0 && (
-            <div className="flex flex-wrap gap-1 pt-2 border-t border-border/40">
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 5, paddingTop: 10, borderTop: "1px solid rgba(30,48,80,0.7)" }}>
               {app.categories.slice(0, 3).map(({ category }) => (
                 <span
                   key={category.name}
-                  className="px-1.5 py-0.5 rounded text-[10px] font-medium"
-                  style={{ color: category.color, backgroundColor: `${category.color}22` }}
+                  style={{
+                    padding: "2px 8px", borderRadius: 4, fontSize: 10, fontWeight: 500,
+                    color: category.color, background: `${category.color}22`,
+                  }}
                 >
                   {category.name}
                 </span>
               ))}
               {app.categories.length > 3 && (
-                <span className="px-1.5 py-0.5 rounded text-[10px] text-muted-foreground bg-muted">
+                <span style={{ padding: "2px 8px", borderRadius: 4, fontSize: 10, color: "#7A8BA6", background: "#1A2640" }}>
                   +{app.categories.length - 3}
                 </span>
               )}

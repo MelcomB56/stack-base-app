@@ -1,52 +1,32 @@
-import { cn } from "@/lib/utils";
-
 export type AppStatus = "PRODUCTION" | "DEVELOPMENT" | "TESTING" | "MAINTENANCE" | "ARCHIVED";
 
-const CONFIG: Record<AppStatus, { label: string; className: string; dot: string }> = {
-  PRODUCTION: {
-    label: "Produktion",
-    className: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
-    dot: "bg-emerald-400",
-  },
-  DEVELOPMENT: {
-    label: "Entwicklung",
-    className: "bg-blue-500/15 text-blue-400 border-blue-500/30",
-    dot: "bg-blue-400",
-  },
-  TESTING: {
-    label: "Testing",
-    className: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30",
-    dot: "bg-yellow-400",
-  },
-  MAINTENANCE: {
-    label: "Wartung",
-    className: "bg-orange-500/15 text-orange-400 border-orange-500/30",
-    dot: "bg-orange-400",
-  },
-  ARCHIVED: {
-    label: "Archiviert",
-    className: "bg-zinc-500/15 text-zinc-400 border-zinc-500/30",
-    dot: "bg-zinc-400",
-  },
+const CONFIG: Record<AppStatus, { label: string; color: string; bg: string; border: string; dot: string }> = {
+  PRODUCTION:  { label: "Produktion",  color: "#34D399", bg: "rgba(16,185,129,0.12)", border: "rgba(16,185,129,0.3)", dot: "#34D399" },
+  DEVELOPMENT: { label: "Entwicklung", color: "#60A5FA", bg: "rgba(59,130,246,0.12)", border: "rgba(59,130,246,0.3)", dot: "#60A5FA" },
+  TESTING:     { label: "Testing",     color: "#FBBF24", bg: "rgba(245,158,11,0.12)", border: "rgba(245,158,11,0.3)", dot: "#FBBF24" },
+  MAINTENANCE: { label: "Wartung",     color: "#FB923C", bg: "rgba(249,115,22,0.12)", border: "rgba(249,115,22,0.3)", dot: "#FB923C" },
+  ARCHIVED:    { label: "Archiviert",  color: "#94A3B8", bg: "rgba(100,116,139,0.12)",border: "rgba(100,116,139,0.3)",dot: "#94A3B8" },
 };
 
 interface Props {
   status: AppStatus;
   showDot?: boolean;
-  className?: string;
+  style?: React.CSSProperties;
 }
 
-export function AppStatusBadge({ status, showDot = true, className }: Props) {
+export function AppStatusBadge({ status, showDot = true, style }: Props) {
   const cfg = CONFIG[status] ?? CONFIG.DEVELOPMENT;
   return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium border",
-        cfg.className,
-        className
+    <span style={{
+      display: "inline-flex", alignItems: "center", gap: 5,
+      padding: "3px 9px", borderRadius: 99,
+      fontSize: 11, fontWeight: 500, whiteSpace: "nowrap",
+      color: cfg.color, background: cfg.bg, border: `1px solid ${cfg.border}`,
+      ...style,
+    }}>
+      {showDot && (
+        <span style={{ width: 6, height: 6, borderRadius: "50%", background: cfg.dot, flexShrink: 0 }} />
       )}
-    >
-      {showDot && <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", cfg.dot)} />}
       {cfg.label}
     </span>
   );
