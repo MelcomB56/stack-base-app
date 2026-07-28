@@ -2,15 +2,17 @@
 
 Zentrale WebApp-Management-Plattform für eigene Anwendungen — vergleichbar mit dem Azure Portal, aber für selbst entwickelte Apps.
 
-**Version:** v0.1.0-dev
+**Version:** v0.2.0-dev
 
 ## Features (v0.1.0)
 
-- **App-Verwaltung:** Apps anlegen, einsehen, Status verwalten
-- **Dashboard:** Überblick aller Apps mit Status-Counts und letzten Aktivitäten
+- **Auth:** next-auth v5 mit Credentials-Login (bcrypt) + optionalem Authentik OIDC
+- **App-Verwaltung:** Apps anlegen, bearbeiten, löschen, Status verwalten
+- **Dashboard:** StatCards mit Recharts-Sparklines, Status-Donut, Top-Apps, Aktivitäts-Feed
 - **Releases & Changelog:** Versionshistorie pro App
 - **Favoriten & Suche:** Schnellzugriff auf häufig genutzte Apps
 - **Kategorien, Stacks, Technologien:** Klassifizierung des Tech-Stacks
+- **Design-System v2:** Navy-Farbpalette mit Cyan-Akzent, kollapsierbare Sidebar, Topbar
 
 ## Tech-Stack
 
@@ -52,8 +54,9 @@ src/
 │   │   └── layout.tsx
 │   └── api/            # REST API-Routen
 ├── components/
-│   ├── layout/         # Sidebar
-│   ├── apps/           # AppCard, AppStatusBadge
+│   ├── layout/         # Sidebar, Topbar
+│   ├── dashboard/      # DashboardClient (Recharts)
+│   ├── apps/           # AppCard, AppStatusBadge, EditAppForm
 │   └── ui/             # shadcn/ui Komponenten
 ├── lib/
 │   ├── db.ts           # Prisma Client (server-only)
@@ -62,8 +65,24 @@ src/
 └── generated/prisma/   # Generierter Prisma Client
 ```
 
+## Umgebungsvariablen
+
+```env
+# Pflicht
+DATABASE_URL=postgresql://...
+AUTH_SECRET=<zufälliger Secret>
+
+# Optionales Authentik OIDC
+AUTHENTIK_CLIENT_ID=...
+AUTHENTIK_CLIENT_SECRET=...
+AUTHENTIK_ISSUER=https://auth.example.com/application/o/stack-base/
+NEXT_PUBLIC_AUTHENTIK_ENABLED=true
+```
+
 ## Offen (nächste Schritte)
 
-- App-Bearbeitungsseite (`/apps/[slug]/edit`)
-- Authentifizierung (next-auth v5 + Authentik OIDC)
-- Weitere Seiten: Favoriten, Suche, Kategorien, Stacks, Technologien, Einstellungen
+- Sidebar-Collapse-Sync mit AppLayout (CSS-Variable oder Context)
+- App-Detail-Seite: Design v2 (Breadcrumb, Verfügbarkeitschart)
+- AppCard: Design v2 anpassen
+- Restliche Seiten: Favoriten, Suche, Kategorien, Stacks, Technologien, Einstellungen
+- Authentik OIDC: OAuth2-App in Authentik anlegen, Redirect URI konfigurieren

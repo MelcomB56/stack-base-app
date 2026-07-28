@@ -3,6 +3,39 @@
 Alle wesentlichen Änderungen an Stack-Base werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/).
 
+## [0.2.0-dev] — 2026-07-28
+
+### Added
+
+**Auth (next-auth v5)**
+- `auth.config.ts` (Edge-safe, kein DB-Import) für Middleware
+- `auth.ts` mit Credentials- und optionalem Authentik-OIDC-Provider (bcrypt-Vergleich)
+- `middleware.ts` schützt alle Routen außer `/login` und `/api/auth/*`
+- Login-Seite (`/login`) mit E-Mail/Passwort-Formular und optionalem SSO-Button
+- `SessionProvider` in `providers.tsx` für Client-Komponenten
+- Alle 6 Mutations-API-Routen auf Session-Auth umgestellt (kein User-Lookup mehr nötig)
+
+**App-Bearbeitung**
+- `/apps/[slug]/edit` — Formular mit vorausgefüllten Feldern, PATCH auf API, Slug-Redirect
+- Delete-Button in EditAppForm mit Bestätigungs-Dialog → DELETE → Redirect `/apps`
+
+**Design-System v2**
+- Neue Farbpalette: Primary `#2563E8`, Accent Cyan `#22D3EE`, Success `#10B981`, Warning `#F59E0B`, Danger `#EF4444`
+- Tieferes Background-Navy (`oklch(0.075 0.025 255)` ≈ `#0B1220`)
+- Neue CSS-Tokens: `--success`, `--success-foreground`, `--warning`, `--warning-foreground`, `--cyan`
+- Sidebar-spezifische Farbtokens (`--sidebar`, `--sidebar-foreground`, `--sidebar-border` etc.)
+
+**Layout**
+- Sidebar: STACK·BASE Hexagon-Logo mit Tagline, Minimieren-Toggle (220px ↔ 60px), User-Avatar mit Initialen, neue NavLink-Styles mit Dot-Indikator, Abmelden-Button
+- Topbar: Global-Suche, Notifications-Bell (Warning-Badge), User-Avatar — in AppLayout integriert
+
+**Dashboard (komplett überarbeitet)**
+- 6 StatCards mit Recharts-Sparklines (LineChart, Mock-Daten)
+- StatusDonut (PieChart mit innerRadius, Legende, zentrierte Gesamt-Zahl)
+- Top-Apps-Liste mit Progress-Bars nach Status-Farbe
+- Aktivitäts-Feed mit Timeline-Dots und `timeAgo()`-Funktion
+- Server Component (page.tsx) + Client Component (DashboardClient.tsx) mit korrekter Date-Serialisierung
+
 ## [0.1.0-dev] — 2026-07-27
 
 ### Added
