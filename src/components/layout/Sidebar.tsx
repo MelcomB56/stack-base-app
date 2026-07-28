@@ -3,52 +3,79 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
+import { useState } from "react";
 import {
-  LayoutDashboard,
-  Grid2X2,
-  Heart,
-  Tag,
-  Layers,
-  Cpu,
-  Settings,
-  Search,
-  ChevronRight,
-  LogOut,
-  User,
+  LayoutDashboard, Grid2X2, Heart, Tag, Layers, Cpu,
+  Settings, Search, ChevronLeft, ChevronRight, LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/apps", label: "Apps", icon: Grid2X2 },
-  { href: "/favorites", label: "Favoriten", icon: Heart },
-  { href: "/search", label: "Suche", icon: Search },
+  { href: "/apps",      label: "Apps",       icon: Grid2X2 },
+  { href: "/favorites", label: "Favoriten",  icon: Heart },
+  { href: "/search",    label: "Suche",      icon: Search },
 ] as const;
 
 const NAV_ADMIN = [
-  { href: "/categories", label: "Kategorien", icon: Tag },
-  { href: "/stacks", label: "Stacks", icon: Layers },
-  { href: "/technologies", label: "Technologien", icon: Cpu },
-  { href: "/settings", label: "Einstellungen", icon: Settings },
+  { href: "/categories",   label: "Kategorien",   icon: Tag },
+  { href: "/stacks",       label: "Stacks",        icon: Layers },
+  { href: "/technologies", label: "Technologien",  icon: Cpu },
+  { href: "/settings",     label: "Einstellungen", icon: Settings },
 ] as const;
 
 type NavItem = { href: string; label: string; icon: React.ElementType };
 
-function NavLink({ item, active }: { item: NavItem; active: boolean }) {
+function StackBaseLogo({ collapsed }: { collapsed: boolean }) {
+  return (
+    <Link href="/dashboard" className="flex items-center gap-3 px-1 min-w-0">
+      {/* Hexagon-Icon */}
+      <div className="shrink-0 w-8 h-8 relative flex items-center justify-center">
+        <svg viewBox="0 0 32 32" className="w-8 h-8" fill="none">
+          <path
+            d="M16 2L28 9V23L16 30L4 23V9L16 2Z"
+            fill="oklch(0.530 0.220 262)"
+            stroke="oklch(0.735 0.155 194)"
+            strokeWidth="1"
+          />
+          <path
+            d="M16 7L23 11V19L16 23L9 19V11L16 7Z"
+            fill="none"
+            stroke="rgba(255,255,255,0.3)"
+            strokeWidth="1"
+          />
+          <text x="16" y="20" textAnchor="middle" fontSize="9" fontWeight="700" fill="white" fontFamily="sans-serif">SB</text>
+        </svg>
+      </div>
+      {!collapsed && (
+        <div className="overflow-hidden">
+          <p className="text-sm font-bold tracking-wide text-foreground whitespace-nowrap">STACK·BASE</p>
+          <p className="text-[9px] text-muted-foreground tracking-widest uppercase whitespace-nowrap">One Platform. All Ops.</p>
+        </div>
+      )}
+    </Link>
+  );
+}
+
+function NavLink({ item, active, collapsed }: { item: NavItem; active: boolean; collapsed: boolean }) {
   const Icon = item.icon;
   return (
     <Link
       href={item.href}
+      title={collapsed ? item.label : undefined}
       className={cn(
-        "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all",
+        "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 group",
+        collapsed && "justify-center px-2",
         active
-          ? "bg-primary/20 text-primary"
-          : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+          ? "bg-primary/15 text-primary border border-primary/20"
+          : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground border border-transparent"
       )}
     >
-      <Icon size={18} className="shrink-0" />
-      <span className="truncate">{item.label}</span>
-      {active && <ChevronRight size={14} className="ml-auto shrink-0 text-primary" />}
+      <Icon size={17} className="shrink-0" />
+      {!collapsed && <span className="truncate flex-1">{item.label}</span>}
+      {!collapsed && active && (
+        <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+      )}
     </Link>
   );
 }
@@ -56,64 +83,100 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
 export function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const [collapsed, setCollapsed] = useState(false);
+
+  const initials = session?.user?.name
+    ? session.user.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
+    : "??";
 
   return (
-    <aside className="flex flex-col w-60 h-screen bg-sidebar border-r border-sidebar-border shrink-0 fixed top-0 left-0 z-40">
+    <aside
+      className={cn(
+        "flex flex-col h-screen bg-sidebar border-r border-sidebar-border shrink-0 fixed top-0 left-0 z-40 transition-all duration-200",
+        collapsed ? "w-[60px]" : "w-[220px]"
+      )}
+    >
       {/* Logo */}
-      <div className="px-4 py-5 border-b border-sidebar-border">
-        <Link href="/dashboard" className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center">
-            <span className="text-xs font-bold text-white">SB</span>
-          </div>
-          <span className="font-semibold text-foreground tracking-tight">Stack-Base</span>
-        </Link>
+      <div className={cn("flex items-center border-b border-sidebar-border py-4", collapsed ? "px-2 justify-center" : "px-4")}>
+        <StackBaseLogo collapsed={collapsed} />
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
         {NAV.map((item) => (
           <NavLink
             key={item.href}
             item={item}
             active={pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href))}
+            collapsed={collapsed}
           />
         ))}
 
-        <div className="my-3 border-t border-sidebar-border" />
-        <p className="px-3 pb-1 text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
-          Verwaltung
-        </p>
+        <div className="my-2.5 border-t border-sidebar-border" />
+
+        {!collapsed && (
+          <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+            Verwaltung
+          </p>
+        )}
 
         {NAV_ADMIN.map((item) => (
           <NavLink
             key={item.href}
             item={item}
             active={pathname.startsWith(item.href)}
+            collapsed={collapsed}
           />
         ))}
       </nav>
 
-      {/* Footer: User + Logout */}
-      <div className="px-3 py-3 border-t border-sidebar-border space-y-1">
-        {session?.user && (
-          <div className="flex items-center gap-2.5 px-3 py-2 rounded-md">
-            <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-              <User size={12} className="text-primary" />
+      {/* Footer */}
+      <div className="border-t border-sidebar-border px-2 py-2 space-y-1">
+        {/* User */}
+        {session?.user && !collapsed && (
+          <div className="flex items-center gap-2.5 px-3 py-2 rounded-lg">
+            <div className="w-7 h-7 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center shrink-0">
+              <span className="text-[10px] font-bold text-primary">{initials}</span>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium truncate">{session.user.name}</p>
+              <p className="text-xs font-semibold truncate text-foreground">{session.user.name}</p>
               <p className="text-[10px] text-muted-foreground truncate">{session.user.email}</p>
             </div>
           </div>
         )}
+
+        {/* Logout */}
         <button
           onClick={() => signOut({ callbackUrl: "/login" })}
-          className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all"
+          title={collapsed ? "Abmelden" : undefined}
+          className={cn(
+            "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-destructive transition-all",
+            collapsed && "justify-center px-2"
+          )}
         >
-          <LogOut size={16} className="shrink-0" />
-          <span>Abmelden</span>
+          <LogOut size={15} className="shrink-0" />
+          {!collapsed && <span>Abmelden</span>}
         </button>
-        <p className="px-3 pt-1 text-[11px] text-muted-foreground">v0.1.0-dev</p>
+
+        {/* Collapse-Toggle */}
+        <button
+          onClick={() => setCollapsed((v) => !v)}
+          className={cn(
+            "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all",
+            collapsed && "justify-center px-2"
+          )}
+        >
+          {collapsed ? <ChevronRight size={14} /> : (
+            <>
+              <ChevronLeft size={14} />
+              <span>Minimieren</span>
+            </>
+          )}
+        </button>
+
+        {!collapsed && (
+          <p className="px-3 text-[10px] text-muted-foreground">v0.1.0-dev</p>
+        )}
       </div>
     </aside>
   );
