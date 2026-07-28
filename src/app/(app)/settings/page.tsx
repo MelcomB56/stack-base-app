@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { Settings, User, Shield, Bell } from "lucide-react";
+import { PasswordChangeForm } from "@/components/settings/PasswordChangeForm";
 
 export default async function SettingsPage() {
   const session = await auth();
@@ -64,14 +65,12 @@ export default async function SettingsPage() {
       </div>
 
       {/* Sicherheit */}
-      <div style={{ background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12, padding: 18, display: "flex", flexDirection: "column", gap: 10 }}>
+      <div style={{ background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12, padding: 18, display: "flex", flexDirection: "column", gap: 16 }}>
         <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: ".15em", textTransform: "uppercase", color: "#7A8BA6", margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
           <Shield size={11} />
-          Sicherheit
+          Sicherheit — Passwort ändern
         </p>
-        <p style={{ fontSize: 13, color: "#7A8BA6", margin: 0, lineHeight: 1.5 }}>
-          Passwort-Änderung und 2FA-Konfiguration folgen in einer späteren Version.
-        </p>
+        <PasswordChangeForm />
       </div>
 
       {/* Benachrichtigungen */}
