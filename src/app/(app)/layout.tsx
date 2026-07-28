@@ -5,7 +5,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar />
-      <div className="flex flex-col flex-1 min-w-0 ml-[220px]">
+      <div className="flex flex-col flex-1 min-w-0 transition-[margin] duration-200" style={{ marginLeft: "var(--sidebar-w)" }}>
         <Topbar />
         <main className="flex-1 overflow-y-auto">
           {children}

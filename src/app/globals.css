@@ -57,6 +57,9 @@
 
 /* Stack-Base — Design System v2 (Konzept Jan Seifarth) */
 :root {
+  /* Sidebar-Breite (wird per JS aktualisiert wenn Sidebar kollapsiert) */
+  --sidebar-w: 220px;
+
   /* Backgrounds */
   --background:         oklch(0.075 0.025 255);   /* #0B1220 tiefstes Navy */
   --foreground:         oklch(0.935 0.008 240);   /* #EDF2F7 fast-weiß */

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   LayoutDashboard, Grid2X2, Heart, Tag, Layers, Cpu,
   Settings, Search, ChevronLeft, ChevronRight, LogOut,
@@ -84,6 +84,10 @@ export function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [collapsed, setCollapsed] = useState(false);
+
+  useEffect(() => {
+    document.documentElement.style.setProperty("--sidebar-w", collapsed ? "60px" : "220px");
+  }, [collapsed]);
 
   const initials = session?.user?.name
     ? session.user.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
@@ -175,7 +179,7 @@ export function Sidebar() {
         </button>
 
         {!collapsed && (
-          <p className="px-3 text-[10px] text-muted-foreground">v0.1.0-dev</p>
+          <p className="px-3 text-[10px] text-muted-foreground">v0.2.0-dev</p>
         )}
       </div>
     </aside>
