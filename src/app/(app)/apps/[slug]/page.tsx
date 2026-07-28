@@ -6,10 +6,12 @@ import { FavoriteButton } from "@/components/apps/FavoriteButton";
 import { AppStatus } from "@/generated/prisma/client";
 import {
   ExternalLink, GitBranch, Globe, Server, Database,
-  Mail, User, Calendar, Edit, Tag, Layers, Cpu, ChevronRight,
+  Mail, User, Edit, Tag, Layers, Cpu, ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ReleasesTab } from "@/components/apps/ReleasesTab";
+import { ChangelogTab } from "@/components/apps/ChangelogTab";
 
 async function getApp(slug: string) {
   return db.app.findUnique({
@@ -28,7 +30,10 @@ async function getApp(slug: string) {
       changelogEntries: {
         orderBy: [{ entryDate: "desc" }, { createdAt: "desc" }],
         take: 20,
-        include: { release: { select: { version: true } } },
+        include: {
+          release: { select: { id: true, version: true } },
+          createdBy: { select: { name: true } },
+        },
       },
     },
   });
@@ -39,22 +44,6 @@ const STATUS_ACCENT: Record<string, string> = {
   MAINTENANCE: "#F97316", ARCHIVED: "#6B7280",
 };
 
-const CHANGELOG_STYLE: Record<string, { color: string; bg: string; border: string; label: string }> = {
-  ADDED:      { color: "#34D399", bg: "rgba(16,185,129,0.1)", border: "rgba(16,185,129,0.25)", label: "Neu" },
-  CHANGED:    { color: "#60A5FA", bg: "rgba(59,130,246,0.1)", border: "rgba(59,130,246,0.25)", label: "Geändert" },
-  FIXED:      { color: "#FBBF24", bg: "rgba(245,158,11,0.1)", border: "rgba(245,158,11,0.25)", label: "Behoben" },
-  REMOVED:    { color: "#F87171", bg: "rgba(239,68,68,0.1)",  border: "rgba(239,68,68,0.25)",  label: "Entfernt" },
-  SECURITY:   { color: "#C084FC", bg: "rgba(168,85,247,0.1)", border: "rgba(168,85,247,0.25)", label: "Sicherheit" },
-  DEPRECATED: { color: "#FB923C", bg: "rgba(249,115,22,0.1)", border: "rgba(249,115,22,0.25)", label: "Veraltet" },
-};
-
-const RELEASE_TYPE_STYLE: Record<string, { color: string; bg: string; border: string }> = {
-  MAJOR:      { color: "#F87171", bg: "rgba(239,68,68,0.12)",  border: "rgba(239,68,68,0.3)"  },
-  MINOR:      { color: "#60A5FA", bg: "rgba(59,130,246,0.12)", border: "rgba(59,130,246,0.3)" },
-  PATCH:      { color: "#94A3B8", bg: "rgba(100,116,139,0.12)",border: "rgba(100,116,139,0.3)"},
-  HOTFIX:     { color: "#FB923C", bg: "rgba(249,115,22,0.12)", border: "rgba(249,115,22,0.3)" },
-  PRERELEASE: { color: "#C084FC", bg: "rgba(168,85,247,0.12)", border: "rgba(168,85,247,0.3)" },
-};
 
 function fmt(d: Date | string) {
   return new Intl.DateTimeFormat("de-DE", { dateStyle: "medium" }).format(new Date(d));
@@ -242,74 +231,12 @@ export default async function AppDetailPage({ params }: { params: Promise<{ slug
 
         {/* Releases */}
         <TabsContent value="releases">
-          <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
-            {app.releases.length === 0 ? (
-              <p style={{ fontSize: 13, color: "#7A8BA6", padding: "16px 0" }}>Noch keine Releases eingetragen.</p>
-            ) : app.releases.map((release) => {
-              const rt = RELEASE_TYPE_STYLE[release.releaseType];
-              return (
-                <div key={release.id} style={{ background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12, padding: 14 }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <span style={{ fontFamily: "monospace", fontWeight: 700, fontSize: 13, color: "#EDF2F7" }}>v{release.version}</span>
-                      {rt && (
-                        <span style={{ padding: "2px 8px", borderRadius: 5, fontSize: 10, fontWeight: 600, color: rt.color, background: rt.bg, border: `1px solid ${rt.border}` }}>
-                          {release.releaseType}
-                        </span>
-                      )}
-                      {release.isCurrent && (
-                        <span style={{ padding: "2px 8px", borderRadius: 5, fontSize: 10, fontWeight: 600, color: "#2563E8", background: "rgba(37,99,232,0.12)", border: "1px solid rgba(37,99,232,0.3)" }}>
-                          aktuell
-                        </span>
-                      )}
-                    </div>
-                    <div style={{ textAlign: "right" }}>
-                      <p style={{ fontSize: 11, color: "#7A8BA6", margin: 0, display: "flex", alignItems: "center", gap: 4, justifyContent: "flex-end" }}>
-                        <Calendar size={10} /> {fmt(release.releasedAt)}
-                      </p>
-                      <p style={{ fontSize: 10, color: "#7A8BA6", margin: "2px 0 0" }}>{release.createdBy.name}</p>
-                    </div>
-                  </div>
-                  {release.description && (
-                    <p style={{ fontSize: 12, color: "#7A8BA6", marginTop: 10, paddingTop: 10, borderTop: "1px solid rgba(30,48,80,0.6)" }}>
-                      {release.description}
-                    </p>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+          <ReleasesTab appSlug={app.slug} initial={app.releases} />
         </TabsContent>
 
         {/* Changelog */}
         <TabsContent value="changelog">
-          <div style={{ marginTop: 12 }}>
-            {app.changelogEntries.length === 0 ? (
-              <p style={{ fontSize: 13, color: "#7A8BA6", padding: "16px 0" }}>Noch keine Changelog-Einträge vorhanden.</p>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column" }}>
-                {app.changelogEntries.map((entry, i) => {
-                  const cs = CHANGELOG_STYLE[entry.type] ?? CHANGELOG_STYLE.CHANGED;
-                  return (
-                    <div key={entry.id} style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "10px 0", borderBottom: i < app.changelogEntries.length - 1 ? "1px solid rgba(30,48,80,0.4)" : "none" }}>
-                      <span style={{ flexShrink: 0, padding: "2px 8px", borderRadius: 5, fontSize: 10, fontWeight: 600, color: cs.color, background: cs.bg, border: `1px solid ${cs.border}` }}>
-                        {cs.label}
-                      </span>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontSize: 13, color: "#C8D8EC", margin: 0 }}>{entry.description}</p>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
-                          <span style={{ fontSize: 10, color: "#7A8BA6" }}>{fmt(entry.entryDate)}</span>
-                          {entry.release && (
-                            <span style={{ fontSize: 10, color: "#2563E8", fontFamily: "monospace" }}>v{entry.release.version}</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+          <ChangelogTab appSlug={app.slug} initial={app.changelogEntries} releases={app.releases} />
         </TabsContent>
       </Tabs>
     </div>
