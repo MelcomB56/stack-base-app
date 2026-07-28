@@ -3,6 +3,26 @@
 Alle wesentlichen Änderungen an Stack-Base werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/).
 
+## [0.2.1-dev] — 2026-07-28
+
+### Added
+
+**Sidebar-Collapse-Sync**
+- Sidebar schreibt `--sidebar-w` (220 → 60 px) via `useEffect` auf `:root`
+- AppLayout reagiert per `style={{ marginLeft: "var(--sidebar-w)" }}` mit `transition-[margin]`
+
+**AppCard (Design v2)**
+- Farbiger Status-Akzentstreifen oben (grün/blau/gelb/orange/grau je Status)
+- Logo-Box mit Status-Farbe als Tint-Hintergrund
+- Hover: dezenter Primary-Glow statt nur Border-Tint
+- Kategorie-Chips durch Border-Trennlinie abgesetzt
+
+**App-Detail-Seite (Design v2)**
+- Breadcrumb-Navigation `Apps > App-Name`
+- Hero-Karte mit Status-Streifen, größerem Logo, Inline-Quick-Links (Live, Repository, Staging)
+- Meta-Chips als Pill-Reihe (Docker-Image, DB-Typ, Sprache, Kontakt, E-Mail)
+- Releases + Changelog schlanker ohne Card-Wrapper
+
 ## [0.2.0-dev] — 2026-07-28
 
 ### Added
