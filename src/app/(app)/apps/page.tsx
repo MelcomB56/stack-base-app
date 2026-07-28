@@ -139,7 +139,7 @@ export default async function AppsPage({ searchParams }: { searchParams: Promise
           </Link>
         </div>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 12 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14 }}>
           {apps.map((app) => (
             <AppCard
               key={app.id}
