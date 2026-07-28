@@ -50,7 +50,7 @@ function StackBaseLogo({ collapsed }: { collapsed: boolean }) {
       {!collapsed && (
         <div className="overflow-hidden">
           <p className="text-sm font-bold tracking-wide text-foreground whitespace-nowrap">STACK·BASE</p>
-          <p className="text-[9px] text-muted-foreground tracking-widest uppercase whitespace-nowrap">One Platform. All Ops.</p>
+          <p className="text-[9px] text-muted-foreground tracking-wide uppercase whitespace-nowrap">One Platform. All Ops.</p>
         </div>
       )}
     </Link>
