@@ -3,6 +3,24 @@
 Alle wesentlichen Änderungen an Stack-Base werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/).
 
+## [0.3.0-dev] — 2026-07-28
+
+### Added
+
+**Login-Seite (Design v2)**
+- Hexagon-Logo + STACK·BASE + "One Platform. All Ops." zentriert
+- Ambient-Glow-Hintergrundeffekt (radialer Primary-Farbgradient)
+- Glassmorphism-Card (bg-card/80 + backdrop-blur)
+- Icon-Inputs (Mail, Lock) mit eigenem Styling
+
+**Neue Seiten**
+- `/favorites` — App-Grid der gemerkten Favoriten (Session → UserFavorite)
+- `/search` — Volltext-Suche über Name, Beschreibung, Sprache, Docker-Image
+- `/categories` — Kachel-Grid mit Buchstaben-Avatar, App-Count, Link zu gefilterten Apps
+- `/stacks` — 2-Spalten-Karten mit Tech-Chips (max. 5) + App-Count
+- `/technologies` — Nach Kategorie gruppiert (Sprache/Frontend/Backend/DB/Infra/Tool/Sonstige)
+- `/settings` — Profil-Karte (Name, E-Mail, Rolle, Daten), Sicherheit + Notifications als Platzhalter
+
 ## [0.2.1-dev] — 2026-07-28
 
 ### Added

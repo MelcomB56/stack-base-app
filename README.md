@@ -2,7 +2,7 @@
 
 Zentrale WebApp-Management-Plattform für eigene Anwendungen — vergleichbar mit dem Azure Portal, aber für selbst entwickelte Apps.
 
-**Version:** v0.2.1-dev
+**Version:** v0.3.0-dev
 
 ## Features (v0.1.0)
 
@@ -81,8 +81,7 @@ NEXT_PUBLIC_AUTHENTIK_ENABLED=true
 
 ## Offen (nächste Schritte)
 
-- Sidebar-Collapse-Sync mit AppLayout (CSS-Variable oder Context)
-- App-Detail-Seite: Design v2 (Breadcrumb, Verfügbarkeitschart)
-- AppCard: Design v2 anpassen
-- Restliche Seiten: Favoriten, Suche, Kategorien, Stacks, Technologien, Einstellungen
+- Favoriten-Toggle auf App-Detail-Seite (Herz-Button → API-Call)
 - Authentik OIDC: OAuth2-App in Authentik anlegen, Redirect URI konfigurieren
+- Kategorien/Stacks/Technologien: Verwaltungs-CRUD (anlegen, bearbeiten, löschen)
+- Passwort-Änderung + 2FA in Einstellungen
