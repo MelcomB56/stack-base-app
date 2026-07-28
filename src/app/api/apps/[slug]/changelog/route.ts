@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { apiError } from "@/lib/server-utils";
 import { createChangelogEntrySchema } from "@/lib/validations/changelog";
+import { auth } from "@/auth";
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -31,6 +32,10 @@ export async function GET(req: NextRequest, { params }: Params) {
 }
 
 export async function POST(req: NextRequest, { params }: Params) {
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) return apiError("Nicht authentifiziert", 401);
+
   const { slug } = await params;
   const app = await db.app.findUnique({ where: { slug, deletedAt: null } });
   if (!app) return apiError("App nicht gefunden", 404);
@@ -40,9 +45,6 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   const parsed = createChangelogEntrySchema.safeParse(body);
   if (!parsed.success) return apiError(parsed.error.issues[0].message);
-
-  const firstUser = await db.user.findFirst();
-  if (!firstUser) return apiError("Kein User gefunden", 500);
 
   if (parsed.data.releaseId) {
     const release = await db.release.findFirst({
@@ -54,7 +56,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   const entry = await db.changelogEntry.create({
     data: {
       appId: app.id,
-      createdById: firstUser.id,
+      createdById: userId,
       type: parsed.data.type,
       description: parsed.data.description,
       ...(parsed.data.entryDate ? { entryDate: new Date(parsed.data.entryDate) } : {}),

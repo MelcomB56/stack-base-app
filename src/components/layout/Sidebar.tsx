@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 import {
   LayoutDashboard,
   Grid2X2,
@@ -12,6 +13,8 @@ import {
   Settings,
   Search,
   ChevronRight,
+  LogOut,
+  User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -52,6 +55,7 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { data: session } = useSession();
 
   return (
     <aside className="flex flex-col w-60 h-screen bg-sidebar border-r border-sidebar-border shrink-0 fixed top-0 left-0 z-40">
@@ -89,9 +93,27 @@ export function Sidebar() {
         ))}
       </nav>
 
-      {/* Footer */}
-      <div className="px-4 py-3 border-t border-sidebar-border">
-        <p className="text-[11px] text-muted-foreground">v0.1.0-dev</p>
+      {/* Footer: User + Logout */}
+      <div className="px-3 py-3 border-t border-sidebar-border space-y-1">
+        {session?.user && (
+          <div className="flex items-center gap-2.5 px-3 py-2 rounded-md">
+            <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+              <User size={12} className="text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium truncate">{session.user.name}</p>
+              <p className="text-[10px] text-muted-foreground truncate">{session.user.email}</p>
+            </div>
+          </div>
+        )}
+        <button
+          onClick={() => signOut({ callbackUrl: "/login" })}
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all"
+        >
+          <LogOut size={16} className="shrink-0" />
+          <span>Abmelden</span>
+        </button>
+        <p className="px-3 pt-1 text-[11px] text-muted-foreground">v0.1.0-dev</p>
       </div>
     </aside>
   );

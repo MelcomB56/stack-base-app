@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { apiError, uniqueAppSlug } from "@/lib/server-utils";
 import { updateAppSchema } from "@/lib/validations/app";
+import { auth } from "@/auth";
 
 const APP_INCLUDE = {
   categories: { include: { category: true } },
@@ -15,7 +16,6 @@ async function findApp(slug: string) {
   return db.app.findFirst({ where: { slug, deletedAt: null } });
 }
 
-// GET /api/apps/[slug]
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
@@ -29,11 +29,14 @@ export async function GET(
   return Response.json(app);
 }
 
-// PATCH /api/apps/[slug]
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) return apiError("Nicht authentifiziert", 401);
+
   const { slug } = await params;
   const app = await findApp(slug);
   if (!app) return apiError("App nicht gefunden", 404);
@@ -44,8 +47,7 @@ export async function PATCH(
   const parsed = updateAppSchema.safeParse(body);
   if (!parsed.success) return apiError(parsed.error.issues[0].message);
 
-  const { categoryIds, tagIds, stackIds, technologyIds, name, ...data } =
-    parsed.data;
+  const { categoryIds, tagIds, stackIds, technologyIds, name, ...data } = parsed.data;
 
   let newSlug = app.slug;
   if (name && name !== app.name) {
@@ -58,77 +60,59 @@ export async function PATCH(
       ...data,
       ...(name && { name, slug: newSlug }),
       ...(categoryIds !== undefined && {
-        categories: {
-          deleteMany: {},
-          create: categoryIds.map((id) => ({ categoryId: id })),
-        },
+        categories: { deleteMany: {}, create: categoryIds.map((id) => ({ categoryId: id })) },
       }),
       ...(tagIds !== undefined && {
-        tags: {
-          deleteMany: {},
-          create: tagIds.map((id) => ({ tagId: id })),
-        },
+        tags: { deleteMany: {}, create: tagIds.map((id) => ({ tagId: id })) },
       }),
       ...(stackIds !== undefined && {
-        stacks: {
-          deleteMany: {},
-          create: stackIds.map((id) => ({ stackId: id })),
-        },
+        stacks: { deleteMany: {}, create: stackIds.map((id) => ({ stackId: id })) },
       }),
       ...(technologyIds !== undefined && {
-        technologies: {
-          deleteMany: {},
-          create: technologyIds.map((id) => ({ technologyId: id })),
-        },
+        technologies: { deleteMany: {}, create: technologyIds.map((id) => ({ technologyId: id })) },
       }),
     },
     include: APP_INCLUDE,
   });
 
-  const firstUser = await db.user.findFirst();
-  if (firstUser) {
-    await db.activityLog.create({
-      data: {
-        appId: app.id,
-        userId: firstUser.id,
-        action: "app.updated",
-        entityType: "app",
-        entityId: app.id,
-        metadata: { changes: Object.keys(parsed.data) },
-      },
-    });
-  }
+  await db.activityLog.create({
+    data: {
+      appId: app.id,
+      userId,
+      action: "app.updated",
+      entityType: "app",
+      entityId: app.id,
+      metadata: { changes: Object.keys(parsed.data) },
+    },
+  });
 
   return Response.json(updated);
 }
 
-// DELETE /api/apps/[slug] — Soft Delete
 export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) return apiError("Nicht authentifiziert", 401);
+
   const { slug } = await params;
   const app = await findApp(slug);
   if (!app) return apiError("App nicht gefunden", 404);
 
-  await db.app.update({
-    where: { id: app.id },
-    data: { deletedAt: new Date() },
-  });
+  await db.app.update({ where: { id: app.id }, data: { deletedAt: new Date() } });
 
-  const firstUser = await db.user.findFirst();
-  if (firstUser) {
-    await db.activityLog.create({
-      data: {
-        appId: app.id,
-        userId: firstUser.id,
-        action: "app.deleted",
-        entityType: "app",
-        entityId: app.id,
-        metadata: { name: app.name },
-      },
-    });
-  }
+  await db.activityLog.create({
+    data: {
+      appId: app.id,
+      userId,
+      action: "app.deleted",
+      entityType: "app",
+      entityId: app.id,
+      metadata: { name: app.name },
+    },
+  });
 
   return new Response(null, { status: 204 });
 }

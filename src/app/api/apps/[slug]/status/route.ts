@@ -2,12 +2,16 @@ import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { apiError } from "@/lib/server-utils";
 import { changeStatusSchema } from "@/lib/validations/app";
+import { auth } from "@/auth";
 
-// PATCH /api/apps/[slug]/status
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) return apiError("Nicht authentifiziert", 401);
+
   const { slug } = await params;
   const app = await db.app.findFirst({ where: { slug, deletedAt: null } });
   if (!app) return apiError("App nicht gefunden", 404);
@@ -24,8 +28,6 @@ export async function PATCH(
     return apiError("Wartungshinweis ist Pflicht bei Status MAINTENANCE");
   }
 
-  const firstUser = await db.user.findFirst();
-
   const [updated] = await db.$transaction([
     db.app.update({
       where: { id: app.id },
@@ -33,9 +35,7 @@ export async function PATCH(
         status,
         maintenanceNote: status === "MAINTENANCE" ? maintenanceNote : null,
         maintenanceEnd:
-          status === "MAINTENANCE" && maintenanceEnd
-            ? new Date(maintenanceEnd)
-            : null,
+          status === "MAINTENANCE" && maintenanceEnd ? new Date(maintenanceEnd) : null,
       },
     }),
     db.appStatusHistory.create({
@@ -43,24 +43,20 @@ export async function PATCH(
         appId: app.id,
         oldStatus: app.status,
         newStatus: status,
-        changedById: firstUser!.id,
+        changedById: userId,
         note: maintenanceNote,
       },
     }),
-    ...(firstUser
-      ? [
-          db.activityLog.create({
-            data: {
-              appId: app.id,
-              userId: firstUser.id,
-              action: "status.changed",
-              entityType: "app",
-              entityId: app.id,
-              metadata: { oldStatus: app.status, newStatus: status },
-            },
-          }),
-        ]
-      : []),
+    db.activityLog.create({
+      data: {
+        appId: app.id,
+        userId,
+        action: "status.changed",
+        entityType: "app",
+        entityId: app.id,
+        metadata: { oldStatus: app.status, newStatus: status },
+      },
+    }),
   ]);
 
   return Response.json(updated);

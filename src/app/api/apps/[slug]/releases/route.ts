@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { apiError } from "@/lib/server-utils";
 import { createReleaseSchema } from "@/lib/validations/release";
+import { auth } from "@/auth";
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -23,6 +24,10 @@ export async function GET(_req: NextRequest, { params }: Params) {
 }
 
 export async function POST(req: NextRequest, { params }: Params) {
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) return apiError("Nicht authentifiziert", 401);
+
   const { slug } = await params;
   const app = await db.app.findUnique({ where: { slug, deletedAt: null } });
   if (!app) return apiError("App nicht gefunden", 404);
@@ -33,9 +38,6 @@ export async function POST(req: NextRequest, { params }: Params) {
   const parsed = createReleaseSchema.safeParse(body);
   if (!parsed.success) return apiError(parsed.error.issues[0].message);
 
-  const firstUser = await db.user.findFirst();
-  if (!firstUser) return apiError("Kein User gefunden", 500);
-
   const exists = await db.release.findUnique({
     where: { appId_version: { appId: app.id, version: parsed.data.version } },
   });
@@ -45,10 +47,7 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   const release = await db.$transaction(async (tx) => {
     if (isCurrent) {
-      await tx.release.updateMany({
-        where: { appId: app.id },
-        data: { isCurrent: false },
-      });
+      await tx.release.updateMany({ where: { appId: app.id }, data: { isCurrent: false } });
     }
     return tx.release.create({
       data: {
@@ -56,7 +55,7 @@ export async function POST(req: NextRequest, { params }: Params) {
         releasedAt: new Date(rest.releasedAt),
         isCurrent: isCurrent ?? false,
         appId: app.id,
-        createdById: firstUser.id,
+        createdById: userId,
       },
     });
   });

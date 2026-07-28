@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { apiError, uniqueAppSlug } from "@/lib/server-utils";
 import { createAppSchema } from "@/lib/validations/app";
+import { auth } from "@/auth";
 
 const APP_INCLUDE = {
   categories: { include: { category: true } },
@@ -11,7 +12,6 @@ const APP_INCLUDE = {
   createdBy: { select: { id: true, name: true, avatarUrl: true } },
 } as const;
 
-// GET /api/apps — Liste aller Apps (paginiert, gefiltert)
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
   const page = Math.max(1, parseInt(searchParams.get("page") ?? "1"));
@@ -48,42 +48,29 @@ export async function GET(req: NextRequest) {
   return Response.json({ apps, total, page, limit });
 }
 
-// POST /api/apps — App anlegen
 export async function POST(req: NextRequest) {
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) return apiError("Nicht authentifiziert", 401);
+
   const body = await req.json().catch(() => null);
   if (!body) return apiError("Ungültiger Request-Body");
 
   const parsed = createAppSchema.safeParse(body);
-  if (!parsed.success) {
-    return apiError(parsed.error.issues[0].message);
-  }
+  if (!parsed.success) return apiError(parsed.error.issues[0].message);
 
-  const { categoryIds, tagIds, stackIds, technologyIds, ...data } =
-    parsed.data;
-
-  // Temp: createdById bis Auth implementiert ist
-  const firstUser = await db.user.findFirst();
-  if (!firstUser) return apiError("Kein Admin-User gefunden", 500);
-
+  const { categoryIds, tagIds, stackIds, technologyIds, ...data } = parsed.data;
   const slug = await uniqueAppSlug(data.name);
 
   const app = await db.app.create({
     data: {
       ...data,
       slug,
-      createdById: firstUser.id,
-      categories: {
-        create: categoryIds?.map((id) => ({ categoryId: id })) ?? [],
-      },
-      tags: {
-        create: tagIds?.map((id) => ({ tagId: id })) ?? [],
-      },
-      stacks: {
-        create: stackIds?.map((id) => ({ stackId: id })) ?? [],
-      },
-      technologies: {
-        create: technologyIds?.map((id) => ({ technologyId: id })) ?? [],
-      },
+      createdById: userId,
+      categories: { create: categoryIds?.map((id) => ({ categoryId: id })) ?? [] },
+      tags: { create: tagIds?.map((id) => ({ tagId: id })) ?? [] },
+      stacks: { create: stackIds?.map((id) => ({ stackId: id })) ?? [] },
+      technologies: { create: technologyIds?.map((id) => ({ technologyId: id })) ?? [] },
     },
     include: APP_INCLUDE,
   });
@@ -91,7 +78,7 @@ export async function POST(req: NextRequest) {
   await db.activityLog.create({
     data: {
       appId: app.id,
-      userId: firstUser.id,
+      userId,
       action: "app.created",
       entityType: "app",
       entityId: app.id,
