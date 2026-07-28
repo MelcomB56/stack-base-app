@@ -2,15 +2,9 @@ import { db } from "@/lib/db";
 import { AppCard } from "@/components/apps/AppCard";
 import { Search } from "lucide-react";
 
-interface SearchParams {
-  q?: string;
-}
+interface SearchParams { q?: string }
 
-export default async function SearchPage({
-  searchParams,
-}: {
-  searchParams: Promise<SearchParams>;
-}) {
+export default async function SearchPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const { q } = await searchParams;
   const query = q?.trim();
 
@@ -26,48 +20,39 @@ export default async function SearchPage({
             { dockerImage: { contains: query, mode: "insensitive" } },
           ],
         },
-        include: {
-          categories: { include: { category: true } },
-        },
+        include: { categories: { include: { category: true } } },
         orderBy: { name: "asc" },
         take: 50,
       })
     : [];
 
   return (
-    <div className="p-6 space-y-5 max-w-7xl">
+    <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 20 }}>
       <div>
-        <h1 className="text-xl font-bold tracking-tight flex items-center gap-2">
-          <Search size={18} className="text-primary" />
+        <h1 style={{ fontSize: 20, fontWeight: 700, letterSpacing: "-0.02em", color: "#EDF2F7", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+          <Search size={18} style={{ color: "#2563E8" }} />
           Suche
         </h1>
-        {query ? (
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {results.length} Ergebnis{results.length !== 1 ? "se" : ""} für{" "}
-            <span className="text-foreground font-medium">&bdquo;{query}&ldquo;</span>
-          </p>
-        ) : (
-          <p className="text-sm text-muted-foreground mt-0.5">Gib oben einen Suchbegriff ein.</p>
-        )}
+        <p style={{ fontSize: 13, color: "#7A8BA6", marginTop: 4 }}>
+          {query
+            ? <>{results.length} Ergebnis{results.length !== 1 ? "se" : ""} für <span style={{ color: "#EDF2F7", fontWeight: 500 }}>„{query}"</span></>
+            : "Gib oben einen Suchbegriff ein."}
+        </p>
       </div>
 
       {query && results.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-24 text-center">
-          <Search size={32} className="text-muted-foreground/30 mb-3" />
-          <p className="text-sm text-muted-foreground">Keine Apps gefunden.</p>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "80px 0", textAlign: "center" }}>
+          <Search size={32} style={{ color: "rgba(37,99,232,0.2)", marginBottom: 12 }} />
+          <p style={{ fontSize: 13, color: "#7A8BA6" }}>Keine Apps gefunden.</p>
         </div>
       )}
 
       {results.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 12 }}>
           {results.map((app) => (
             <AppCard
               key={app.id}
-              app={{
-                ...app,
-                logoUrl: app.logoUrl ?? null,
-                urlProd: app.urlProd ?? null,
-              }}
+              app={{ ...app, logoUrl: app.logoUrl ?? null, urlProd: app.urlProd ?? null }}
             />
           ))}
         </div>

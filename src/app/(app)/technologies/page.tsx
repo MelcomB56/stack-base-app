@@ -1,23 +1,21 @@
 import { db } from "@/lib/db";
-import { Cpu, Grid2X2, Globe } from "lucide-react";
+import { Cpu, Globe } from "lucide-react";
 
 const CATEGORY_LABEL: Record<string, string> = {
-  FRONTEND: "Frontend",
-  BACKEND: "Backend",
-  DATABASE: "Datenbank",
+  FRONTEND:       "Frontend",
+  BACKEND:        "Backend",
+  DATABASE:       "Datenbank",
   INFRASTRUCTURE: "Infrastruktur",
-  TOOL: "Tool",
-  LANGUAGE: "Sprache",
-  OTHER: "Sonstige",
+  TOOL:           "Tool",
+  LANGUAGE:       "Sprache",
+  OTHER:          "Sonstige",
 };
 
 const CATEGORY_ORDER = ["LANGUAGE", "FRONTEND", "BACKEND", "DATABASE", "INFRASTRUCTURE", "TOOL", "OTHER"];
 
 export default async function TechnologiesPage() {
   const technologies = await db.technology.findMany({
-    include: {
-      _count: { select: { apps: true } },
-    },
+    include: { _count: { select: { apps: true } } },
     orderBy: [{ category: "asc" }, { name: "asc" }],
   });
 
@@ -28,41 +26,44 @@ export default async function TechnologiesPage() {
   }, {});
 
   return (
-    <div className="p-6 space-y-6 max-w-5xl">
+    <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 24 }}>
       <div>
-        <h1 className="text-xl font-bold tracking-tight flex items-center gap-2">
-          <Cpu size={18} className="text-primary" />
+        <h1 style={{ fontSize: 20, fontWeight: 700, letterSpacing: "-0.02em", color: "#EDF2F7", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+          <Cpu size={18} style={{ color: "#2563E8" }} />
           Technologien
         </h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
+        <p style={{ fontSize: 13, color: "#7A8BA6", marginTop: 4 }}>
           {technologies.length} Technologie{technologies.length !== 1 ? "n" : ""} im Einsatz
         </p>
       </div>
 
       {technologies.length === 0 ? (
-        <p className="text-sm text-muted-foreground py-8 text-center">Noch keine Technologien angelegt.</p>
+        <div style={{ background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12, padding: 40, textAlign: "center" }}>
+          <p style={{ fontSize: 13, color: "#7A8BA6" }}>Noch keine Technologien angelegt.</p>
+        </div>
       ) : (
         Object.entries(grouped).map(([cat, items]) => (
-          <section key={cat}>
-            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">
+          <section key={cat} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: ".15em", textTransform: "uppercase", color: "#7A8BA6", margin: 0 }}>
               {CATEGORY_LABEL[cat] ?? cat}
             </p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 8 }}>
               {items.map((tech) => (
                 <div
                   key={tech.id}
-                  className="flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2.5 hover:border-border/80 transition-colors"
+                  style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "#111C2D", border: "1px solid #1E3050", borderRadius: 8 }}
                 >
                   {tech.logoUrl ? (
-                    <img src={tech.logoUrl} alt={tech.name} className="w-5 h-5 object-contain shrink-0" />
+                    <img src={tech.logoUrl} alt={tech.name} style={{ width: 18, height: 18, objectFit: "contain", flexShrink: 0 }} />
                   ) : (
-                    <Globe size={14} className="text-muted-foreground shrink-0" />
+                    <Globe size={14} style={{ color: "#7A8BA6", flexShrink: 0 }} />
                   )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-foreground truncate">{tech.name}</p>
-                    <p className="text-[10px] text-muted-foreground flex items-center gap-0.5 mt-0.5">
-                      <Grid2X2 size={9} />
-                      <span className="tabular-nums">{tech._count.apps}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 12, fontWeight: 500, color: "#EDF2F7", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {tech.name}
+                    </p>
+                    <p style={{ fontSize: 10, color: "#7A8BA6", margin: "1px 0 0", fontVariantNumeric: "tabular-nums" }}>
+                      {tech._count.apps} Apps
                     </p>
                   </div>
                 </div>

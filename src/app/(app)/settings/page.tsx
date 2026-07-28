@@ -23,69 +23,67 @@ export default async function SettingsPage() {
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-2xl">
+    <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 20, maxWidth: 640 }}>
       <div>
-        <h1 className="text-xl font-bold tracking-tight flex items-center gap-2">
-          <Settings size={18} className="text-primary" />
+        <h1 style={{ fontSize: 20, fontWeight: 700, letterSpacing: "-0.02em", color: "#EDF2F7", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+          <Settings size={18} style={{ color: "#2563E8" }} />
           Einstellungen
         </h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Profil und Systemkonfiguration</p>
+        <p style={{ fontSize: 13, color: "#7A8BA6", marginTop: 4 }}>Profil und Systemkonfiguration</p>
       </div>
 
       {/* Profil */}
-      <section className="rounded-xl border border-border bg-card p-5 space-y-4">
-        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-          <User size={12} />
+      <div style={{ background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12, padding: 18, display: "flex", flexDirection: "column", gap: 16 }}>
+        <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: ".15em", textTransform: "uppercase", color: "#7A8BA6", margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
+          <User size={11} />
           Profil
         </p>
 
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-full bg-primary/20 border-2 border-primary/30 flex items-center justify-center shrink-0">
-            <span className="text-lg font-bold text-primary">{initials}</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <div style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(37,99,232,0.15)", border: "2px solid rgba(37,99,232,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <span style={{ fontSize: 16, fontWeight: 700, color: "#2563E8" }}>{initials}</span>
           </div>
           <div>
-            <p className="font-semibold">{user?.name ?? "—"}</p>
-            <p className="text-sm text-muted-foreground">{user?.email ?? "—"}</p>
+            <p style={{ fontSize: 14, fontWeight: 600, color: "#EDF2F7", margin: 0 }}>{user?.name ?? "—"}</p>
+            <p style={{ fontSize: 12, color: "#7A8BA6", margin: "2px 0 0" }}>{user?.email ?? "—"}</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 text-xs pt-2 border-t border-border/50">
-          <div>
-            <p className="text-muted-foreground mb-1">Rolle</p>
-            <p className="font-semibold">{user?.role ?? "—"}</p>
-          </div>
-          <div>
-            <p className="text-muted-foreground mb-1">Mitglied seit</p>
-            <p className="font-semibold">{fmt(user?.createdAt)}</p>
-          </div>
-          <div>
-            <p className="text-muted-foreground mb-1">Letzter Login</p>
-            <p className="font-semibold">{fmt(user?.lastLoginAt)}</p>
-          </div>
+        <div style={{ borderTop: "1px solid #1E3050", paddingTop: 14, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+          {[
+            { label: "Rolle", value: user?.role ?? "—" },
+            { label: "Mitglied seit", value: fmt(user?.createdAt) },
+            { label: "Letzter Login", value: fmt(user?.lastLoginAt) },
+          ].map(({ label, value }) => (
+            <div key={label}>
+              <p style={{ fontSize: 10, color: "#7A8BA6", margin: "0 0 3px", textTransform: "uppercase", letterSpacing: ".08em" }}>{label}</p>
+              <p style={{ fontSize: 12, fontWeight: 600, color: "#EDF2F7", margin: 0 }}>{value}</p>
+            </div>
+          ))}
         </div>
-      </section>
+      </div>
 
       {/* Sicherheit */}
-      <section className="rounded-xl border border-border bg-card p-5 space-y-3">
-        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-          <Shield size={12} />
+      <div style={{ background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12, padding: 18, display: "flex", flexDirection: "column", gap: 10 }}>
+        <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: ".15em", textTransform: "uppercase", color: "#7A8BA6", margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
+          <Shield size={11} />
           Sicherheit
         </p>
-        <p className="text-sm text-muted-foreground">
+        <p style={{ fontSize: 13, color: "#7A8BA6", margin: 0, lineHeight: 1.5 }}>
           Passwort-Änderung und 2FA-Konfiguration folgen in einer späteren Version.
         </p>
-      </section>
+      </div>
 
       {/* Benachrichtigungen */}
-      <section className="rounded-xl border border-border bg-card p-5 space-y-3">
-        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-          <Bell size={12} />
+      <div style={{ background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12, padding: 18, display: "flex", flexDirection: "column", gap: 10 }}>
+        <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: ".15em", textTransform: "uppercase", color: "#7A8BA6", margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
+          <Bell size={11} />
           Benachrichtigungen
         </p>
-        <p className="text-sm text-muted-foreground">
+        <p style={{ fontSize: 13, color: "#7A8BA6", margin: 0, lineHeight: 1.5 }}>
           Webhook- und E-Mail-Benachrichtigungen folgen in einer späteren Version.
         </p>
-      </section>
+      </div>
     </div>
   );
 }

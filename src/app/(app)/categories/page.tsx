@@ -1,57 +1,64 @@
 import { db } from "@/lib/db";
-import { Tag, Grid2X2 } from "lucide-react";
+import { Tag } from "lucide-react";
 import Link from "next/link";
 
 export default async function CategoriesPage() {
   const categories = await db.category.findMany({
-    include: {
-      _count: { select: { apps: true } },
-    },
+    include: { _count: { select: { apps: true } } },
     orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
   });
 
   return (
-    <div className="p-6 space-y-5 max-w-5xl">
+    <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 20 }}>
       <div>
-        <h1 className="text-xl font-bold tracking-tight flex items-center gap-2">
-          <Tag size={18} className="text-primary" />
+        <h1 style={{ fontSize: 20, fontWeight: 700, letterSpacing: "-0.02em", color: "#EDF2F7", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+          <Tag size={18} style={{ color: "#2563E8" }} />
           Kategorien
         </h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          {categories.length} Kategorien verfügbar
+        <p style={{ fontSize: 13, color: "#7A8BA6", marginTop: 4 }}>
+          {categories.length} Kategorie{categories.length !== 1 ? "n" : ""} verfügbar
         </p>
       </div>
 
       {categories.length === 0 ? (
-        <p className="text-sm text-muted-foreground py-8 text-center">Noch keine Kategorien angelegt.</p>
+        <div style={{ background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12, padding: 40, textAlign: "center" }}>
+          <p style={{ fontSize: 13, color: "#7A8BA6" }}>Noch keine Kategorien angelegt.</p>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 12 }}>
           {categories.map((cat) => (
             <Link
               key={cat.id}
               href={`/apps?categoryId=${cat.id}`}
-              className="group rounded-xl border border-border bg-card hover:border-primary/30 hover:shadow-[0_0_0_1px_rgba(37,99,232,0.1),0_4px_16px_rgba(0,0,0,0.2)] transition-all duration-200 p-4 flex items-center gap-4"
+              style={{ textDecoration: "none" }}
             >
-              {/* Farbiger Kreis + Icon */}
               <div
-                className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 text-lg"
-                style={{ backgroundColor: `${cat.color}22`, color: cat.color }}
+                style={{ background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12, padding: 16, display: "flex", alignItems: "center", gap: 14, transition: "border-color 150ms, box-shadow 150ms", cursor: "pointer" }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.borderColor = "rgba(37,99,232,0.3)";
+                  (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 20px rgba(0,0,0,0.25)";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.borderColor = "#1E3050";
+                  (e.currentTarget as HTMLElement).style.boxShadow = "none";
+                }}
               >
-                {cat.name.charAt(0).toUpperCase()}
-              </div>
-
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm text-foreground truncate group-hover:text-primary transition-colors">
-                  {cat.name}
+                <div style={{ width: 40, height: 40, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 18, fontWeight: 700, background: `${cat.color}22`, color: cat.color }}>
+                  {cat.name.charAt(0).toUpperCase()}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: "#EDF2F7", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {cat.name}
+                  </p>
+                  {cat.description && (
+                    <p style={{ fontSize: 11, color: "#7A8BA6", margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {cat.description}
+                    </p>
+                  )}
+                </div>
+                <p style={{ fontSize: 12, color: "#7A8BA6", flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>
+                  {cat._count.apps}
                 </p>
-                {cat.description && (
-                  <p className="text-xs text-muted-foreground truncate mt-0.5">{cat.description}</p>
-                )}
-              </div>
-
-              <div className="flex items-center gap-1 shrink-0 text-xs text-muted-foreground">
-                <Grid2X2 size={11} />
-                <span className="tabular-nums font-medium">{cat._count.apps}</span>
               </div>
             </Link>
           ))}

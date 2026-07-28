@@ -117,3 +117,48 @@
   body { @apply bg-background text-foreground; }
   html { @apply font-sans; }
 }
+
+/* DS-Formulareingaben (für Server Components ohne onFocus/onBlur) */
+.ds-input, .ds-select {
+  padding: 7px 12px;
+  background: #111C2D;
+  border: 1px solid #1E3050;
+  border-radius: 8px;
+  color: #EDF2F7;
+  font-size: 13px;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 150ms;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.ds-input::placeholder { color: #4A5A72; }
+.ds-input:focus, .ds-select:focus { border-color: #2563E8; }
+
+/* shadcn Tabs — Design-System-Override */
+[data-slot="tabs-list"] {
+  background: #111C2D !important;
+  border: 1px solid #1E3050 !important;
+  border-radius: 8px !important;
+  padding: 3px !important;
+  height: auto !important;
+  width: auto !important;
+}
+[data-slot="tabs-trigger"] {
+  color: #7A8BA6 !important;
+  border-radius: 6px !important;
+  padding: 5px 12px !important;
+  font-size: 12px !important;
+  height: auto !important;
+  font-weight: 500 !important;
+}
+[data-slot="tabs-trigger"][data-active] {
+  background: #1A2640 !important;
+  color: #EDF2F7 !important;
+  border-color: #1E3050 !important;
+  box-shadow: none !important;
+}
+[data-slot="tabs-trigger"]:hover:not([data-active]) {
+  color: #EDF2F7 !important;
+  background: rgba(26,38,64,0.5) !important;
+}

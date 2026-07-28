@@ -2,10 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { ArrowLeft, Loader2, Save } from "lucide-react";
 import Link from "next/link";
 
@@ -16,6 +12,41 @@ const STATUS_OPTIONS = [
   { value: "MAINTENANCE", label: "Wartung" },
   { value: "ARCHIVED", label: "Archiviert" },
 ];
+
+const PANEL: React.CSSProperties = { background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12, padding: 18, display: "flex", flexDirection: "column", gap: 14 };
+const SECTION_LABEL: React.CSSProperties = { fontSize: 9, fontWeight: 600, letterSpacing: ".15em", textTransform: "uppercase", color: "#7A8BA6", margin: 0 };
+const FIELD_LABEL: React.CSSProperties = { fontSize: 11, fontWeight: 600, color: "#7A8BA6", textTransform: "uppercase", letterSpacing: ".08em", display: "block", marginBottom: 5 };
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label style={FIELD_LABEL}>{label}</label>
+      {children}
+    </div>
+  );
+}
+
+function DSInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <input
+      {...props}
+      style={{ width: "100%", padding: "7px 12px", background: "#1A2640", border: "1px solid #1E3050", borderRadius: 8, color: "#EDF2F7", fontSize: 13, outline: "none", fontFamily: "inherit", ...props.style }}
+      onFocus={(e) => { e.currentTarget.style.borderColor = "#2563E8"; props.onFocus?.(e); }}
+      onBlur={(e) => { e.currentTarget.style.borderColor = "#1E3050"; props.onBlur?.(e); }}
+    />
+  );
+}
+
+function DSSelect(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
+  return (
+    <select
+      {...props}
+      style={{ width: "100%", padding: "7px 12px", background: "#1A2640", border: "1px solid #1E3050", borderRadius: 8, color: "#EDF2F7", fontSize: 13, outline: "none", fontFamily: "inherit", appearance: "none", cursor: "pointer", ...props.style }}
+      onFocus={(e) => { e.currentTarget.style.borderColor = "#2563E8"; props.onFocus?.(e); }}
+      onBlur={(e) => { e.currentTarget.style.borderColor = "#1E3050"; props.onBlur?.(e); }}
+    />
+  );
+}
 
 export default function NewAppPage() {
   const router = useRouter();
@@ -34,16 +65,9 @@ export default function NewAppPage() {
     }
 
     try {
-      const res = await fetch("/api/apps", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
+      const res = await fetch("/api/apps", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const data = await res.json();
-      if (!res.ok) {
-        setError(data.error ?? "Fehler beim Speichern");
-        return;
-      }
+      if (!res.ok) { setError(data.error ?? "Fehler beim Speichern"); return; }
       router.push(`/apps/${data.slug}`);
       router.refresh();
     } catch {
@@ -54,178 +78,97 @@ export default function NewAppPage() {
   }
 
   return (
-    <div className="p-6 max-w-2xl">
-      <div className="flex items-center gap-3 mb-6">
-        <Link href="/apps">
-          <Button size="sm" variant="ghost" className="gap-1.5">
-            <ArrowLeft size={14} />
-            Zurück
-          </Button>
+    <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 20, maxWidth: 680 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <Link href="/apps" style={{ textDecoration: "none" }}>
+          <button style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 12px", background: "transparent", color: "#7A8BA6", borderRadius: 8, fontSize: 12, border: "1px solid transparent", cursor: "pointer" }}>
+            <ArrowLeft size={13} /> Zurück
+          </button>
         </Link>
         <div>
-          <h1 className="text-xl font-bold">Neue App anlegen</h1>
-          <p className="text-sm text-muted-foreground">Grunddaten der App erfassen</p>
+          <h1 style={{ fontSize: 20, fontWeight: 700, letterSpacing: "-0.02em", color: "#EDF2F7", margin: 0 }}>Neue App anlegen</h1>
+          <p style={{ fontSize: 13, color: "#7A8BA6", marginTop: 2 }}>Grunddaten der App erfassen</p>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <Card className="border-border bg-card">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold">Basis-Informationen</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2 space-y-1.5">
-                <Label htmlFor="name">Name *</Label>
-                <Input
-                  id="name"
-                  name="name"
-                  required
-                  placeholder="z.B. AzubiSuite"
-                  maxLength={100}
-                />
-              </div>
-              <div className="col-span-2 space-y-1.5">
-                <Label htmlFor="shortDesc">Kurzbeschreibung *</Label>
-                <Input
-                  id="shortDesc"
-                  name="shortDesc"
-                  required
-                  placeholder="Was macht diese App? (max. 255 Zeichen)"
-                  maxLength={255}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="status">Status</Label>
-                <select
-                  id="status"
-                  name="status"
-                  defaultValue="DEVELOPMENT"
-                  className="w-full px-3 py-2 text-sm bg-background border border-input rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
-                >
-                  {STATUS_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="language">Sprache / Framework</Label>
-                <Input
-                  id="language"
-                  name="language"
-                  placeholder="z.B. Next.js, Laravel"
-                  maxLength={50}
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <div style={PANEL}>
+          <p style={SECTION_LABEL}>Basis-Informationen</p>
+          <Field label="Name *">
+            <DSInput name="name" required placeholder="z.B. AzubiSuite" maxLength={100} />
+          </Field>
+          <Field label="Kurzbeschreibung *">
+            <DSInput name="shortDesc" required placeholder="Was macht diese App? (max. 255 Zeichen)" maxLength={255} />
+          </Field>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <Field label="Status">
+              <DSSelect name="status" defaultValue="DEVELOPMENT">
+                {STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </DSSelect>
+            </Field>
+            <Field label="Sprache / Framework">
+              <DSInput name="language" placeholder="z.B. Next.js, Laravel" maxLength={50} />
+            </Field>
+          </div>
+        </div>
 
-        <Card className="border-border bg-card">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold">URLs</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="urlProd">Produktion</Label>
-              <Input
-                id="urlProd"
-                name="urlProd"
-                type="url"
-                placeholder="https://app.example.de"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="urlStaging">Staging</Label>
-              <Input
-                id="urlStaging"
-                name="urlStaging"
-                type="url"
-                placeholder="https://staging.example.de"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="repoUrl">Repository</Label>
-              <Input
-                id="repoUrl"
-                name="repoUrl"
-                type="url"
-                placeholder="https://github.com/org/repo"
-              />
-            </div>
-          </CardContent>
-        </Card>
+        <div style={PANEL}>
+          <p style={SECTION_LABEL}>URLs</p>
+          <Field label="Produktion">
+            <DSInput name="urlProd" type="url" placeholder="https://app.example.de" />
+          </Field>
+          <Field label="Staging">
+            <DSInput name="urlStaging" type="url" placeholder="https://staging.example.de" />
+          </Field>
+          <Field label="Repository">
+            <DSInput name="repoUrl" type="url" placeholder="https://github.com/org/repo" />
+          </Field>
+        </div>
 
-        <Card className="border-border bg-card">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold">Infrastruktur</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="dockerImage">Docker Image</Label>
-                <Input
-                  id="dockerImage"
-                  name="dockerImage"
-                  placeholder="org/image:latest"
-                  maxLength={200}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="dbType">Datenbank</Label>
-                <Input
-                  id="dbType"
-                  name="dbType"
-                  placeholder="z.B. PostgreSQL, Redis"
-                  maxLength={50}
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <div style={PANEL}>
+          <p style={SECTION_LABEL}>Infrastruktur</p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <Field label="Docker Image">
+              <DSInput name="dockerImage" placeholder="org/image:latest" maxLength={200} />
+            </Field>
+            <Field label="Datenbank">
+              <DSInput name="dbType" placeholder="z.B. PostgreSQL, Redis" maxLength={50} />
+            </Field>
+          </div>
+        </div>
 
-        <Card className="border-border bg-card">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold">Kontakt</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="contactName">Ansprechpartner</Label>
-                <Input id="contactName" name="contactName" placeholder="Name" maxLength={100} />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="supportEmail">Support E-Mail</Label>
-                <Input
-                  id="supportEmail"
-                  name="supportEmail"
-                  type="email"
-                  placeholder="support@example.de"
-                  maxLength={200}
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <div style={PANEL}>
+          <p style={SECTION_LABEL}>Kontakt</p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <Field label="Ansprechpartner">
+              <DSInput name="contactName" placeholder="Name" maxLength={100} />
+            </Field>
+            <Field label="Support E-Mail">
+              <DSInput name="supportEmail" type="email" placeholder="support@example.de" maxLength={200} />
+            </Field>
+          </div>
+        </div>
 
         {error && (
-          <p className="text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded-md px-3 py-2">
+          <p style={{ fontSize: 13, color: "#EF4444", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, padding: "8px 12px" }}>
             {error}
           </p>
         )}
 
-        <div className="flex gap-2 justify-end">
-          <Link href="/apps">
-            <Button type="button" variant="ghost">
+        <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+          <Link href="/apps" style={{ textDecoration: "none" }}>
+            <button type="button" style={{ padding: "7px 16px", background: "transparent", color: "#7A8BA6", borderRadius: 8, fontSize: 13, border: "1px solid #1E3050", cursor: "pointer" }}>
               Abbrechen
-            </Button>
+            </button>
           </Link>
-          <Button type="submit" disabled={loading} className="gap-1.5">
-            {loading ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+          <button
+            type="submit"
+            disabled={loading}
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 16px", background: "#2563E8", color: "#fff", borderRadius: 8, fontSize: 13, fontWeight: 500, border: "none", cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1 }}
+          >
+            {loading ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
             App anlegen
-          </Button>
+          </button>
         </div>
       </form>
     </div>

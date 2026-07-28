@@ -13,48 +13,40 @@ export default async function FavoritesPage() {
         orderBy: { createdAt: "desc" },
         include: {
           app: {
-            include: {
-              categories: { include: { category: true } },
-            },
+            include: { categories: { include: { category: true } } },
           },
         },
       })
     : [];
 
-  const apps = favorites
-    .map((f) => f.app)
-    .filter((app) => !app.deletedAt);
+  const apps = favorites.map((f) => f.app).filter((app) => !app.deletedAt);
 
   return (
-    <div className="p-6 space-y-5 max-w-7xl">
+    <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 20 }}>
       <div>
-        <h1 className="text-xl font-bold tracking-tight flex items-center gap-2">
-          <Heart size={18} className="text-primary" />
+        <h1 style={{ fontSize: 20, fontWeight: 700, letterSpacing: "-0.02em", color: "#EDF2F7", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+          <Heart size={18} style={{ color: "#2563E8" }} />
           Favoriten
         </h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
+        <p style={{ fontSize: 13, color: "#7A8BA6", marginTop: 4 }}>
           {apps.length} gemerkte App{apps.length !== 1 ? "s" : ""}
         </p>
       </div>
 
       {apps.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 text-center">
-          <Heart size={32} className="text-muted-foreground/30 mb-3" />
-          <p className="text-sm text-muted-foreground">Noch keine Favoriten gesetzt.</p>
-          <p className="text-xs text-muted-foreground/60 mt-1">
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "80px 0", textAlign: "center" }}>
+          <Heart size={32} style={{ color: "rgba(37,99,232,0.2)", marginBottom: 12 }} />
+          <p style={{ fontSize: 13, color: "#7A8BA6" }}>Noch keine Favoriten gesetzt.</p>
+          <p style={{ fontSize: 11, color: "#4A5A72", marginTop: 4 }}>
             Öffne eine App und klicke auf das Herz-Symbol.
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 12 }}>
           {apps.map((app) => (
             <AppCard
               key={app.id}
-              app={{
-                ...app,
-                logoUrl: app.logoUrl ?? null,
-                urlProd: app.urlProd ?? null,
-              }}
+              app={{ ...app, logoUrl: app.logoUrl ?? null, urlProd: app.urlProd ?? null }}
             />
           ))}
         </div>

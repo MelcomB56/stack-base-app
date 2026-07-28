@@ -1,77 +1,63 @@
 import { db } from "@/lib/db";
-import { Layers, Grid2X2, Cpu } from "lucide-react";
+import { Layers, Cpu } from "lucide-react";
 import Link from "next/link";
 
 export default async function StacksPage() {
   const stacks = await db.stack.findMany({
     include: {
       _count: { select: { apps: true } },
-      technologies: {
-        include: { technology: true },
-        take: 5,
-      },
+      technologies: { include: { technology: true }, take: 5 },
     },
     orderBy: { name: "asc" },
   });
 
   return (
-    <div className="p-6 space-y-5 max-w-5xl">
+    <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 20 }}>
       <div>
-        <h1 className="text-xl font-bold tracking-tight flex items-center gap-2">
-          <Layers size={18} className="text-primary" />
+        <h1 style={{ fontSize: 20, fontWeight: 700, letterSpacing: "-0.02em", color: "#EDF2F7", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+          <Layers size={18} style={{ color: "#2563E8" }} />
           Stacks
         </h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
+        <p style={{ fontSize: 13, color: "#7A8BA6", marginTop: 4 }}>
           {stacks.length} Tech-Stack{stacks.length !== 1 ? "s" : ""} definiert
         </p>
       </div>
 
       {stacks.length === 0 ? (
-        <p className="text-sm text-muted-foreground py-8 text-center">Noch keine Stacks angelegt.</p>
+        <div style={{ background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12, padding: 40, textAlign: "center" }}>
+          <p style={{ fontSize: 13, color: "#7A8BA6" }}>Noch keine Stacks angelegt.</p>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 12 }}>
           {stacks.map((stack) => (
-            <div
-              key={stack.id}
-              className="rounded-xl border border-border bg-card p-4 space-y-3"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
-                    <Layers size={15} className="text-primary" />
+            <div key={stack.id} style={{ background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12, padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 8, background: "rgba(37,99,232,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <Layers size={15} style={{ color: "#2563E8" }} />
                   </div>
                   <div>
-                    <p className="font-semibold text-sm text-foreground">{stack.name}</p>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: "#EDF2F7", margin: 0 }}>{stack.name}</p>
                     {stack.description && (
-                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{stack.description}</p>
+                      <p style={{ fontSize: 11, color: "#7A8BA6", margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 180 }}>
+                        {stack.description}
+                      </p>
                     )}
                   </div>
                 </div>
-                <Link
-                  href={`/apps?stackId=${stack.id}`}
-                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors shrink-0"
-                >
-                  <Grid2X2 size={11} />
-                  <span className="tabular-nums">{stack._count.apps} Apps</span>
+                <Link href={`/apps?stackId=${stack.id}`} style={{ fontSize: 11, color: "#7A8BA6", textDecoration: "none", flexShrink: 0, display: "flex", alignItems: "center", gap: 4, whiteSpace: "nowrap" }}>
+                  {stack._count.apps} Apps
                 </Link>
               </div>
 
               {stack.technologies.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 pt-2 border-t border-border/40">
+                <div style={{ borderTop: "1px solid #1E3050", paddingTop: 10, display: "flex", flexWrap: "wrap", gap: 6 }}>
                   {stack.technologies.map(({ technology }) => (
-                    <span
-                      key={technology.id}
-                      className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] bg-muted text-muted-foreground"
-                    >
+                    <span key={technology.id} style={{ display: "flex", alignItems: "center", gap: 4, padding: "2px 8px", borderRadius: 4, background: "#1A2640", fontSize: 10, color: "#7A8BA6" }}>
                       <Cpu size={9} />
                       {technology.name}
                     </span>
                   ))}
-                  {stack._count.apps > 5 && (
-                    <span className="px-2 py-0.5 rounded text-[10px] bg-muted text-muted-foreground">
-                      +{stack._count.apps - 5} weitere
-                    </span>
-                  )}
                 </div>
               )}
             </div>

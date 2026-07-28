@@ -3,7 +3,6 @@ import { AppCard } from "@/components/apps/AppCard";
 import { AppStatus } from "@/generated/prisma/client";
 import { Plus, Search } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 
 interface SearchParams {
   q?: string;
@@ -24,12 +23,10 @@ async function getApps(params: SearchParams) {
     ...(status && Object.values(AppStatus).includes(status) ? { status } : {}),
     ...(categoryId ? { categories: { some: { categoryId } } } : {}),
     ...(q
-      ? {
-          OR: [
+      ? { OR: [
             { name: { contains: q, mode: "insensitive" as const } },
             { shortDesc: { contains: q, mode: "insensitive" as const } },
-          ],
-        }
+          ] }
       : {}),
   };
 
@@ -60,105 +57,93 @@ const STATUS_OPTIONS = [
   { value: "ARCHIVED", label: "Archiviert" },
 ];
 
-export default async function AppsPage({
-  searchParams,
-}: {
-  searchParams: Promise<SearchParams>;
-}) {
+export default async function AppsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const params = await searchParams;
   const { apps, total, page, limit, categories } = await getApps(params);
   const pages = Math.ceil(total / limit);
 
   return (
-    <div className="p-6 space-y-5 max-w-7xl">
+    <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 20 }}>
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Apps</h1>
-          <p className="text-muted-foreground text-sm mt-1">
+          <h1 style={{ fontSize: 20, fontWeight: 700, letterSpacing: "-0.02em", color: "#EDF2F7", margin: 0 }}>
+            Apps
+          </h1>
+          <p style={{ fontSize: 13, color: "#7A8BA6", marginTop: 4 }}>
             {total} App{total !== 1 ? "s" : ""} gesamt
           </p>
         </div>
-        <Link href="/apps/new">
-          <Button size="sm" className="gap-1.5">
+        <Link href="/apps/new" style={{ textDecoration: "none" }}>
+          <button
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", background: "#2563E8", color: "#fff", borderRadius: 8, fontSize: 13, fontWeight: 500, border: "none", cursor: "pointer" }}
+          >
             <Plus size={14} />
             Neue App
-          </Button>
+          </button>
         </Link>
       </div>
 
-      {/* Filter Bar */}
-      <form method="GET" className="flex flex-wrap gap-2">
-        <div className="relative">
-          <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <input
-            name="q"
-            defaultValue={params.q}
-            placeholder="App suchen..."
-            className="pl-8 pr-3 py-1.5 text-sm bg-card border border-border rounded-md w-56 focus:outline-none focus:ring-1 focus:ring-primary"
-          />
-        </div>
+      {/* Filterleiste */}
+      <form method="GET">
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+            <Search size={13} style={{ position: "absolute", left: 10, color: "#7A8BA6", pointerEvents: "none" }} />
+            <input
+              name="q"
+              defaultValue={params.q}
+              placeholder="App suchen..."
+              className="ds-input"
+              style={{ paddingLeft: 30, width: 200 }}
+            />
+          </div>
 
-        <select
-          name="status"
-          defaultValue={params.status ?? ""}
-          className="px-3 py-1.5 text-sm bg-card border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
-        >
-          {STATUS_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
-
-        {categories.length > 0 && (
-          <select
-            name="categoryId"
-            defaultValue={params.categoryId ?? ""}
-            className="px-3 py-1.5 text-sm bg-card border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
-          >
-            <option value="">Alle Kategorien</option>
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
+          <select name="status" defaultValue={params.status ?? ""} className="ds-select" style={{ paddingRight: 28, backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237A8BA6' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 8px center" }}>
+            {STATUS_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>{o.label}</option>
             ))}
           </select>
-        )}
 
-        <Button type="submit" size="sm" variant="secondary">
-          Filtern
-        </Button>
-        {(params.q || params.status || params.categoryId) && (
-          <Link href="/apps">
-            <Button size="sm" variant="ghost">
-              Zurücksetzen
-            </Button>
-          </Link>
-        )}
+          {categories.length > 0 && (
+            <select name="categoryId" defaultValue={params.categoryId ?? ""} className="ds-select" style={{ paddingRight: 28, backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237A8BA6' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 8px center" }}>
+              <option value="">Alle Kategorien</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          )}
+
+          <button type="submit" style={{ padding: "7px 14px", background: "#1A2640", color: "#EDF2F7", borderRadius: 8, fontSize: 13, fontWeight: 500, border: "1px solid #1E3050", cursor: "pointer" }}>
+            Filtern
+          </button>
+
+          {(params.q || params.status || params.categoryId) && (
+            <Link href="/apps" style={{ textDecoration: "none" }}>
+              <button type="button" style={{ padding: "7px 14px", background: "transparent", color: "#7A8BA6", borderRadius: 8, fontSize: 13, border: "1px solid transparent", cursor: "pointer" }}>
+                Zurücksetzen
+              </button>
+            </Link>
+          )}
+        </div>
       </form>
 
       {/* Grid */}
       {apps.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 text-center">
-          <p className="text-muted-foreground text-sm">Keine Apps gefunden</p>
-          <Link href="/apps/new" className="mt-3">
-            <Button size="sm" variant="secondary" className="gap-1.5">
-              <Plus size={14} />
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "80px 0", textAlign: "center" }}>
+          <p style={{ fontSize: 13, color: "#7A8BA6" }}>Keine Apps gefunden.</p>
+          <Link href="/apps/new" style={{ textDecoration: "none", marginTop: 12 }}>
+            <button style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", background: "#1A2640", color: "#EDF2F7", borderRadius: 8, fontSize: 13, border: "1px solid #1E3050", cursor: "pointer" }}>
+              <Plus size={13} />
               Erste App anlegen
-            </Button>
+            </button>
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 12 }}>
           {apps.map((app) => (
             <AppCard
               key={app.id}
-              app={{
-                ...app,
-                logoUrl: app.logoUrl ?? null,
-                urlProd: app.urlProd ?? null,
-              }}
+              app={{ ...app, logoUrl: app.logoUrl ?? null, urlProd: app.urlProd ?? null }}
             />
           ))}
         </div>
@@ -166,26 +151,20 @@ export default async function AppsPage({
 
       {/* Pagination */}
       {pages > 1 && (
-        <div className="flex items-center gap-2 pt-2">
+        <div style={{ display: "flex", alignItems: "center", gap: 8, paddingTop: 4 }}>
           {page > 1 && (
-            <Link
-              href={`/apps?${new URLSearchParams({ ...params, page: String(page - 1) }).toString()}`}
-            >
-              <Button size="sm" variant="outline">
+            <Link href={`/apps?${new URLSearchParams({ ...params, page: String(page - 1) }).toString()}`} style={{ textDecoration: "none" }}>
+              <button style={{ padding: "6px 14px", background: "#111C2D", color: "#EDF2F7", borderRadius: 8, fontSize: 12, border: "1px solid #1E3050", cursor: "pointer" }}>
                 ← Zurück
-              </Button>
+              </button>
             </Link>
           )}
-          <span className="text-sm text-muted-foreground">
-            Seite {page} von {pages}
-          </span>
+          <span style={{ fontSize: 12, color: "#7A8BA6" }}>Seite {page} von {pages}</span>
           {page < pages && (
-            <Link
-              href={`/apps?${new URLSearchParams({ ...params, page: String(page + 1) }).toString()}`}
-            >
-              <Button size="sm" variant="outline">
+            <Link href={`/apps?${new URLSearchParams({ ...params, page: String(page + 1) }).toString()}`} style={{ textDecoration: "none" }}>
+              <button style={{ padding: "6px 14px", background: "#111C2D", color: "#EDF2F7", borderRadius: 8, fontSize: 12, border: "1px solid #1E3050", cursor: "pointer" }}>
                 Weiter →
-              </Button>
+              </button>
             </Link>
           )}
         </div>
