@@ -113,8 +113,8 @@ export default async function AppDetailPage({ params }: { params: Promise<{ slug
       </nav>
 
       {/* Hero */}
-      <div style={{ background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12, overflow: "hidden" }}>
-        <div style={{ height: 2, background: accentColor }} />
+      <div style={{ background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12 }}>
+        <div style={{ height: 2, background: accentColor, borderRadius: "12px 12px 0 0" }} />
         <div style={{ padding: "16px 18px", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16 }}>
           <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
             {/* Logo/Icon */}
