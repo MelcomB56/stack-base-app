@@ -3,6 +3,15 @@
 Alle wesentlichen Änderungen an Stack-Base werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/).
 
+## [0.3.6-dev] — 2026-07-29
+
+### Added
+
+**Worker-Automatisierung**
+- `npm run dev:all` startet Next.js und Worker-Prozess parallel via `concurrently`
+- `docker-compose.yml`: neuer `worker`-Service mit `restart: unless-stopped` — läuft im Container automatisch
+- MonitorTab-Hinweis aktualisiert: zeigt `dev:all` und Docker-Hinweis statt `npm run worker`
+
 ## [0.3.5-dev] — 2026-07-29
 
 ### Added
