@@ -23,6 +23,8 @@ export default async function EditAppPage({ params }: Props) {
         dbType:       true,
         contactName:  true,
         supportEmail: true,
+        criticality:  true,
+        vendor:       true,
         categories:   { select: { categoryId: true } },
         tags:         { select: { tagId: true } },
         stacks:       { select: { stackId: true } },
@@ -41,6 +43,8 @@ export default async function EditAppPage({ params }: Props) {
     <EditAppForm
       app={{
         ...app,
+        criticality:   app.criticality ?? null,
+        vendor:        app.vendor ?? null,
         categoryIds:   app.categories.map((c) => c.categoryId),
         tagIds:        app.tags.map((t) => t.tagId),
         stackIds:      app.stacks.map((s) => s.stackId),

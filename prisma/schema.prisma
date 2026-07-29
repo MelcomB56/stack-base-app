@@ -76,6 +76,33 @@ enum RelationshipType {
   PLANNED
 }
 
+enum Criticality {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum HealthStatus {
+  UP
+  DEGRADED
+  DOWN
+  UNKNOWN
+}
+
+enum IncidentSeverity {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum IncidentStatus {
+  OPEN
+  INVESTIGATING
+  RESOLVED
+}
+
 // ─────────────────────────────────────────────
 // Modul 4 — Benutzer
 // ─────────────────────────────────────────────
@@ -209,8 +236,10 @@ model App {
   language        String?   @db.VarChar(50)
   dbType          String?   @db.VarChar(50) @map("db_type")
   supportEmail    String?   @db.VarChar(200) @map("support_email")
-  contactName     String?   @db.VarChar(100) @map("contact_name")
-  createdById     String    @map("created_by")
+  contactName     String?      @db.VarChar(100) @map("contact_name")
+  criticality     Criticality? @default(MEDIUM)
+  vendor          String?      @db.VarChar(100)
+  createdById     String       @map("created_by")
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
   deletedAt       DateTime? @map("deleted_at")
@@ -229,6 +258,11 @@ model App {
   screenshots    Screenshot[]
   statusHistory  AppStatusHistory[]
   activityLogs   ActivityLog[]
+  dependencies   AppDependency[]    @relation("AppDependencies")
+  dependents     AppDependency[]    @relation("AppDependents")
+  healthChecks   HealthCheck[]
+  monitorConfig  MonitorConfig?
+  incidents      Incident[]
 
   @@map("apps")
 }
@@ -465,4 +499,83 @@ model ActivityLog {
   @@index([action])
   @@index([createdAt])
   @@map("activity_log")
+}
+
+// ─────────────────────────────────────────────
+// Monitoring — Abhängigkeiten
+// ─────────────────────────────────────────────
+
+model AppDependency {
+  id               String           @id @default(uuid())
+  appId            String           @map("app_id")
+  dependsOnAppId   String?          @map("depends_on_app_id")
+  dependsOnName    String?          @db.VarChar(100) @map("depends_on_name")
+  relationshipType RelationshipType @default(REQUIRES) @map("relationship_type")
+  description      String?          @db.VarChar(255)
+  createdAt        DateTime         @default(now()) @map("created_at")
+
+  app          App  @relation("AppDependencies", fields: [appId], references: [id], onDelete: Cascade)
+  dependsOnApp App? @relation("AppDependents", fields: [dependsOnAppId], references: [id], onDelete: SetNull)
+
+  @@index([appId])
+  @@map("app_dependencies")
+}
+
+// ─────────────────────────────────────────────
+// Monitoring — Healthchecks
+// ─────────────────────────────────────────────
+
+model MonitorConfig {
+  id             String   @id @default(uuid())
+  appId          String   @unique @map("app_id")
+  enabled        Boolean  @default(true)
+  intervalMin    Int      @default(5) @map("interval_min")
+  timeoutSec     Int      @default(10) @map("timeout_sec")
+  checkUrl       String?  @db.VarChar(500) @map("check_url")
+  expectedStatus Int      @default(200) @map("expected_status")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  app App @relation(fields: [appId], references: [id], onDelete: Cascade)
+
+  @@map("monitor_configs")
+}
+
+model HealthCheck {
+  id           String       @id @default(uuid())
+  appId        String       @map("app_id")
+  status       HealthStatus
+  responseTime Int?         @map("response_time")
+  statusCode   Int?         @map("status_code")
+  errorMsg     String?      @db.VarChar(500) @map("error_msg")
+  checkedAt    DateTime     @default(now()) @map("checked_at")
+
+  app App @relation(fields: [appId], references: [id], onDelete: Cascade)
+
+  @@index([appId, checkedAt])
+  @@map("health_checks")
+}
+
+// ─────────────────────────────────────────────
+// Monitoring — Incidents
+// ─────────────────────────────────────────────
+
+model Incident {
+  id          String           @id @default(uuid())
+  appId       String           @map("app_id")
+  title       String           @db.VarChar(200)
+  description String?
+  severity    IncidentSeverity @default(MEDIUM)
+  status      IncidentStatus   @default(OPEN)
+  autoCreated Boolean          @default(false) @map("auto_created")
+  startedAt   DateTime         @default(now()) @map("started_at")
+  resolvedAt  DateTime?        @map("resolved_at")
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+
+  app App @relation(fields: [appId], references: [id], onDelete: Cascade)
+
+  @@index([appId])
+  @@index([status])
+  @@map("incidents")
 }

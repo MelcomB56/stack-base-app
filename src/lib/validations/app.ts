@@ -23,6 +23,8 @@ export const createAppSchema = z.object({
   tagIds: z.array(z.string().uuid()).optional(),
   stackIds: z.array(z.string().uuid()).optional(),
   technologyIds: z.array(z.string().uuid()).optional(),
+  criticality: z.enum(["CRITICAL", "HIGH", "MEDIUM", "LOW"]).optional(),
+  vendor: z.string().max(100).optional(),
 });
 
 export const updateAppSchema = createAppSchema.partial();

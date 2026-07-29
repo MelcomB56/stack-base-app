@@ -25,6 +25,14 @@ const STATUS_OPTIONS = [
   { value: "ARCHIVED",    label: "Archiviert" },
 ];
 
+const CRITICALITY_OPTIONS = [
+  { value: "",         label: "— nicht angegeben —" },
+  { value: "CRITICAL", label: "Kritisch" },
+  { value: "HIGH",     label: "Hoch" },
+  { value: "MEDIUM",   label: "Mittel" },
+  { value: "LOW",      label: "Niedrig" },
+];
+
 const TECH_CATEGORY_ORDER = ["LANGUAGE", "FRONTEND", "BACKEND", "DATABASE", "INFRASTRUCTURE", "TOOL", "OTHER"];
 const TECH_CATEGORY_LABEL: Record<string, string> = {
   LANGUAGE: "Sprache", FRONTEND: "Frontend", BACKEND: "Backend",
@@ -173,10 +181,18 @@ export function NewAppForm({ options }: { options: Options }) {
         </div>
 
         <div style={PANEL}>
-          <p style={SECTION_LABEL}>Infrastruktur</p>
+          <p style={SECTION_LABEL}>Infrastruktur &amp; Betrieb</p>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <Field label="Docker Image"><DSInput name="dockerImage" placeholder="org/image:latest" maxLength={200} /></Field>
             <Field label="Datenbank"><DSInput name="dbType" placeholder="z.B. PostgreSQL, Redis" maxLength={50} /></Field>
+            <Field label="Kritikalität">
+              <DSSelect name="criticality">
+                {CRITICALITY_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </DSSelect>
+            </Field>
+            <Field label="Anbieter / Hersteller">
+              <DSInput name="vendor" placeholder="z.B. Atlassian, Microsoft" maxLength={100} />
+            </Field>
           </div>
         </div>
 

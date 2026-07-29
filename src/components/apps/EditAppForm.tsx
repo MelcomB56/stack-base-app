@@ -25,6 +25,8 @@ type AppData = {
   dbType:       string | null;
   contactName:  string | null;
   supportEmail: string | null;
+  criticality:  string | null;
+  vendor:       string | null;
   categoryIds:  string[];
   tagIds:       string[];
   stackIds:     string[];
@@ -46,6 +48,14 @@ const STATUS_OPTIONS = [
   { value: "PRODUCTION",  label: "Produktion" },
   { value: "MAINTENANCE", label: "Wartung" },
   { value: "ARCHIVED",    label: "Archiviert" },
+];
+
+const CRITICALITY_OPTIONS = [
+  { value: "",         label: "— nicht angegeben —" },
+  { value: "CRITICAL", label: "Kritisch" },
+  { value: "HIGH",     label: "Hoch" },
+  { value: "MEDIUM",   label: "Mittel" },
+  { value: "LOW",      label: "Niedrig" },
 ];
 
 const TECH_CATEGORY_ORDER = ["LANGUAGE", "FRONTEND", "BACKEND", "DATABASE", "INFRASTRUCTURE", "TOOL", "OTHER"];
@@ -219,10 +229,18 @@ export function EditAppForm({ app, options }: { app: AppData; options: Options }
 
         {/* Infrastruktur */}
         <div style={PANEL}>
-          <p style={SECTION_LABEL}>Infrastruktur</p>
+          <p style={SECTION_LABEL}>Infrastruktur &amp; Betrieb</p>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <Field label="Docker Image"><DSInput name="dockerImage" defaultValue={app.dockerImage ?? ""} placeholder="org/image:latest" maxLength={200} /></Field>
             <Field label="Datenbank"><DSInput name="dbType" defaultValue={app.dbType ?? ""} placeholder="z.B. PostgreSQL" maxLength={50} /></Field>
+            <Field label="Kritikalität">
+              <DSSelect name="criticality" defaultValue={app.criticality ?? ""}>
+                {CRITICALITY_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </DSSelect>
+            </Field>
+            <Field label="Anbieter / Hersteller">
+              <DSInput name="vendor" defaultValue={app.vendor ?? ""} placeholder="z.B. Atlassian, Microsoft" maxLength={100} />
+            </Field>
           </div>
         </div>
 

@@ -7,12 +7,15 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "seed": "dotenv -e .env -- npx tsx prisma/seed.ts"
+    "seed": "dotenv -e .env -- npx tsx prisma/seed.ts",
+    "worker": "dotenv -e .env -- npx tsx src/worker/index.ts",
+    "worker:watch": "dotenv -e .env -- npx tsx --watch src/worker/index.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
+    "@types/node-cron": "^3.0.11",
     "bcryptjs": "^3.0.3",
     "bullmq": "^5.81.2",
     "class-variance-authority": "^0.7.1",
@@ -22,6 +25,7 @@
     "lucide-react": "^1.27.0",
     "next": "16.2.12",
     "next-auth": "^5.0.0-beta.32",
+    "node-cron": "^4.6.0",
     "pg": "^8.22.0",
     "prisma": "^7.9.1",
     "react": "19.2.4",
