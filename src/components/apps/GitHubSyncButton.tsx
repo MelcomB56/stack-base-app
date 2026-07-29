@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { GitBranch, Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { GitBranch, Loader2, CheckCircle, AlertCircle, X } from "lucide-react";
 
 type SyncResult = {
   imported: number;
@@ -31,7 +31,6 @@ export function GitHubSyncButton({ appSlug }: { appSlug: string }) {
       }
       setResult(data);
       setState("success");
-      // Nach 6s zurücksetzen
       setTimeout(() => setState("idle"), 6000);
     } catch {
       setErrorMsg("Netzwerkfehler");
@@ -40,43 +39,69 @@ export function GitHubSyncButton({ appSlug }: { appSlug: string }) {
     }
   }
 
-  if (state === "success" && result) {
-    return (
-      <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 12px", background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 7, fontSize: 11, color: "#10B981" }}>
-        <CheckCircle size={11} />
-        {result.imported > 0
-          ? `${result.imported} Release${result.imported > 1 ? "s" : ""} importiert`
-          : "Bereits aktuell"}
-        {result.isPrivate && " · Privat-Tag gesetzt"}
-      </div>
-    );
-  }
-
-  if (state === "error") {
-    return (
-      <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 12px", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 7, fontSize: 11, color: "#F87171" }}>
-        <AlertCircle size={11} />
-        {errorMsg}
-      </div>
-    );
-  }
-
   return (
-    <button
-      onClick={sync}
-      disabled={state === "syncing"}
-      title="Releases & Changelog von GitHub synchronisieren"
-      style={{
-        display: "inline-flex", alignItems: "center", gap: 5,
-        padding: "6px 12px", background: "#1A2640", color: "#EDF2F7",
-        borderRadius: 7, fontSize: 11, border: "1px solid #1E3050",
-        cursor: state === "syncing" ? "not-allowed" : "pointer",
-        opacity: state === "syncing" ? 0.7 : 1,
-      }}>
-      {state === "syncing"
-        ? <Loader2 size={11} className="animate-spin" />
-        : <GitBranch size={11} />}
-      {state === "syncing" ? "Synchronisiere…" : "GitHub Sync"}
-    </button>
+    <div style={{ position: "relative" }}>
+      {/* Button — immer sichtbar */}
+      <button
+        onClick={sync}
+        disabled={state === "syncing"}
+        title="Releases & Changelog von GitHub synchronisieren"
+        style={{
+          display: "inline-flex", alignItems: "center", gap: 5,
+          padding: "6px 12px",
+          background: state === "success" ? "rgba(16,185,129,0.12)" : "#1A2640",
+          color: state === "success" ? "#10B981" : "#EDF2F7",
+          border: `1px solid ${state === "success" ? "rgba(16,185,129,0.3)" : state === "error" ? "rgba(239,68,68,0.4)" : "#1E3050"}`,
+          borderRadius: 7, fontSize: 11,
+          cursor: state === "syncing" ? "not-allowed" : "pointer",
+          opacity: state === "syncing" ? 0.7 : 1,
+          transition: "background 200ms, color 200ms, border-color 200ms",
+        }}>
+        {state === "syncing" ? <Loader2 size={11} className="animate-spin" /> : <GitBranch size={11} />}
+        {state === "syncing" ? "Synchronisiere…" : state === "success" ? "Synchronisiert" : "GitHub Sync"}
+      </button>
+
+      {/* Erfolgs-Hinweis — Tooltip unter dem Button */}
+      {state === "success" && result && (
+        <div style={{
+          position: "absolute", top: "calc(100% + 6px)", right: 0,
+          background: "#0B1220", border: "1px solid rgba(16,185,129,0.35)",
+          borderRadius: 8, padding: "7px 10px",
+          display: "flex", alignItems: "center", gap: 7,
+          whiteSpace: "nowrap", zIndex: 50,
+          boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
+          fontSize: 11, color: "#10B981",
+        }}>
+          <CheckCircle size={11} />
+          <span>
+            {result.imported > 0
+              ? `${result.imported} Release${result.imported > 1 ? "s" : ""} importiert`
+              : "Bereits aktuell"}
+            {result.isPrivate && " · Privat-Tag gesetzt"}
+          </span>
+        </div>
+      )}
+
+      {/* Fehler-Hinweis — Tooltip unter dem Button */}
+      {state === "error" && errorMsg && (
+        <div style={{
+          position: "absolute", top: "calc(100% + 6px)", right: 0,
+          background: "#0B1220", border: "1px solid rgba(239,68,68,0.35)",
+          borderRadius: 8, padding: "7px 10px",
+          display: "flex", alignItems: "flex-start", gap: 7,
+          zIndex: 50, maxWidth: 340,
+          boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
+          fontSize: 11, color: "#F87171",
+        }}>
+          <AlertCircle size={11} style={{ flexShrink: 0, marginTop: 1 }} />
+          <span style={{ lineHeight: 1.4 }}>{errorMsg}</span>
+          <button
+            onClick={() => setState("idle")}
+            style={{ background: "none", border: "none", color: "#F87171", cursor: "pointer", padding: 0, marginLeft: 4, flexShrink: 0 }}>
+            <X size={10} />
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
