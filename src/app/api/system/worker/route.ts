@@ -68,11 +68,11 @@ export async function POST(req: NextRequest) {
 
       // Worker als Kindprozess starten (erbt DATABASE_URL etc. aus process.env)
       const workerPath = join(process.cwd(), "src", "worker", "index.ts");
-      const tsxPath = join(process.cwd(), "node_modules", ".bin", "tsx");
-
-      const child = spawn(tsxPath, [workerPath], {
+      // Auf Windows sind .bin-Dateien .cmd-Skripte — shell:true löst das auf allen Plattformen
+      const child = spawn("npx", ["tsx", workerPath], {
         detached: true,
         stdio: "ignore",
+        shell: true,
         env: { ...process.env },
       });
       child.unref();
