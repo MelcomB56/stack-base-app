@@ -2,9 +2,8 @@ import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { notFound } from "next/navigation";
 import { AppStatusBadge } from "@/components/apps/AppStatusBadge";
-import { FavoriteButton } from "@/components/apps/FavoriteButton";
 import { AppStatus } from "@/generated/prisma/client";
-import { ExternalLink, GitBranch, Globe, Edit, ChevronRight, Activity, AlertTriangle, Shield } from "lucide-react";
+import { Globe, ChevronRight, Activity, AlertTriangle, Shield } from "lucide-react";
 import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ReleasesTab } from "@/components/apps/ReleasesTab";
@@ -13,7 +12,7 @@ import { OverviewTab } from "@/components/apps/detail/OverviewTab";
 import { IncidentsTab } from "@/components/apps/detail/IncidentsTab";
 import { MonitorTab } from "@/components/apps/detail/MonitorTab";
 import { DependenciesTab } from "@/components/apps/detail/DependenciesTab";
-import { GitHubSyncButton } from "@/components/apps/GitHubSyncButton";
+import { AppDetailActions } from "@/components/apps/AppDetailActions";
 
 async function getApp(slug: string) {
   return db.app.findUnique({
@@ -156,29 +155,13 @@ export default async function AppDetailPage({ params }: { params: Promise<{ slug
           </div>
 
           {/* Aktionen */}
-          <div style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }}>
-            <FavoriteButton appId={app.id} initialFavorited={isFavorited} />
-            {app.urlProd && (
-              <a href={app.urlProd} target="_blank" rel="noopener noreferrer"
-                style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 12px", background: "#2563E8", color: "#fff", borderRadius: 7, fontSize: 11, fontWeight: 500, textDecoration: "none" }}>
-                <ExternalLink size={10} /> Öffnen
-              </a>
-            )}
-            {app.repoUrl && (
-              <a href={app.repoUrl} target="_blank" rel="noopener noreferrer"
-                style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 12px", background: "#1A2640", color: "#EDF2F7", borderRadius: 7, fontSize: 11, border: "1px solid #1E3050", textDecoration: "none" }}>
-                <GitBranch size={10} />
-              </a>
-            )}
-            {app.repoUrl && app.repoUrl.includes("github.com") && (
-              <GitHubSyncButton appSlug={app.slug} />
-            )}
-            <Link href={`/apps/${app.slug}/edit`} style={{ textDecoration: "none" }}>
-              <button style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 12px", background: "#1A2640", color: "#EDF2F7", borderRadius: 7, fontSize: 11, fontWeight: 500, border: "1px solid #1E3050", cursor: "pointer" }}>
-                <Edit size={10} /> Bearbeiten
-              </button>
-            </Link>
-          </div>
+          <AppDetailActions
+            appId={app.id}
+            appSlug={app.slug}
+            urlProd={app.urlProd}
+            repoUrl={app.repoUrl}
+            isFavorited={isFavorited}
+          />
         </div>
       </div>
 

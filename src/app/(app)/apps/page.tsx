@@ -45,7 +45,16 @@ async function getApps(params: SearchParams) {
     db.category.findMany({ orderBy: { name: "asc" } }),
   ]);
 
-  return { apps, total, page, limit, categories };
+  // Letzter Healthcheck pro App (eine Query statt N)
+  const latestChecks = await db.healthCheck.findMany({
+    where: { appId: { in: apps.map((a) => a.id) } },
+    orderBy: { checkedAt: "desc" },
+    distinct: ["appId"],
+    select: { appId: true, status: true },
+  });
+  const healthMap = Object.fromEntries(latestChecks.map((c) => [c.appId, c.status]));
+
+  return { apps, total, page, limit, categories, healthMap };
 }
 
 const STATUS_OPTIONS = [
@@ -59,7 +68,7 @@ const STATUS_OPTIONS = [
 
 export default async function AppsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const params = await searchParams;
-  const { apps, total, page, limit, categories } = await getApps(params);
+  const { apps, total, page, limit, categories, healthMap } = await getApps(params);
   const pages = Math.ceil(total / limit);
 
   return (
@@ -144,6 +153,7 @@ export default async function AppsPage({ searchParams }: { searchParams: Promise
             <AppCard
               key={app.id}
               app={{ ...app, logoUrl: app.logoUrl ?? null, urlProd: app.urlProd ?? null }}
+              healthStatus={healthMap[app.id] ?? null}
             />
           ))}
         </div>

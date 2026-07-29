@@ -3,6 +3,21 @@
 Alle wesentlichen Änderungen an Stack-Base werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/).
 
+## [0.3.8-dev] — 2026-07-29
+
+### Added
+
+**App-Übersicht: Health-Status-Indikator pro Karte**
+- Jede App-Karte zeigt einen farbigen Dot mit Label (Online/Offline/Degraded/Unbekannt)
+- Grüner Glow-Effekt bei "Online", rot bei "Offline"
+- Letzter Healthcheck wird in einer einzigen DB-Query für alle Apps geladen (`distinct: ["appId"]`)
+
+**App-Detail: Aktionen-Dropdown**
+- Einzelne Buttons (Repository, GitHub Sync, Bearbeiten) zu "Aktionen ▼"-Dropdown zusammengefasst
+- "Öffnen" bleibt als primärer Button sichtbar
+- Dropdown schließt automatisch bei Klick außerhalb oder nach einer Aktion
+- `GitHubSyncButton` unterstützt jetzt `menuItem`-Prop für flaches Dropdown-Rendering
+
 ## [0.3.7-dev] — 2026-07-29
 
 ### Added

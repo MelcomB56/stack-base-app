@@ -14,7 +14,13 @@ type SyncResult = {
   repo: string;
 };
 
-export function GitHubSyncButton({ appSlug }: { appSlug: string }) {
+interface GitHubSyncButtonProps {
+  appSlug: string;
+  menuItem?: boolean;
+  onSync?: () => void;
+}
+
+export function GitHubSyncButton({ appSlug, menuItem, onSync }: GitHubSyncButtonProps) {
   const [state, setState] = useState<"idle" | "syncing" | "success" | "error">("idle");
   const [result, setResult] = useState<SyncResult | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -34,7 +40,7 @@ export function GitHubSyncButton({ appSlug }: { appSlug: string }) {
       }
       setResult(data);
       setState("success");
-      setTimeout(() => setState("idle"), 6000);
+      setTimeout(() => { setState("idle"); onSync?.(); }, 3000);
     } catch {
       setErrorMsg("Netzwerkfehler");
       setState("error");
@@ -42,27 +48,44 @@ export function GitHubSyncButton({ appSlug }: { appSlug: string }) {
     }
   }
 
+  const label = state === "syncing" ? "Synchronisiere…" : state === "success" ? "Synchronisiert" : "GitHub Sync";
+  const icon = state === "syncing" ? <Loader2 size={11} className="animate-spin" /> : <GitBranch size={menuItem ? 12 : 11} style={menuItem ? { color: "#7A8BA6", flexShrink: 0 } : undefined} />;
+
   return (
     <div style={{ position: "relative" }}>
-      {/* Button — immer sichtbar */}
-      <button
-        onClick={sync}
-        disabled={state === "syncing"}
-        title="Releases & Changelog von GitHub synchronisieren"
-        style={{
-          display: "inline-flex", alignItems: "center", gap: 5,
-          padding: "6px 12px",
-          background: state === "success" ? "rgba(16,185,129,0.12)" : "#1A2640",
-          color: state === "success" ? "#10B981" : "#EDF2F7",
-          border: `1px solid ${state === "success" ? "rgba(16,185,129,0.3)" : state === "error" ? "rgba(239,68,68,0.4)" : "#1E3050"}`,
-          borderRadius: 7, fontSize: 11,
-          cursor: state === "syncing" ? "not-allowed" : "pointer",
-          opacity: state === "syncing" ? 0.7 : 1,
-          transition: "background 200ms, color 200ms, border-color 200ms",
-        }}>
-        {state === "syncing" ? <Loader2 size={11} className="animate-spin" /> : <GitBranch size={11} />}
-        {state === "syncing" ? "Synchronisiere…" : state === "success" ? "Synchronisiert" : "GitHub Sync"}
-      </button>
+      {menuItem ? (
+        <button
+          onClick={sync}
+          disabled={state === "syncing"}
+          style={{
+            display: "flex", alignItems: "center", gap: 8,
+            padding: "8px 14px", fontSize: 12, color: "#EDF2F7",
+            background: "none", border: "none", cursor: state === "syncing" ? "not-allowed" : "pointer",
+            width: "100%", textAlign: "left", opacity: state === "syncing" ? 0.7 : 1,
+          }}
+        >
+          {icon}{label}
+        </button>
+      ) : (
+        <button
+          onClick={sync}
+          disabled={state === "syncing"}
+          title="Releases & Changelog von GitHub synchronisieren"
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 5,
+            padding: "6px 12px",
+            background: state === "success" ? "rgba(16,185,129,0.12)" : "#1A2640",
+            color: state === "success" ? "#10B981" : "#EDF2F7",
+            border: `1px solid ${state === "success" ? "rgba(16,185,129,0.3)" : state === "error" ? "rgba(239,68,68,0.4)" : "#1E3050"}`,
+            borderRadius: 7, fontSize: 11,
+            cursor: state === "syncing" ? "not-allowed" : "pointer",
+            opacity: state === "syncing" ? 0.7 : 1,
+            transition: "background 200ms, color 200ms, border-color 200ms",
+          }}>
+          {icon}
+          {label}
+        </button>
+      )}
 
       {/* Erfolgs-Hinweis — Tooltip unter dem Button */}
       {state === "success" && result && (

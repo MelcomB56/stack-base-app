@@ -10,6 +10,22 @@ const STATUS_COLOR: Record<string, string> = {
   ARCHIVED:    "#6B7280",
 };
 
+type HealthStatus = "UP" | "DEGRADED" | "DOWN" | "UNKNOWN";
+
+const HEALTH_COLOR: Record<HealthStatus, string> = {
+  UP: "#10B981",
+  DEGRADED: "#F59E0B",
+  DOWN: "#EF4444",
+  UNKNOWN: "#7A8BA6",
+};
+
+const HEALTH_LABEL: Record<HealthStatus, string> = {
+  UP: "Online",
+  DEGRADED: "Degraded",
+  DOWN: "Offline",
+  UNKNOWN: "Unbekannt",
+};
+
 interface AppCardProps {
   app: {
     name: string;
@@ -20,9 +36,10 @@ interface AppCardProps {
     urlProd?: string | null;
     categories?: Array<{ category: { name: string; color: string } }>;
   };
+  healthStatus?: HealthStatus | null;
 }
 
-export function AppCard({ app }: AppCardProps) {
+export function AppCard({ app, healthStatus }: AppCardProps) {
   const accentColor = STATUS_COLOR[app.status] ?? "#6B7280";
 
   return (
@@ -83,8 +100,22 @@ export function AppCard({ app }: AppCardProps) {
               )}
             </div>
 
-            <div style={{ flexShrink: 0, paddingTop: 2 }}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 5, paddingTop: 2 }}>
               <AppStatusBadge status={app.status} showDot />
+              {healthStatus && (
+                <span
+                  title={HEALTH_LABEL[healthStatus]}
+                  style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, color: HEALTH_COLOR[healthStatus] }}
+                >
+                  <span style={{
+                    width: 6, height: 6, borderRadius: "50%",
+                    background: HEALTH_COLOR[healthStatus],
+                    boxShadow: healthStatus === "UP" ? `0 0 5px ${HEALTH_COLOR[healthStatus]}` : undefined,
+                    display: "inline-block", flexShrink: 0,
+                  }} />
+                  {HEALTH_LABEL[healthStatus]}
+                </span>
+              )}
             </div>
           </div>
 
