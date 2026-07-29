@@ -3,6 +3,17 @@
 Alle wesentlichen Änderungen an Stack-Base werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/).
 
+## [0.3.4-dev] — 2026-07-29
+
+### Fixed
+
+**GitHub-Sync**
+- Repo-Info-Abruf (Privacy-Check) ist jetzt nicht-fatal — Sync läuft weiter auch bei 404 auf `/repos/{owner}/{repo}`
+- Fallback auf `/tags`-Endpunkt wenn keine formellen GitHub-Releases vorhanden (Repos die nur Git-Tags nutzen)
+- Tags werden mit dem Commit-Datum aus `/commits/{sha}` importiert statt aktuellem Datum
+- `existingVersions` prüft beide Formen (mit und ohne `v`-Prefix) gegen Duplikate
+- Draft-Releases werden übersprungen
+
 ## [0.3.3-dev] — 2026-07-28
 
 ### Fixed
