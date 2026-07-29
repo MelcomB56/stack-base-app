@@ -8,6 +8,8 @@ type SyncResult = {
   skipped: number;
   releasesFound: number;
   tagsFound: number;
+  readmeVersionsFound: number;
+  readmeImported: number;
   isPrivate: boolean;
   repo: string;
 };
@@ -76,7 +78,7 @@ export function GitHubSyncButton({ appSlug }: { appSlug: string }) {
           <CheckCircle size={11} />
           <span>
             {result.imported > 0
-              ? `${result.imported} Release${result.imported > 1 ? "s" : ""} importiert`
+              ? `${result.imported} Release${result.imported > 1 ? "s" : ""} importiert${result.readmeImported > 0 ? " (aus README)" : ""}`
               : "Bereits aktuell"}
             {result.isPrivate && " · Privat-Tag gesetzt"}
           </span>

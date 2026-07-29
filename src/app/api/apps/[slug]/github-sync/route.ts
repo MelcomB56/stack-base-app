@@ -46,6 +46,95 @@ function releaseTypeFromVersion(version: string, prerelease: boolean) {
   return "PATCH" as const;
 }
 
+// ── README-Parser ─────────────────────────────────────────────────────────────
+// Erkennt Versions-Einträge in einem README-Markdown-String.
+//
+// Unterstützte Formate:
+//   ## [1.2.3] — 2024-01-15       (Keep a Changelog, Heading)
+//   ### v1.2.3 (2024-01-15)       (Heading)
+//   ## v1.2.3                     (Heading)
+//   **v1.2.3** (2024-01-15)       (Fett-Marker, kein Heading)
+//   **v1.2.3**:                   (Fett-Marker)
+//   ### Version 1.2.3             (Heading mit "Version"-Wort)
+//
+// Gibt eine geordnete Liste von { version, date?, body } zurück.
+type ReadmeVersion = {
+  version: string;
+  date: Date | null;
+  body: string;
+};
+
+// Optionale Datumsgruppen: em-Dash-Format oder Klammer-Format
+const DATE_SUFFIX = String.raw`(?:\s*[—–-]\s*(\d{4}-\d{2}-\d{2}))?(?:\s*\((\d{4}-\d{2}-\d{2})\))?`;
+
+// Muster 1: Headings (#, ##, ###) — mit optionalem Präfix "v", "[", "Version"
+const HEADING_RE = new RegExp(
+  String.raw`^#{1,4}\s+(?:Version\s+|Release\s+)?(?:\[)?v?(\d+\.\d+(?:\.\d+)?(?:[-\w.+]+)?)(?:\])?` + DATE_SUFFIX,
+  "gm",
+);
+
+// Muster 2: Fett-markierte Versionen am Zeilenanfang — **v1.2.3** oder **1.2.3**
+const BOLD_RE = new RegExp(
+  String.raw`^\*\*v?(\d+\.\d+(?:\.\d+)?(?:[-\w.+]+)?)\*\*` + DATE_SUFFIX,
+  "gm",
+);
+
+// Muster 3: Tabellen-Zeilen — | **2.3.3** | 2026-07-13 | Beschreibung |
+//                           oder | 2.3.3 | 2026-07-13 | Beschreibung |
+const TABLE_ROW_RE = /^\|\s*\*{0,2}v?(\d+\.\d+(?:\.\d+)?(?:[-\w.+]+)?)\*{0,2}\s*\|\s*(\d{4}-\d{2}-\d{2})\s*\|\s*([^|\r\n]+)/gm;
+
+function extractVersionMatches(
+  content: string,
+  re: RegExp,
+): { version: string; date: Date | null; index: number; matchLen: number }[] {
+  const hits = [];
+  for (const m of content.matchAll(re)) {
+    const version = m[1];
+    if (!/^\d+\.\d+/.test(version)) continue;
+    const rawDate = m[2] ?? m[3] ?? null;
+    const date = rawDate ? new Date(rawDate) : null;
+    hits.push({ version, date, index: m.index ?? 0, matchLen: m[0].length });
+  }
+  return hits;
+}
+
+function parseReadmeVersions(content: string): ReadmeVersion[] {
+  const headingHits = extractVersionMatches(content, HEADING_RE);
+  const boldHits = extractVersionMatches(content, BOLD_RE);
+
+  // Tabellen-Zeilen direkt auswerten (kompaktes Format, Body = 3. Spalte)
+  const tableVersions: ReadmeVersion[] = [];
+  for (const m of content.matchAll(TABLE_ROW_RE)) {
+    const version = m[1];
+    if (!/^\d+\.\d+/.test(version)) continue;
+    // Trennzeilen (|---|) überspringen
+    if (/^-+$/.test(m[1])) continue;
+    const date = new Date(m[2]);
+    const body = m[3].trim();
+    tableVersions.push({ version, date, body });
+  }
+
+  // Wenn Tabellen-Einträge gefunden → direkt zurückgeben (kein Heading-Muster nötig)
+  if (tableVersions.length > 0) return tableVersions;
+
+  // Sonst: Headings + Bold-Muster kombinieren
+  const allHits = [...headingHits, ...boldHits]
+    .sort((a, b) => a.index - b.index)
+    .filter((h, i, arr) => i === 0 || h.index !== arr[i - 1].index);
+
+  const versions: ReadmeVersion[] = [];
+  for (let i = 0; i < allHits.length; i++) {
+    const h = allHits[i];
+    const bodyStart = h.index + h.matchLen;
+    const bodyEnd = i + 1 < allHits.length ? allHits[i + 1].index : content.length;
+    const body = content.slice(bodyStart, bodyEnd).trim();
+    if (body.length >= 10 || h.date) {
+      versions.push({ version: h.version, date: h.date, body });
+    }
+  }
+  return versions;
+}
+
 export async function POST(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   try {
     const session = await auth();
@@ -94,7 +183,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
         await db.appTag.deleteMany({ where: { appId: app.id, tagId: privTag.id } });
       }
     } catch {
-      // Repo-Info-Fehler nicht fatal — weiter mit Releases
+      // Nicht fatal — weiter mit Releases/Tags
     }
 
     // Schon vorhandene Versionen (mit und ohne "v"-Prefix)
@@ -105,16 +194,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
     let importedCount = 0;
     let skippedCount = 0;
 
-    // ─── 2. Formelle GitHub-Releases ──────────────────────────────────────────
+    // ─── 2. Formelle GitHub-Releases ───────────────────────────────────────
     const ghReleases = await githubFetch(
       `/repos/${owner}/${repo}/releases?per_page=100`,
       token,
     ) as GHRelease[];
 
-    const releasesFromGitHub = new Set<string>(); // Versionen die über Releases kommen
+    const releasesFromGitHub = new Set<string>();
 
     for (const gh of ghReleases) {
-      if (gh.draft) continue; // Drafts überspringen
+      if (gh.draft) continue;
 
       const version = gh.tag_name.replace(/^v/, "");
       releasesFromGitHub.add(version);
@@ -153,7 +242,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
       importedCount++;
     }
 
-    // ─── 3. Fallback: Git-Tags (wenn keine formellen Releases oder zusätzliche Tags) ──
+    // ─── 3. Fallback: Git-Tags ─────────────────────────────────────────────
     const ghTags = await githubFetch(
       `/repos/${owner}/${repo}/tags?per_page=100`,
       token,
@@ -162,11 +251,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
     for (const tag of ghTags) {
       const version = tag.name.replace(/^v/, "");
 
-      // Bereits via Releases importiert oder schon in DB
       if (releasesFromGitHub.has(version)) continue;
       if (existingVersions.has(version)) { skippedCount++; continue; }
 
-      // Commit-Datum holen für releasedAt
       let releasedAt = new Date();
       try {
         const commit = await githubFetch(
@@ -196,7 +283,68 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
       importedCount++;
     }
 
-    // ─── 4. Neuesten Release als "current" markieren ──────────────────────────
+    // ─── 4. Fallback: README-Changelog ─────────────────────────────────────
+    // Nur wenn weder Releases noch Tags gefunden wurden
+    let readmeVersionsFound = 0;
+    let readmeImported = 0;
+
+    if (ghReleases.filter((r) => !r.draft).length === 0 && ghTags.length === 0) {
+      try {
+        const readmeData = await githubFetch(
+          `/repos/${owner}/${repo}/readme`,
+          token,
+        ) as { content: string; encoding: string };
+
+        if (readmeData.encoding === "base64") {
+          const readmeText = Buffer.from(readmeData.content, "base64").toString("utf-8");
+
+          const readmeVersions = parseReadmeVersions(readmeText);
+          readmeVersionsFound = readmeVersions.length;
+
+          for (const rv of readmeVersions) {
+            const version = rv.version.replace(/^v/, "");
+            if (existingVersions.has(version)) { skippedCount++; continue; }
+
+            const releasedAt = rv.date ?? new Date();
+            const isPrerelease = /[-](alpha|beta|rc|dev|pre)/i.test(version);
+            const releaseType = releaseTypeFromVersion(version, isPrerelease);
+
+            const release = await db.release.create({
+              data: {
+                appId: app.id,
+                version,
+                releaseType,
+                description: rv.body ? rv.body.slice(0, 2000) : null,
+                releasedAt,
+                isCurrent: false,
+                createdById: session.user!.id!,
+              },
+            });
+
+            if (rv.body && rv.body.trim()) {
+              await db.changelogEntry.create({
+                data: {
+                  appId: app.id,
+                  releaseId: release.id,
+                  type: isPrerelease ? ("CHANGED" as const) : ("ADDED" as const),
+                  description: rv.body.slice(0, 5000),
+                  entryDate: releasedAt,
+                  createdById: session.user!.id!,
+                },
+              });
+            }
+
+            existingVersions.add(version);
+            importedCount++;
+            readmeImported++;
+          }
+        }
+      } catch {
+        // README nicht vorhanden oder nicht parsebar — kein Fehler
+      }
+    }
+
+    // ─── 5. Neuesten Release als "current" markieren ───────────────────────
     if (importedCount > 0) {
       const currentExists = await db.release.findFirst({
         where: { appId: app.id, isCurrent: true },
@@ -212,7 +360,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
       }
     }
 
-    // ─── 5. Sync-Timestamp ────────────────────────────────────────────────────
+    // ─── 6. Sync-Timestamp ─────────────────────────────────────────────────
     await db.app.update({
       where: { id: app.id },
       data: { githubSyncedAt: new Date() },
@@ -223,6 +371,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
       skipped: skippedCount,
       releasesFound: ghReleases.filter((r) => !r.draft).length,
       tagsFound: ghTags.length,
+      readmeVersionsFound,
+      readmeImported,
       isPrivate,
       repo: `${owner}/${repo}`,
     });
