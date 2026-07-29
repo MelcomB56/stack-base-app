@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { Settings, User, Shield, Bell } from "lucide-react";
 import { PasswordChangeForm } from "@/components/settings/PasswordChangeForm";
+import { ProfileForm } from "@/components/settings/ProfileForm";
 
 export default async function SettingsPage() {
   const session = await auth();
@@ -50,7 +51,7 @@ export default async function SettingsPage() {
           </div>
         </div>
 
-        <div style={{ borderTop: "1px solid #1E3050", paddingTop: 14, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+        <div style={{ borderTop: "1px solid #1E3050", paddingTop: 14, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 4 }}>
           {[
             { label: "Rolle", value: user?.role ?? "—" },
             { label: "Mitglied seit", value: fmt(user?.createdAt) },
@@ -61,6 +62,10 @@ export default async function SettingsPage() {
               <p style={{ fontSize: 12, fontWeight: 600, color: "#EDF2F7", margin: 0 }}>{value}</p>
             </div>
           ))}
+        </div>
+
+        <div style={{ borderTop: "1px solid #1E3050", paddingTop: 14 }}>
+          <ProfileForm initialName={user?.name ?? ""} initialEmail={user?.email ?? ""} />
         </div>
       </div>
 

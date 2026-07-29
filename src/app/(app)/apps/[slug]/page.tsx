@@ -150,7 +150,7 @@ export default async function AppDetailPage({ params }: { params: Promise<{ slug
       )}
 
       {/* Klassifizierungen */}
-      {(app.categories.length > 0 || app.tags.length > 0 || app.stacks.length > 0) && (
+      {(app.categories.length > 0 || app.tags.length > 0 || app.stacks.length > 0 || app.technologies.length > 0) && (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
           {app.categories.map(({ category }) => (
             <span key={category.id} style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 10px", borderRadius: 99, fontSize: 11, fontWeight: 500, border: `1px solid ${category.color}44`, color: category.color, background: `${category.color}18` }}>
@@ -162,8 +162,13 @@ export default async function AppDetailPage({ params }: { params: Promise<{ slug
               <Layers size={9} /> {stack.name}
             </span>
           ))}
+          {app.technologies.map(({ technology }) => (
+            <span key={technology.id} style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 10px", borderRadius: 99, fontSize: 11, fontWeight: 500, border: "1px solid rgba(124,58,237,0.3)", color: "#A78BFA", background: "rgba(124,58,237,0.1)" }}>
+              <Cpu size={9} /> {technology.name}
+            </span>
+          ))}
           {app.tags.map(({ tag }) => (
-            <span key={tag.id} style={{ display: "inline-flex", alignItems: "center", padding: "3px 10px", borderRadius: 99, fontSize: 11, background: "#1A2640", color: "#7A8BA6", border: "1px solid #1E3050" }}>
+            <span key={tag.id} style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 10px", borderRadius: 99, fontSize: 11, fontWeight: 500, border: `1px solid ${tag.color}44`, color: tag.color, background: `${tag.color}18` }}>
               #{tag.name}
             </span>
           ))}

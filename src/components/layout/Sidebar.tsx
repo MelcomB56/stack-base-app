@@ -64,10 +64,18 @@ const NAV = [
   { href: "/search",      label: "Suche",        icon: Icons.search },
 ] as const;
 
+const Icons_tag = (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/>
+    <line x1="7" y1="7" x2="7.01" y2="7"/>
+  </svg>
+);
+
 const NAV_ADMIN = [
   { href: "/categories",   label: "Kategorien",   icon: Icons.categories },
   { href: "/stacks",       label: "Stacks",       icon: Icons.stacks },
   { href: "/technologies", label: "Technologien", icon: Icons.technologies },
+  { href: "/tags",         label: "Tags",         icon: Icons_tag },
   { href: "/settings",     label: "Einstellungen",icon: Icons.settings },
 ] as const;
 
