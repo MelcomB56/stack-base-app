@@ -239,6 +239,8 @@ model App {
   contactName     String?      @db.VarChar(100) @map("contact_name")
   criticality     Criticality? @default(MEDIUM)
   vendor          String?      @db.VarChar(100)
+  githubToken     String?      @db.VarChar(255) @map("github_token")
+  githubSyncedAt  DateTime?    @map("github_synced_at")
   createdById     String       @map("created_by")
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")

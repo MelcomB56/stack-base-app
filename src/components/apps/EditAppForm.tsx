@@ -27,6 +27,7 @@ type AppData = {
   supportEmail: string | null;
   criticality:  string | null;
   vendor:       string | null;
+  githubToken:  string | null;
   categoryIds:  string[];
   tagIds:       string[];
   stackIds:     string[];
@@ -240,6 +241,28 @@ export function EditAppForm({ app, options }: { app: AppData; options: Options }
             </Field>
             <Field label="Anbieter / Hersteller">
               <DSInput name="vendor" defaultValue={app.vendor ?? ""} placeholder="z.B. Atlassian, Microsoft" maxLength={100} />
+            </Field>
+          </div>
+        </div>
+
+        {/* GitHub Integration */}
+        <div style={PANEL}>
+          <p style={{ ...SECTION_LABEL, display: "flex", alignItems: "center", gap: 6 }}>
+            GitHub Integration
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 12 }}>
+            <Field label="GitHub Personal Access Token">
+              <DSInput
+                name="githubToken"
+                type="password"
+                defaultValue={app.githubToken ?? ""}
+                placeholder="ghp_xxxxxxxxxxxxxxxxxxxx (wird verschlüsselt gespeichert)"
+                maxLength={255}
+              />
+              <p style={{ fontSize: 10, color: "#7A8BA6", margin: "4px 0 0" }}>
+                Nur erforderlich für private Repositories. Token benötigt Scope <code style={{ background: "#1A2640", padding: "1px 4px", borderRadius: 3 }}>repo</code> (read-only reicht).
+                Leer lassen für öffentliche Repos.
+              </p>
             </Field>
           </div>
         </div>

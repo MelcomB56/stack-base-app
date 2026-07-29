@@ -13,6 +13,7 @@ import { OverviewTab } from "@/components/apps/detail/OverviewTab";
 import { IncidentsTab } from "@/components/apps/detail/IncidentsTab";
 import { MonitorTab } from "@/components/apps/detail/MonitorTab";
 import { DependenciesTab } from "@/components/apps/detail/DependenciesTab";
+import { GitHubSyncButton } from "@/components/apps/GitHubSyncButton";
 
 async function getApp(slug: string) {
   return db.app.findUnique({
@@ -168,6 +169,9 @@ export default async function AppDetailPage({ params }: { params: Promise<{ slug
                 style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 12px", background: "#1A2640", color: "#EDF2F7", borderRadius: 7, fontSize: 11, border: "1px solid #1E3050", textDecoration: "none" }}>
                 <GitBranch size={10} />
               </a>
+            )}
+            {app.repoUrl && app.repoUrl.includes("github.com") && (
+              <GitHubSyncButton appSlug={app.slug} />
             )}
             <Link href={`/apps/${app.slug}/edit`} style={{ textDecoration: "none" }}>
               <button style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 12px", background: "#1A2640", color: "#EDF2F7", borderRadius: 7, fontSize: 11, fontWeight: 500, border: "1px solid #1E3050", cursor: "pointer" }}>

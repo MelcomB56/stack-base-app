@@ -25,6 +25,7 @@ export const createAppSchema = z.object({
   technologyIds: z.array(z.string().uuid()).optional(),
   criticality: z.enum(["CRITICAL", "HIGH", "MEDIUM", "LOW"]).optional(),
   vendor: z.string().max(100).optional(),
+  githubToken: z.string().max(255).optional(),
 });
 
 export const updateAppSchema = createAppSchema.partial();
