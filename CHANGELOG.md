@@ -3,6 +3,16 @@
 Alle wesentlichen Änderungen an Stack-Base werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/).
 
+## [0.3.5-dev] — 2026-07-29
+
+### Added
+
+**GitHub-Sync: README-Changelog-Fallback**
+- Wenn ein Repo weder Releases noch Git-Tags hat, wird die `README.md` analysiert
+- Unterstützte Formate: Markdown-Tabellen (`| **2.3.3** | 2026-07-13 | Beschreibung |`), Keep-a-Changelog-Headings (`## [1.2.3]`), versionierte Headings (`### v1.2.3`), Fett-Marker (`**v1.2.3**`), "Version"-Präfix in Headings
+- Datum und Beschreibung werden direkt aus der Tabelle/dem Heading übernommen
+- Changelog-Einträge werden pro Version angelegt
+
 ## [0.3.4-dev] — 2026-07-29
 
 ### Fixed
