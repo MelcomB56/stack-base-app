@@ -507,8 +507,9 @@ export function MonitorTab({
       {/* Hinweis zum Worker */}
       {configs.length > 0 && (
         <div style={{ padding: "8px 12px", background: "rgba(37,99,232,0.06)", border: "1px solid rgba(37,99,232,0.2)", borderRadius: 8, fontSize: 11, color: "#7A8BA6" }}>
-          Automatische Checks laufen alle {configs[0]?.intervalMin ?? 5} Minuten, wenn der Worker aktiv ist:{" "}
-          <code style={{ background: "#1A2640", padding: "1px 5px", borderRadius: 4, color: "#60A5FA" }}>npm run worker</code>
+          Automatische Checks laufen alle {configs[0]?.intervalMin ?? 5} Minuten. Dev:{" "}
+          <code style={{ background: "#1A2640", padding: "1px 5px", borderRadius: 4, color: "#60A5FA" }}>npm run dev:all</code>
+          {" "}· Docker: Worker-Service läuft automatisch
         </div>
       )}
     </div>
