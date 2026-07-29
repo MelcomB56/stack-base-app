@@ -11,12 +11,6 @@ type HealthCheck = {
   checkedAt: string | Date;
 };
 
-type MonitorConfig = {
-  enabled: boolean;
-  checkUrl: string | null;
-  intervalMin: number;
-} | null;
-
 type AppOverviewProps = {
   app: {
     longDesc: string | null;
@@ -40,7 +34,7 @@ type AppOverviewProps = {
     releases: { isCurrent: boolean; version: string }[];
   };
   healthChecks: HealthCheck[];
-  monitorConfig: MonitorConfig;
+  monitorConfigs: { enabled: boolean; checkUrl: string | null }[];
 };
 
 const CRITICALITY_COLORS: Record<string, string> = {
@@ -109,7 +103,8 @@ function MiniChart({ checks }: { checks: HealthCheck[] }) {
   );
 }
 
-export function OverviewTab({ app, healthChecks, monitorConfig }: AppOverviewProps) {
+export function OverviewTab({ app, healthChecks, monitorConfigs }: AppOverviewProps) {
+  const monitorActive = monitorConfigs.some((c) => c.enabled && c.checkUrl);
   const currentRelease = app.releases.find((r) => r.isCurrent);
 
   return (
@@ -126,7 +121,7 @@ export function OverviewTab({ app, healthChecks, monitorConfig }: AppOverviewPro
           )}
 
           {/* Availability Chart */}
-          {monitorConfig && <MiniChart checks={healthChecks} />}
+          {monitorActive && <MiniChart checks={healthChecks} />}
 
           {/* Quick Links */}
           {(app.urlProd || app.urlStaging || app.repoUrl) && (

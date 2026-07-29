@@ -6,28 +6,27 @@ const db = new PrismaClient({ adapter });
 
 const CONSECUTIVE_FAILURES_BEFORE_INCIDENT = 2;
 
+export async function runHealthchecks() {
+  const configs = await db.monitorConfig.findMany({
+    where: { enabled: true, checkUrl: { not: null } },
+    include: { app: { select: { id: true, name: true, slug: true } } },
+  });
+
+  await Promise.allSettled(configs.map(checkEndpoint));
+}
+
 type ConfigWithApp = {
   id: string;
   appId: string;
+  label: string;
   checkUrl: string | null;
   timeoutSec: number;
   expectedStatus: number;
   app: { id: string; name: string; slug: string };
 };
 
-export async function runHealthchecks() {
-  const configs = await db.monitorConfig.findMany({
-    where: { enabled: true },
-    include: { app: { select: { id: true, name: true, slug: true } } },
-  });
-
-  await Promise.allSettled((configs as ConfigWithApp[]).map(checkApp));
-}
-
-async function checkApp(config: ConfigWithApp) {
-  const url = config.checkUrl ?? null;
-  if (!url) return;
-
+async function checkEndpoint(config: ConfigWithApp) {
+  const url = config.checkUrl!;
   const start = Date.now();
   let status: HealthStatus = "UNKNOWN";
   let statusCode: number | null = null;
@@ -66,6 +65,8 @@ async function checkApp(config: ConfigWithApp) {
   await db.healthCheck.create({
     data: {
       appId: config.appId,
+      configId: config.id,
+      checkUrl: url,
       status,
       responseTime,
       statusCode,
@@ -73,20 +74,25 @@ async function checkApp(config: ConfigWithApp) {
     },
   });
 
-  await handleIncidents(config.appId, config.app.name, status);
+  await handleIncidents(config.appId, config.app.name, config.label, status);
 }
 
-async function handleIncidents(appId: string, appName: string, currentStatus: HealthStatus) {
+async function handleIncidents(
+  appId: string,
+  appName: string,
+  endpointLabel: string,
+  currentStatus: HealthStatus,
+) {
   if (currentStatus === "DOWN") {
-    // Letzte N Checks prüfen — Incident nur bei wiederholtem Ausfall
     const recent = await db.healthCheck.findMany({
       where: { appId },
       orderBy: { checkedAt: "desc" },
       take: CONSECUTIVE_FAILURES_BEFORE_INCIDENT,
     });
 
-    const allDown = recent.length >= CONSECUTIVE_FAILURES_BEFORE_INCIDENT
-      && recent.every((c) => c.status === "DOWN");
+    const allDown =
+      recent.length >= CONSECUTIVE_FAILURES_BEFORE_INCIDENT &&
+      recent.every((c) => c.status === "DOWN");
 
     if (!allDown) return;
 
@@ -98,7 +104,7 @@ async function handleIncidents(appId: string, appName: string, currentStatus: He
       await db.incident.create({
         data: {
           appId,
-          title: `${appName} nicht erreichbar`,
+          title: `${appName} — ${endpointLabel} nicht erreichbar`,
           description: `Automatisch erstellt: ${CONSECUTIVE_FAILURES_BEFORE_INCIDENT} aufeinanderfolgende DOWN-Checks.`,
           severity: "HIGH",
           status: "OPEN",
@@ -107,7 +113,6 @@ async function handleIncidents(appId: string, appName: string, currentStatus: He
       });
     }
   } else if (currentStatus === "UP") {
-    // Auto-Incidents bei Erholung schließen
     await db.incident.updateMany({
       where: { appId, status: { in: ["OPEN", "INVESTIGATING"] }, autoCreated: true },
       data: { status: "RESOLVED", resolvedAt: new Date() },

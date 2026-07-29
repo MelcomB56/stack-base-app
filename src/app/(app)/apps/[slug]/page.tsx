@@ -36,7 +36,15 @@ async function getApp(slug: string) {
           createdBy: { select: { name: true } },
         },
       },
-      monitorConfig: true,
+      monitorConfigs: {
+        orderBy: { createdAt: "asc" as const },
+        include: {
+          healthChecks: {
+            orderBy: { checkedAt: "desc" as const },
+            take: 288,
+          },
+        },
+      },
       incidents: {
         orderBy: { startedAt: "desc" },
         take: 20,
@@ -220,7 +228,7 @@ export default async function AppDetailPage({ params }: { params: Promise<{ slug
               vendor: app.vendor ?? null,
             }}
             healthChecks={healthData.map((h) => ({ ...h, checkedAt: h.checkedAt.toISOString() }))}
-            monitorConfig={app.monitorConfig}
+            monitorConfigs={app.monitorConfigs}
           />
         </TabsContent>
 
@@ -260,13 +268,17 @@ export default async function AppDetailPage({ params }: { params: Promise<{ slug
         <TabsContent value="monitoring">
           <MonitorTab
             appSlug={app.slug}
-            initial={{
-              config: app.monitorConfig,
-              checks: healthData.map((h) => ({
+            initial={app.monitorConfigs.map((cfg) => ({
+              ...cfg,
+              healthChecks: cfg.healthChecks.map((h) => ({
                 ...h,
                 checkedAt: h.checkedAt.toISOString(),
               })),
-            }}
+            }))}
+            appUrls={[
+              ...(app.urlProd ? [{ label: "Production", url: app.urlProd }] : []),
+              ...(app.urlStaging ? [{ label: "Staging", url: app.urlStaging }] : []),
+            ]}
           />
         </TabsContent>
       </Tabs>

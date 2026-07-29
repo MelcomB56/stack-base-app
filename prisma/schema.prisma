@@ -261,7 +261,7 @@ model App {
   dependencies   AppDependency[]    @relation("AppDependencies")
   dependents     AppDependency[]    @relation("AppDependents")
   healthChecks   HealthCheck[]
-  monitorConfig  MonitorConfig?
+  monitorConfigs MonitorConfig[]
   incidents      Incident[]
 
   @@map("apps")
@@ -527,7 +527,8 @@ model AppDependency {
 
 model MonitorConfig {
   id             String   @id @default(uuid())
-  appId          String   @unique @map("app_id")
+  appId          String   @map("app_id")
+  label          String   @default("Production") @db.VarChar(100)
   enabled        Boolean  @default(true)
   intervalMin    Int      @default(5) @map("interval_min")
   timeoutSec     Int      @default(10) @map("timeout_sec")
@@ -536,23 +537,29 @@ model MonitorConfig {
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
-  app App @relation(fields: [appId], references: [id], onDelete: Cascade)
+  app          App          @relation(fields: [appId], references: [id], onDelete: Cascade)
+  healthChecks HealthCheck[]
 
+  @@index([appId])
   @@map("monitor_configs")
 }
 
 model HealthCheck {
   id           String       @id @default(uuid())
   appId        String       @map("app_id")
+  configId     String?      @map("config_id")
+  checkUrl     String?      @db.VarChar(500) @map("check_url")
   status       HealthStatus
   responseTime Int?         @map("response_time")
   statusCode   Int?         @map("status_code")
   errorMsg     String?      @db.VarChar(500) @map("error_msg")
   checkedAt    DateTime     @default(now()) @map("checked_at")
 
-  app App @relation(fields: [appId], references: [id], onDelete: Cascade)
+  app    App           @relation(fields: [appId], references: [id], onDelete: Cascade)
+  config MonitorConfig? @relation(fields: [configId], references: [id], onDelete: SetNull)
 
   @@index([appId, checkedAt])
+  @@index([configId, checkedAt])
   @@map("health_checks")
 }
 
