@@ -315,7 +315,7 @@ export function Sidebar() {
         </button>
 
         {!collapsed && (
-          <p style={{ padding: "4px 12px 2px", fontSize: 10, color: "#7A8BA6", margin: 0 }}>v0.3.6-dev</p>
+          <p style={{ padding: "4px 12px 2px", fontSize: 10, color: "#7A8BA6", margin: 0 }}>v0.3.7-dev</p>
         )}
       </div>
     </aside>

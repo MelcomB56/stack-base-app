@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { Settings, User, Shield, Bell } from "lucide-react";
 import { PasswordChangeForm } from "@/components/settings/PasswordChangeForm";
 import { ProfileForm } from "@/components/settings/ProfileForm";
+import { WorkerStatusCard } from "@/components/settings/WorkerStatusCard";
 
 export default async function SettingsPage() {
   const session = await auth();
@@ -88,6 +89,9 @@ export default async function SettingsPage() {
           Webhook- und E-Mail-Benachrichtigungen folgen in einer späteren Version.
         </p>
       </div>
+
+      {/* Worker-Status */}
+      <WorkerStatusCard />
     </div>
   );
 }

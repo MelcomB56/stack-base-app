@@ -3,6 +3,20 @@
 Alle wesentlichen Änderungen an Stack-Base werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/).
 
+## [0.3.7-dev] — 2026-07-29
+
+### Added
+
+**Worker-Status-UI**
+- Settings-Seite zeigt neuen "Monitoring-Worker"-Block mit Echtzeit-Status (Online/Offline)
+- Pulsierender grüner/roter Status-Dot + PID-Anzeige
+- Start/Stop-Schaltflächen zum direkten Steuern des Worker-Prozesses
+- Meta-Grid: letzter Ping (timeAgo), Startzeit (de-DE), Checks gesamt
+- Polling alle 30 Sekunden; manuelle Aktualisierungsschaltfläche
+- `WorkerHeartbeat`-DB-Modell (Singleton-Row `id: "singleton"`) + Migration
+- Worker schreibt alle 30s Heartbeat; SIGTERM-Handler setzt `pid: null`
+- API-Route `GET/POST /api/system/worker`: Status-Abfrage, Start via `spawn` (detached), Stop via SIGTERM
+
 ## [0.3.6-dev] — 2026-07-29
 
 ### Added

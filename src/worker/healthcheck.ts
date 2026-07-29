@@ -6,13 +6,14 @@ const db = new PrismaClient({ adapter });
 
 const CONSECUTIVE_FAILURES_BEFORE_INCIDENT = 2;
 
-export async function runHealthchecks() {
+export async function runHealthchecks(): Promise<number> {
   const configs = await db.monitorConfig.findMany({
     where: { enabled: true, checkUrl: { not: null } },
     include: { app: { select: { id: true, name: true, slug: true } } },
   });
 
   await Promise.allSettled(configs.map(checkEndpoint));
+  return configs.length;
 }
 
 type ConfigWithApp = {

@@ -588,3 +588,17 @@ model Incident {
   @@index([status])
   @@map("incidents")
 }
+
+// ─────────────────────────────────────────────
+// System — Worker-Status
+// ─────────────────────────────────────────────
+
+model WorkerHeartbeat {
+  id        String   @id @default("singleton")
+  lastPing  DateTime @map("last_ping")
+  startedAt DateTime @map("started_at")
+  checksRun Int      @default(0) @map("checks_run")
+  pid       Int?
+
+  @@map("worker_heartbeats")
+}
