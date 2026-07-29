@@ -5,9 +5,10 @@ import { GitBranch, Loader2, CheckCircle, AlertCircle, X } from "lucide-react";
 
 type SyncResult = {
   imported: number;
-  total: number;
+  skipped: number;
+  releasesFound: number;
+  tagsFound: number;
   isPrivate: boolean;
-  privateTagSet: boolean;
   repo: string;
 };
 

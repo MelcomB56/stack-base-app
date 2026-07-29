@@ -15,7 +15,7 @@ function parseGithubRepo(url: string): { owner: string; repo: string } | null {
   }
 }
 
-async function githubFetch(path: string, token: string | null) {
+async function githubFetch(path: string, token: string | null): Promise<unknown> {
   const headers: Record<string, string> = {
     Accept: "application/vnd.github+json",
     "X-GitHub-Api-Version": "2022-11-28",
@@ -38,136 +38,194 @@ async function githubFetch(path: string, token: string | null) {
   return res.json();
 }
 
+function releaseTypeFromVersion(version: string, prerelease: boolean) {
+  const parts = version.split(".");
+  if (prerelease) return "PRERELEASE" as const;
+  if (parts.length >= 3 && parts[1] === "0" && parts[2] === "0" && parts[0] !== "0") return "MAJOR" as const;
+  if (parts.length >= 3 && parts[2] === "0") return "MINOR" as const;
+  return "PATCH" as const;
+}
+
 export async function POST(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   try {
-  const session = await auth();
-  if (!session) return apiError("Nicht authentifiziert", 401);
+    const session = await auth();
+    if (!session) return apiError("Nicht authentifiziert", 401);
 
-  const { slug } = await params;
+    const { slug } = await params;
 
-  const app = await db.app.findUnique({
-    where: { slug, deletedAt: null },
-    select: {
-      id: true,
-      name: true,
-      repoUrl: true,
-      githubToken: true,
-      releases: { select: { version: true } },
-      tags: { include: { tag: true } },
-    },
-  });
-  if (!app) return apiError("App nicht gefunden", 404);
-  if (!app.repoUrl) return apiError("Kein Repository-URL eingetragen", 400);
-
-  const parsed = parseGithubRepo(app.repoUrl);
-  if (!parsed) return apiError("Keine gültige GitHub-URL (github.com/owner/repo)", 400);
-
-  const { owner, repo } = parsed;
-  const token = app.githubToken;
-
-  // ─── 1. Repo-Info → Private-Tag ───────────────────────────────────────────
-  const repoInfo = await githubFetch(`/repos/${owner}/${repo}`, token).catch((e) => {
-    throw new Error(`Repo-Info: ${e.message}`);
-  });
-
-  const isPrivate: boolean = repoInfo.private;
-
-  if (isPrivate) {
-    const privTag = await db.tag.upsert({
-      where: { slug: "privat" },
-      update: {},
-      create: { name: "Privat", slug: "privat", color: "#6B7280" },
-    });
-    const alreadyTagged = app.tags.some((t) => t.tag.slug === "privat");
-    if (!alreadyTagged) {
-      await db.appTag.create({ data: { appId: app.id, tagId: privTag.id } });
-    }
-  } else {
-    const privTag = await db.tag.findUnique({ where: { slug: "privat" } });
-    if (privTag) {
-      await db.appTag.deleteMany({ where: { appId: app.id, tagId: privTag.id } });
-    }
-  }
-
-  // ─── 2. Releases holen ────────────────────────────────────────────────────
-  const ghReleases: GHRelease[] = await githubFetch(
-    `/repos/${owner}/${repo}/releases?per_page=50`,
-    token,
-  ).catch((e) => { throw new Error(`Releases: ${e.message}`); });
-
-  const existingVersions = new Set(app.releases.map((r) => r.version));
-  let importedCount = 0;
-
-  for (const gh of ghReleases) {
-    const version = gh.tag_name.replace(/^v/, "");
-    if (existingVersions.has(version)) continue;
-
-    const releasedAt = gh.published_at ? new Date(gh.published_at) : new Date();
-
-    // Release-Typ aus Tag ableiten (v1.0.0 = MAJOR, v1.1.0 = MINOR, v1.1.1 = PATCH)
-    const parts = version.split(".");
-    const releaseType =
-      parts[0] !== "0" && parts[1] === "0" && parts[2] === "0" ? "MAJOR" as const
-      : parts[2] === "0" ? "MINOR" as const
-      : gh.prerelease ? "PRERELEASE" as const
-      : "PATCH" as const;
-
-    const release = await db.release.create({
-      data: {
-        appId: app.id,
-        version,
-        releaseType,
-        description: gh.body ? gh.body.slice(0, 2000) : (gh.name || null),
-        releasedAt,
-        isCurrent: false,
-        createdById: session.user!.id!,
+    const app = await db.app.findUnique({
+      where: { slug, deletedAt: null },
+      select: {
+        id: true,
+        name: true,
+        repoUrl: true,
+        githubToken: true,
+        releases: { select: { version: true } },
+        tags: { include: { tag: true } },
       },
     });
+    if (!app) return apiError("App nicht gefunden", 404);
+    if (!app.repoUrl) return apiError("Kein Repository-URL eingetragen", 400);
 
-    // ChangelogEintrag aus Release-Body erzeugen
-    if (gh.body && gh.body.trim()) {
-      await db.changelogEntry.create({
+    const parsed = parseGithubRepo(app.repoUrl);
+    if (!parsed) return apiError("Keine gültige GitHub-URL (github.com/owner/repo)", 400);
+
+    const { owner, repo } = parsed;
+    const token = app.githubToken;
+
+    // ─── 1. Repo-Info → Private-Tag (nicht-fatal) ──────────────────────────
+    let isPrivate = false;
+    try {
+      const repoInfo = await githubFetch(`/repos/${owner}/${repo}`, token) as { private: boolean };
+      isPrivate = repoInfo.private;
+
+      const privTag = await db.tag.upsert({
+        where: { slug: "privat" },
+        update: {},
+        create: { name: "Privat", slug: "privat", color: "#6B7280" },
+      });
+
+      if (isPrivate) {
+        const alreadyTagged = app.tags.some((t) => t.tag.slug === "privat");
+        if (!alreadyTagged) {
+          await db.appTag.create({ data: { appId: app.id, tagId: privTag.id } });
+        }
+      } else {
+        await db.appTag.deleteMany({ where: { appId: app.id, tagId: privTag.id } });
+      }
+    } catch {
+      // Repo-Info-Fehler nicht fatal — weiter mit Releases
+    }
+
+    // Schon vorhandene Versionen (mit und ohne "v"-Prefix)
+    const existingVersions = new Set(
+      app.releases.flatMap((r) => [r.version, `v${r.version}`, r.version.replace(/^v/, "")]),
+    );
+
+    let importedCount = 0;
+    let skippedCount = 0;
+
+    // ─── 2. Formelle GitHub-Releases ──────────────────────────────────────────
+    const ghReleases = await githubFetch(
+      `/repos/${owner}/${repo}/releases?per_page=100`,
+      token,
+    ) as GHRelease[];
+
+    const releasesFromGitHub = new Set<string>(); // Versionen die über Releases kommen
+
+    for (const gh of ghReleases) {
+      if (gh.draft) continue; // Drafts überspringen
+
+      const version = gh.tag_name.replace(/^v/, "");
+      releasesFromGitHub.add(version);
+
+      if (existingVersions.has(version)) { skippedCount++; continue; }
+
+      const releasedAt = gh.published_at ? new Date(gh.published_at) : new Date();
+      const releaseType = releaseTypeFromVersion(version, gh.prerelease);
+
+      const release = await db.release.create({
         data: {
           appId: app.id,
-          releaseId: release.id,
-          type: "ADDED" as const,
-          description: `**${gh.name || `Release v${version}`}**\n\n${gh.body}`.slice(0, 5000),
-          entryDate: releasedAt,
+          version,
+          releaseType,
+          description: gh.body ? gh.body.slice(0, 2000) : (gh.name || null),
+          releasedAt,
+          isCurrent: false,
           createdById: session.user!.id!,
         },
       });
+
+      if (gh.body && gh.body.trim()) {
+        await db.changelogEntry.create({
+          data: {
+            appId: app.id,
+            releaseId: release.id,
+            type: gh.prerelease ? ("CHANGED" as const) : ("ADDED" as const),
+            description: `**${gh.name || `v${version}`}**\n\n${gh.body}`.slice(0, 5000),
+            entryDate: releasedAt,
+            createdById: session.user!.id!,
+          },
+        });
+      }
+
+      existingVersions.add(version);
+      importedCount++;
     }
 
-    importedCount++;
-  }
+    // ─── 3. Fallback: Git-Tags (wenn keine formellen Releases oder zusätzliche Tags) ──
+    const ghTags = await githubFetch(
+      `/repos/${owner}/${repo}/tags?per_page=100`,
+      token,
+    ) as GHTag[];
 
-  // Neuesten Release als "current" markieren (wenn noch keiner gesetzt)
-  const currentExists = await db.release.findFirst({
-    where: { appId: app.id, isCurrent: true },
-  });
-  if (!currentExists) {
-    const newest = await db.release.findFirst({
-      where: { appId: app.id },
-      orderBy: { releasedAt: "desc" },
+    for (const tag of ghTags) {
+      const version = tag.name.replace(/^v/, "");
+
+      // Bereits via Releases importiert oder schon in DB
+      if (releasesFromGitHub.has(version)) continue;
+      if (existingVersions.has(version)) { skippedCount++; continue; }
+
+      // Commit-Datum holen für releasedAt
+      let releasedAt = new Date();
+      try {
+        const commit = await githubFetch(
+          `/repos/${owner}/${repo}/commits/${tag.commit.sha}`,
+          token,
+        ) as { commit: { committer: { date: string } } };
+        releasedAt = new Date(commit.commit.committer.date);
+      } catch {
+        // Datum nicht verfügbar — Jetzt-Datum verwenden
+      }
+
+      const releaseType = releaseTypeFromVersion(version, false);
+
+      await db.release.create({
+        data: {
+          appId: app.id,
+          version,
+          releaseType,
+          description: null,
+          releasedAt,
+          isCurrent: false,
+          createdById: session.user!.id!,
+        },
+      });
+
+      existingVersions.add(version);
+      importedCount++;
+    }
+
+    // ─── 4. Neuesten Release als "current" markieren ──────────────────────────
+    if (importedCount > 0) {
+      const currentExists = await db.release.findFirst({
+        where: { appId: app.id, isCurrent: true },
+      });
+      if (!currentExists) {
+        const newest = await db.release.findFirst({
+          where: { appId: app.id },
+          orderBy: { releasedAt: "desc" },
+        });
+        if (newest) {
+          await db.release.update({ where: { id: newest.id }, data: { isCurrent: true } });
+        }
+      }
+    }
+
+    // ─── 5. Sync-Timestamp ────────────────────────────────────────────────────
+    await db.app.update({
+      where: { id: app.id },
+      data: { githubSyncedAt: new Date() },
     });
-    if (newest) {
-      await db.release.update({ where: { id: newest.id }, data: { isCurrent: true } });
-    }
-  }
 
-  // ─── 3. Sync-Timestamp aktualisieren ──────────────────────────────────────
-  await db.app.update({
-    where: { id: app.id },
-    data: { githubSyncedAt: new Date() },
-  });
-
-  return Response.json({
-    imported: importedCount,
-    total: ghReleases.length,
-    isPrivate,
-    privateTagSet: isPrivate,
-    repo: `${owner}/${repo}`,
-  });
+    return Response.json({
+      imported: importedCount,
+      skipped: skippedCount,
+      releasesFound: ghReleases.filter((r) => !r.draft).length,
+      tagsFound: ghTags.length,
+      isPrivate,
+      repo: `${owner}/${repo}`,
+    });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error("[github-sync]", msg);
@@ -182,4 +240,9 @@ type GHRelease = {
   published_at: string;
   draft: boolean;
   prerelease: boolean;
+};
+
+type GHTag = {
+  name: string;
+  commit: { sha: string };
 };
