@@ -71,20 +71,22 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
   });
 
   const isPrivate: boolean = repoInfo.private;
-  const existingPrivateTag = await db.tag.findFirst({ where: { name: "Privat" } });
 
   if (isPrivate) {
-    const privTag = existingPrivateTag ?? await db.tag.create({
-      data: { name: "Privat", slug: "privat", color: "#6B7280" },
+    const privTag = await db.tag.upsert({
+      where: { slug: "privat" },
+      update: {},
+      create: { name: "Privat", slug: "privat", color: "#6B7280" },
     });
-    const alreadyTagged = app.tags.some((t) => t.tag.name === "Privat");
+    const alreadyTagged = app.tags.some((t) => t.tag.slug === "privat");
     if (!alreadyTagged) {
       await db.appTag.create({ data: { appId: app.id, tagId: privTag.id } });
     }
-  } else if (existingPrivateTag) {
-    await db.appTag.deleteMany({
-      where: { appId: app.id, tagId: existingPrivateTag.id },
-    });
+  } else {
+    const privTag = await db.tag.findUnique({ where: { slug: "privat" } });
+    if (privTag) {
+      await db.appTag.deleteMany({ where: { appId: app.id, tagId: privTag.id } });
+    }
   }
 
   // ─── 2. Releases holen ────────────────────────────────────────────────────
