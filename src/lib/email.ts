@@ -1,30 +1,54 @@
 import "server-only";
 import nodemailer from "nodemailer";
+import { db } from "@/lib/db";
 
-function createTransport() {
-  const host = process.env.SMTP_HOST;
+export interface SmtpConfig {
+  host: string;
+  port: number;
+  secure: boolean;
+  user: string;
+  pass: string;
+  from: string;
+}
+
+export async function getSmtpConfig(): Promise<SmtpConfig | null> {
+  // DB-Einstellungen haben Vorrang vor Env-Vars
+  const rows = await db.systemSetting.findMany({
+    where: { key: { in: ["smtp_host", "smtp_port", "smtp_user", "smtp_pass", "smtp_from", "smtp_secure"] } },
+  });
+  const s = Object.fromEntries(rows.map((r) => [r.key, r.value]));
+
+  const host = s["smtp_host"] || process.env.SMTP_HOST || "";
   if (!host) return null;
+
+  const port = parseInt(s["smtp_port"] || process.env.SMTP_PORT || "587", 10);
+  const secure = (s["smtp_secure"] || process.env.SMTP_SECURE || "") === "true" || port === 465;
+  const user = s["smtp_user"] || process.env.SMTP_USER || "";
+  const pass = s["smtp_pass"] || process.env.SMTP_PASS || "";
+  const from = s["smtp_from"] || process.env.SMTP_FROM || "Stack-Base <noreply@stack-base.local>";
+
+  return { host, port, secure, user, pass, from };
+}
+
+async function getTransporter() {
+  const cfg = await getSmtpConfig();
+  if (!cfg) return null;
   return nodemailer.createTransport({
-    host,
-    port: parseInt(process.env.SMTP_PORT ?? "587"),
-    secure: process.env.SMTP_PORT === "465",
-    auth: process.env.SMTP_USER
-      ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
-      : undefined,
+    host: cfg.host,
+    port: cfg.port,
+    secure: cfg.secure,
+    auth: cfg.user ? { user: cfg.user, pass: cfg.pass } : undefined,
   });
 }
 
-const globalForMailer = globalThis as unknown as { mailer: ReturnType<typeof nodemailer.createTransport> | null | undefined };
-const mailer = globalForMailer.mailer !== undefined ? globalForMailer.mailer : createTransport();
-if (process.env.NODE_ENV !== "production") globalForMailer.mailer = mailer;
-
-const FROM = process.env.SMTP_FROM ?? "Stack-Base <noreply@stack-base.local>";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
 async function send(to: string, subject: string, html: string) {
-  if (!mailer) return;
   try {
-    await mailer.sendMail({ from: FROM, to, subject, html });
+    const transport = await getTransporter();
+    if (!transport) return;
+    const cfg = await getSmtpConfig();
+    await transport.sendMail({ from: cfg!.from, to, subject, html });
   } catch {
     // E-Mail-Fehler sollen nie den auslösenden Request blockieren
   }

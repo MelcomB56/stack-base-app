@@ -103,6 +103,21 @@ enum IncidentStatus {
   RESOLVED
 }
 
+enum EnvironmentType {
+  DEVELOPMENT
+  STAGING
+  PRODUCTION
+  CUSTOM
+}
+
+enum EnvironmentStatus {
+  ONLINE
+  OFFLINE
+  DEGRADED
+  UNKNOWN
+  MAINTENANCE
+}
+
 // ─────────────────────────────────────────────
 // Modul 4 — Benutzer
 // ─────────────────────────────────────────────
@@ -266,8 +281,31 @@ model App {
   monitorConfigs         MonitorConfig[]
   incidents              Incident[]
   notificationSettings   NotificationSetting[]
+  environments           AppEnvironment[]
 
   @@map("apps")
+}
+
+// ─────────────────────────────────────────────
+// Modul 27 — Environment Management
+// ─────────────────────────────────────────────
+
+model AppEnvironment {
+  id         String            @id @default(cuid())
+  appId      String            @map("app_id")
+  name       String            @db.VarChar(100)
+  type       EnvironmentType   @default(CUSTOM)
+  url        String?           @db.VarChar(500)
+  status     EnvironmentStatus @default(UNKNOWN)
+  statusNote String?           @db.VarChar(255) @map("status_note")
+  sortOrder  Int               @default(0) @map("sort_order")
+  createdAt  DateTime          @default(now()) @map("created_at")
+  updatedAt  DateTime          @updatedAt @map("updated_at")
+
+  app App @relation(fields: [appId], references: [id], onDelete: Cascade)
+
+  @@index([appId])
+  @@map("app_environments")
 }
 
 // N:M Verknüpfungen Apps
@@ -602,6 +640,18 @@ model WorkerHeartbeat {
   pid       Int?
 
   @@map("worker_heartbeats")
+}
+
+// ─────────────────────────────────────────────
+// System — Globale Einstellungen
+// ─────────────────────────────────────────────
+
+model SystemSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("system_settings")
 }
 
 model NotificationSetting {

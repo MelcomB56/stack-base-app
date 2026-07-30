@@ -17,6 +17,7 @@ import { DocsTab } from "@/components/apps/detail/DocsTab";
 import { ActivitiesTab } from "@/components/apps/detail/ActivitiesTab";
 import { ScreenshotsTab } from "@/components/apps/detail/ScreenshotsTab";
 import { NotificationsTab } from "@/components/apps/detail/NotificationsTab";
+import { EnvironmentsTab } from "@/components/apps/detail/EnvironmentsTab";
 
 async function getApp(slug: string) {
   return db.app.findUnique({
@@ -62,6 +63,7 @@ async function getApp(slug: string) {
         orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
       },
       notificationSettings: { orderBy: { createdAt: "asc" } },
+      environments: { orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }] },
       dependencies: {
         include: { dependsOnApp: { select: { id: true, name: true, slug: true, status: true } } },
       },
@@ -125,7 +127,7 @@ export default async function AppDetailPage({ params }: { params: Promise<{ slug
     : null;
 
   return (
-    <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16, maxWidth: 960 }}>
+    <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
 
       {/* Breadcrumb */}
       <nav style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#7A8BA6" }}>
@@ -193,6 +195,14 @@ export default async function AppDetailPage({ params }: { params: Promise<{ slug
         <div className="tab-bar" style={{ overflowX: "auto", scrollbarWidth: "none" }}>
         <TabsList>
           <TabsTrigger value="overview">Übersicht</TabsTrigger>
+          <TabsTrigger value="environments">
+            Environments
+            {app.environments.length > 0 && (
+              <span style={{ marginLeft: 5, padding: "1px 6px", borderRadius: 99, background: "#1A2640", fontSize: 10, color: "#7A8BA6" }}>
+                {app.environments.length}
+              </span>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="dependencies">
             Abhängigkeiten
             {(app.dependencies.length + app.dependents.length) > 0 && (
@@ -274,6 +284,10 @@ export default async function AppDetailPage({ params }: { params: Promise<{ slug
             healthChecks={healthData.map((h) => ({ ...h, checkedAt: h.checkedAt.toISOString() }))}
             monitorConfigs={app.monitorConfigs}
           />
+        </TabsContent>
+
+        <TabsContent value="environments">
+          <EnvironmentsTab appSlug={app.slug} initialEnvironments={app.environments} />
         </TabsContent>
 
         <TabsContent value="dependencies">

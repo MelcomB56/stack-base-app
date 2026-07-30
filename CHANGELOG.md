@@ -3,7 +3,30 @@
 Alle wesentlichen Änderungen an Stack-Base werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/).
 
-## [0.4.3-dev] — 2026-07-30
+## [0.4.4-dev] — 2026-07-30
+
+### Added
+
+**Modul 27 — Environment Management**
+- Neuer Tab "Environments" in App-Detail-Seite (zwischen Übersicht und Abhängigkeiten)
+- Environments als vollwertige Objekte: Name, Typ (Dev/Staging/Prod/Custom), URL, Status (Online/Offline/Degradiert/Wartung/Unbekannt), Notiz
+- Inline-Edit und Löschen pro Environment
+- `AppEnvironment`-Prisma-Model mit `EnvironmentType` und `EnvironmentStatus` Enums
+- API: `GET/POST /api/apps/[slug]/environments`, `PATCH/DELETE /api/apps/[slug]/environments/[id]`
+
+**SMTP → Globale Einstellungen**
+- SMTP-Konfiguration aus der Benachrichtigungen-Tab in die globale Settings-Seite verschoben
+- Neuer SMTP-Abschnitt in `/settings`: Host, Port, TLS/SSL, Benutzername, Passwort, Absender
+- "Verbindung testen"-Button: speichert erst, ruft dann `nodemailer.verify()` auf
+- `SystemSetting`-Prisma-Model (Key-Value-Store) für persistente System-Einstellungen
+- `email.ts` liest SMTP-Konfiguration aus DB (DB-Einstellungen überschreiben `.env`-Vars)
+- API: `GET/PATCH /api/system/settings`, `POST /api/system/smtp` (Test)
+- Passwort wird bei GET nicht zurückgegeben (nur "●●●●●●●●" wenn gesetzt)
+
+**App-Detail-Seite: volle Breite**
+- `maxWidth: 960` entfernt — Inhalt nutzt die gesamte verfügbare Breite
+
+### [0.4.3-dev] — 2026-07-30
 
 ### Fixed
 - Tab-Leiste: scrollbare horizontale Ansicht bei zu vielen Tabs (10 Tabs passen nicht in eine Zeile)

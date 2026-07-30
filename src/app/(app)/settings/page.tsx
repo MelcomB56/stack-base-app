@@ -1,20 +1,29 @@
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { Settings, User, Shield, Bell } from "lucide-react";
+import { Settings, User, Shield, Bell, Mail } from "lucide-react";
 import { PasswordChangeForm } from "@/components/settings/PasswordChangeForm";
 import { ProfileForm } from "@/components/settings/ProfileForm";
 import { WorkerStatusCard } from "@/components/settings/WorkerStatusCard";
+import { SmtpSettingsForm } from "@/components/settings/SmtpSettingsForm";
 
 export default async function SettingsPage() {
   const session = await auth();
   const userId = session?.user?.id;
 
-  const user = userId
-    ? await db.user.findUnique({
-        where: { id: userId },
-        select: { id: true, name: true, email: true, role: true, createdAt: true, lastLoginAt: true },
-      })
-    : null;
+  const [user, smtpRows] = await Promise.all([
+    userId
+      ? db.user.findUnique({
+          where: { id: userId },
+          select: { id: true, name: true, email: true, role: true, createdAt: true, lastLoginAt: true },
+        })
+      : null,
+    db.systemSetting.findMany({
+      where: { key: { in: ["smtp_host", "smtp_port", "smtp_user", "smtp_pass", "smtp_from", "smtp_secure"] } },
+    }),
+  ]);
+
+  const smtp = Object.fromEntries(smtpRows.map((r) => [r.key, r.value]));
+  if (smtp["smtp_pass"]) smtp["smtp_pass"] = "••••••••";
 
   const initials = user?.name
     ? user.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
@@ -26,7 +35,7 @@ export default async function SettingsPage() {
   }
 
   return (
-    <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 20, maxWidth: 640 }}>
+    <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 20, maxWidth: 720 }}>
       <div>
         <h1 style={{ fontSize: 20, fontWeight: 700, letterSpacing: "-0.02em", color: "#EDF2F7", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
           <Settings size={18} style={{ color: "#2563E8" }} />
@@ -79,6 +88,20 @@ export default async function SettingsPage() {
         <PasswordChangeForm />
       </div>
 
+      {/* SMTP-Konfiguration */}
+      <div style={{ background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12, padding: 18, display: "flex", flexDirection: "column", gap: 16 }}>
+        <div>
+          <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: ".15em", textTransform: "uppercase", color: "#7A8BA6", margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
+            <Mail size={11} />
+            E-Mail / SMTP
+          </p>
+          <p style={{ fontSize: 12, color: "#7A8BA6", margin: "6px 0 0", lineHeight: 1.5 }}>
+            Globale SMTP-Konfiguration für alle App-Benachrichtigungen. Überschreibt die Einstellungen aus <code style={{ fontFamily: "monospace", fontSize: 11, background: "#1A2640", padding: "1px 6px", borderRadius: 4 }}>.env</code>.
+          </p>
+        </div>
+        <SmtpSettingsForm initial={smtp} />
+      </div>
+
       {/* Benachrichtigungen */}
       <div style={{ background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12, padding: 18, display: "flex", flexDirection: "column", gap: 10 }}>
         <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: ".15em", textTransform: "uppercase", color: "#7A8BA6", margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
@@ -86,7 +109,8 @@ export default async function SettingsPage() {
           Benachrichtigungen
         </p>
         <p style={{ fontSize: 13, color: "#7A8BA6", margin: 0, lineHeight: 1.5 }}>
-          Webhook- und E-Mail-Benachrichtigungen folgen in einer späteren Version.
+          E-Mail-Empfänger werden pro App unter <em>App → Benachrichtigungen</em> verwaltet.
+          Webhook-Benachrichtigungen folgen in einer späteren Version.
         </p>
       </div>
 
