@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { z } from "zod";
+import { logActivity } from "@/lib/activity";
 
 export async function GET(
   _req: NextRequest,
@@ -51,6 +52,7 @@ export async function PUT(
     include: { createdBy: { select: { name: true } } },
   });
 
+  await logActivity({ appId: app.id, userId: session.user?.id, action: "doc.updated", entityType: "doc", entityId: doc.id, metadata: { title: doc.title } });
   return NextResponse.json(doc);
 }
 
@@ -69,5 +71,6 @@ export async function DELETE(
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   await db.docPage.delete({ where: { id } });
+  await logActivity({ appId: app.id, userId: session.user?.id, action: "doc.deleted", entityType: "doc", entityId: id, metadata: { title: existing.title } });
   return NextResponse.json({ ok: true });
 }

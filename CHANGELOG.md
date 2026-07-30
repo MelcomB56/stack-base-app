@@ -3,6 +3,18 @@
 Alle wesentlichen Änderungen an Stack-Base werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/).
 
+## [0.4.0-dev] — 2026-07-30
+
+### Added
+
+**Modul 23 — Aktivitätsprotokoll**
+- Neuer Tab "Aktivitäten" (6. Tab, vor Dokumentation) in App-Detail-Seite
+- Timeline-Ansicht mit Datum-Gruppen, farbigen Typ-Icons und relativem Zeitstempel
+- 14 Action-Typen: release.created/updated/deleted, changelog.created/deleted, incident.created/resolved/updated, doc.created/updated/deleted, github.synced, status.changed, app.created/updated
+- Pagination: erste 30 Einträge beim Laden, "Ältere laden"-Button mit cursor-basierter API
+- `logActivity()` Hilfsfunktion in `lib/activity.ts` — fail-safe (wirft nie, blockiert nie)
+- Logs in 8 API-Routen eingebaut: releases, releases/[id], changelog, changelog/[id], incidents, docs, docs/[id], activity (GET)
+
 ## [0.3.9-dev] — 2026-07-30
 
 ### Added

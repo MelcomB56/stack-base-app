@@ -14,6 +14,7 @@ import { MonitorTab } from "@/components/apps/detail/MonitorTab";
 import { DependenciesTab } from "@/components/apps/detail/DependenciesTab";
 import { AppDetailActions } from "@/components/apps/AppDetailActions";
 import { DocsTab } from "@/components/apps/detail/DocsTab";
+import { ActivitiesTab } from "@/components/apps/detail/ActivitiesTab";
 
 async function getApp(slug: string) {
   return db.app.findUnique({
@@ -82,7 +83,7 @@ export default async function AppDetailPage({ params }: { params: Promise<{ slug
 
   const userId = session?.user?.id;
 
-  const [isFavorited, healthData, allApps] = await Promise.all([
+  const [isFavorited, healthData, allApps, activityResult] = await Promise.all([
     userId
       ? db.userFavorite.findUnique({ where: { userId_appId: { userId, appId: app.id } } }).then(Boolean)
       : Promise.resolve(false),
@@ -96,7 +97,16 @@ export default async function AppDetailPage({ params }: { params: Promise<{ slug
       select: { id: true, name: true, slug: true },
       orderBy: { name: "asc" },
     }),
+    db.activityLog.findMany({
+      where: { appId: app.id },
+      orderBy: { createdAt: "desc" },
+      take: 31,
+      include: { user: { select: { name: true } } },
+    }),
   ]);
+
+  const activityLogs = activityResult.slice(0, 30).map((l) => ({ ...l, createdAt: l.createdAt.toISOString(), metadata: l.metadata as Record<string, unknown> | null }));
+  const activityCursor = activityResult.length > 30 ? activityResult[29].id : null;
 
   const currentRelease = app.releases.find((r) => r.isCurrent);
   const accentColor = STATUS_ACCENT[app.status] ?? "#6B7280";
@@ -207,6 +217,14 @@ export default async function AppDetailPage({ params }: { params: Promise<{ slug
               </span>
             )}
           </TabsTrigger>
+          <TabsTrigger value="activities">
+            Aktivitäten
+            {activityLogs.length > 0 && (
+              <span style={{ marginLeft: 5, padding: "1px 6px", borderRadius: 99, background: "#1A2640", fontSize: 10, color: "#7A8BA6" }}>
+                {activityLogs.length}{activityCursor ? "+" : ""}
+              </span>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="docs">
             Dokumentation
             {app.docPages.length > 0 && (
@@ -264,6 +282,14 @@ export default async function AppDetailPage({ params }: { params: Promise<{ slug
 
         <TabsContent value="changelog">
           <ChangelogTab appSlug={app.slug} initial={app.changelogEntries} releases={app.releases} />
+        </TabsContent>
+
+        <TabsContent value="activities">
+          <ActivitiesTab
+            appSlug={app.slug}
+            initial={activityLogs}
+            initialCursor={activityCursor}
+          />
         </TabsContent>
 
         <TabsContent value="docs">

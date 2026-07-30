@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { apiError } from "@/lib/server-utils";
 import { updateChangelogEntrySchema } from "@/lib/validations/changelog";
+import { logActivity } from "@/lib/activity";
 
 type Params = { params: Promise<{ slug: string; id: string }> };
 
@@ -48,9 +49,10 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
 export async function DELETE(_req: NextRequest, { params }: Params) {
   const { slug, id } = await params;
-  const { entry, error } = await getEntryForApp(slug, id);
+  const { app, entry, error } = await getEntryForApp(slug, id);
   if (error) return error;
 
   await db.changelogEntry.delete({ where: { id: entry!.id } });
+  await logActivity({ appId: app!.id, action: "changelog.deleted", entityType: "changelog", entityId: id, metadata: { type: entry!.type } });
   return new Response(null, { status: 204 });
 }

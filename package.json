@@ -1,6 +1,6 @@
 {
   "name": "stack-base",
-  "version": "0.3.9-dev",
+  "version": "0.4.0-dev",
   "private": true,
   "scripts": {
     "dev": "next dev",

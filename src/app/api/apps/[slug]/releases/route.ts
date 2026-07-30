@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { apiError } from "@/lib/server-utils";
 import { createReleaseSchema } from "@/lib/validations/release";
 import { auth } from "@/auth";
+import { logActivity } from "@/lib/activity";
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -59,6 +60,8 @@ export async function POST(req: NextRequest, { params }: Params) {
       },
     });
   });
+
+  await logActivity({ appId: app.id, userId, action: "release.created", entityType: "release", entityId: release.id, metadata: { version: release.version, type: release.releaseType } });
 
   return Response.json(release, { status: 201 });
 }

@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { apiError } from "@/lib/server-utils";
 import { createChangelogEntrySchema } from "@/lib/validations/changelog";
 import { auth } from "@/auth";
+import { logActivity } from "@/lib/activity";
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -67,6 +68,8 @@ export async function POST(req: NextRequest, { params }: Params) {
       createdBy: { select: { id: true, name: true } },
     },
   });
+
+  await logActivity({ appId: app.id, userId, action: "changelog.created", entityType: "changelog", entityId: entry.id, metadata: { type: entry.type, description: entry.description.slice(0, 80) } });
 
   return Response.json(entry, { status: 201 });
 }

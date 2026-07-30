@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { apiError } from "@/lib/server-utils";
 import { auth } from "@/auth";
+import { logActivity } from "@/lib/activity";
 import { z } from "zod";
 
 const createSchema = z.object({
@@ -47,6 +48,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
   const incident = await db.incident.create({
     data: { appId: app.id, ...parsed.data, autoCreated: false },
   });
+  await logActivity({ appId: app.id, userId: session.user?.id, action: "incident.created", entityType: "incident", entityId: incident.id, metadata: { title: incident.title, severity: incident.severity } });
   return Response.json(incident, { status: 201 });
 }
 
@@ -77,5 +79,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ sl
     where: { id: incidentId, appId: app.id },
     data,
   });
+  const action = parsed.data.status === "RESOLVED" ? "incident.resolved" : "incident.updated";
+  await logActivity({ appId: app.id, userId: session.user?.id, action, entityType: "incident", entityId: incidentId, metadata: { title: updated.title, status: updated.status } });
   return Response.json(updated);
 }
