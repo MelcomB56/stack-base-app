@@ -15,6 +15,7 @@ import { DependenciesTab } from "@/components/apps/detail/DependenciesTab";
 import { AppDetailActions } from "@/components/apps/AppDetailActions";
 import { DocsTab } from "@/components/apps/detail/DocsTab";
 import { ActivitiesTab } from "@/components/apps/detail/ActivitiesTab";
+import { ScreenshotsTab } from "@/components/apps/detail/ScreenshotsTab";
 
 async function getApp(slug: string) {
   return db.app.findUnique({
@@ -55,6 +56,9 @@ async function getApp(slug: string) {
         where: { parentId: null },
         orderBy: [{ type: "asc" }, { sortOrder: "asc" }, { createdAt: "asc" }],
         include: { createdBy: { select: { name: true } } },
+      },
+      screenshots: {
+        orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
       },
       dependencies: {
         include: { dependsOnApp: { select: { id: true, name: true, slug: true, status: true } } },
@@ -233,6 +237,14 @@ export default async function AppDetailPage({ params }: { params: Promise<{ slug
               </span>
             )}
           </TabsTrigger>
+          <TabsTrigger value="screenshots">
+            Screenshots
+            {app.screenshots.length > 0 && (
+              <span style={{ marginLeft: 5, padding: "1px 6px", borderRadius: 99, background: "#1A2640", fontSize: 10, color: "#7A8BA6" }}>
+                {app.screenshots.length}
+              </span>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="monitoring">
             <Activity size={11} style={{ marginRight: 4 }} />
             Monitoring
@@ -299,6 +311,16 @@ export default async function AppDetailPage({ params }: { params: Promise<{ slug
               ...d,
               createdAt: d.createdAt.toISOString(),
               updatedAt: d.updatedAt.toISOString(),
+            }))}
+          />
+        </TabsContent>
+
+        <TabsContent value="screenshots">
+          <ScreenshotsTab
+            appSlug={app.slug}
+            initial={app.screenshots.map((s) => ({
+              ...s,
+              createdAt: s.createdAt.toISOString(),
             }))}
           />
         </TabsContent>

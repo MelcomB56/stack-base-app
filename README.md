@@ -2,7 +2,7 @@
 
 Zentrale WebApp-Management-Plattform für eigene Anwendungen — vergleichbar mit dem Azure Portal, aber für selbst entwickelte Apps.
 
-**Version:** v0.4.0-dev
+**Version:** v0.4.1-dev
 
 ## Features (v0.1.0)
 

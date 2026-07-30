@@ -1,6 +1,6 @@
 {
   "name": "stack-base",
-  "version": "0.4.0-dev",
+  "version": "0.4.1-dev",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -26,6 +26,7 @@
     "ioredis": "^5.11.1",
     "lucide-react": "^1.27.0",
     "marked": "^18.0.7",
+    "minio": "^8.0.7",
     "next": "16.2.12",
     "next-auth": "^5.0.0-beta.32",
     "node-cron": "^4.6.0",

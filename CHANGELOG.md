@@ -3,6 +3,22 @@
 Alle wesentlichen Änderungen an Stack-Base werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/).
 
+## [0.4.1-dev] — 2026-07-30
+
+### Added
+
+**Modul 9 — Screenshots (MinIO-Dateiablage)**
+- Neuer Tab "Screenshots" in App-Detail-Seite (zwischen Dokumentation und Monitoring)
+- Drag-and-drop Upload-Zone + Datei-Dialog, mehrere Dateien gleichzeitig möglich
+- Responsive Galerie-Grid (auto-fill, min. 220px pro Spalte, 16:9 Seitenverhältnis)
+- Hover-Overlay mit Dateiname und Dateigröße; Löschen-Button (Papierkorb) pro Bild
+- Lightbox mit Pfeil-Navigation (Prev/Next) und Keyboard-Steuerung (←/→/Esc)
+- `lib/storage.ts`: MinIO-Client-Singleton, `ensureBucket()`, `uploadFile()`, `deleteFile()`, `objectNameFromUrl()`
+- API: `GET/POST /api/apps/[slug]/screenshots`, `PATCH/DELETE /api/apps/[slug]/screenshots/[id]`
+- Unterstützte Formate: JPEG, PNG, WebP, GIF · max. 10 MB pro Bild
+- MinIO-Bucket `stack-base` mit öffentlich-lesbarer Policy (direkter URL-Zugriff)
+- `logActivity()` für `screenshot.uploaded` und `screenshot.deleted`
+
 ## [0.4.0-dev] — 2026-07-30
 
 ### Added
