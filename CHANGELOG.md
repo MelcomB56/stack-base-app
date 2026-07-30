@@ -3,6 +3,23 @@
 Alle wesentlichen Änderungen an Stack-Base werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/).
 
+## [0.4.2-dev] — 2026-07-30
+
+### Added
+
+**Modul 22 — Benachrichtigungen (E-Mail bei Statuswechsel)**
+- Neuer Tab "Benachrichtigungen" in App-Detail-Seite (zwischen Screenshots und Monitoring)
+- Empfänger-Verwaltung: E-Mail-Adressen hinzufügen/entfernen, SMTP-Status-Anzeige
+- 3 konfigurierbare Trigger per Empfänger: Statuswechsel, Incidents, Releases (Toggle-Switches)
+- `lib/email.ts`: nodemailer-Singleton, 3 E-Mail-Templates mit Dark-Theme-HTML (Status, Incident, Release)
+- E-Mail-Versand in 3 API-Routen: status (Statuswechsel), incidents (POST), releases (POST) — fire & forget
+- `NotificationSetting`-Prisma-Model: `@@unique([appId, email])`, `onStatusChange/onIncident/onRelease`
+- API: `GET/POST /api/apps/[slug]/notifications`, `PATCH/DELETE /api/apps/[slug]/notifications/[id]`
+- SMTP-Konfiguration via `.env`: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`
+
+### Fixed
+- TypeScript-Fehler in `ActivitiesTab.tsx` (label-Signatur) und `activity.ts` (Prisma-Cast)
+
 ## [0.4.1-dev] — 2026-07-30
 
 ### Added

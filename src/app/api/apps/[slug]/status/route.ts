@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { apiError } from "@/lib/server-utils";
 import { changeStatusSchema } from "@/lib/validations/app";
 import { auth } from "@/auth";
+import { sendStatusChangeEmail } from "@/lib/email";
 
 export async function PATCH(
   req: NextRequest,
@@ -58,6 +59,22 @@ export async function PATCH(
       },
     }),
   ]);
+
+  // E-Mail-Benachrichtigungen (fire & forget)
+  const recipients = await db.notificationSetting.findMany({
+    where: { appId: app.id, onStatusChange: true },
+  });
+  const changedByName = session.user?.name ?? session.user?.email ?? userId;
+  for (const r of recipients) {
+    sendStatusChangeEmail({
+      to: r.email,
+      appName: updated.name,
+      appSlug: updated.slug,
+      oldStatus: app.status,
+      newStatus: status,
+      changedBy: changedByName,
+    });
+  }
 
   return Response.json(updated);
 }

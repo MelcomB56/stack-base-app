@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { apiError } from "@/lib/server-utils";
 import { auth } from "@/auth";
 import { logActivity } from "@/lib/activity";
+import { sendIncidentEmail } from "@/lib/email";
 import { z } from "zod";
 
 const createSchema = z.object({
@@ -49,6 +50,17 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
     data: { appId: app.id, ...parsed.data, autoCreated: false },
   });
   await logActivity({ appId: app.id, userId: session.user?.id, action: "incident.created", entityType: "incident", entityId: incident.id, metadata: { title: incident.title, severity: incident.severity } });
+
+  // E-Mail-Benachrichtigungen (fire & forget)
+  const appFull = await db.app.findUnique({ where: { id: app.id }, select: { name: true, slug: true } });
+  if (appFull) {
+    const recipients = await db.notificationSetting.findMany({ where: { appId: app.id, onIncident: true } });
+    const reporter = session.user?.name ?? session.user?.email ?? "Unbekannt";
+    for (const r of recipients) {
+      sendIncidentEmail({ to: r.email, appName: appFull.name, appSlug: appFull.slug, title: incident.title, severity: incident.severity, reportedBy: reporter });
+    }
+  }
+
   return Response.json(incident, { status: 201 });
 }
 

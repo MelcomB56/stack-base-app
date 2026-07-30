@@ -4,6 +4,7 @@ import { apiError } from "@/lib/server-utils";
 import { createReleaseSchema } from "@/lib/validations/release";
 import { auth } from "@/auth";
 import { logActivity } from "@/lib/activity";
+import { sendReleaseEmail } from "@/lib/email";
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -62,6 +63,12 @@ export async function POST(req: NextRequest, { params }: Params) {
   });
 
   await logActivity({ appId: app.id, userId, action: "release.created", entityType: "release", entityId: release.id, metadata: { version: release.version, type: release.releaseType } });
+
+  // E-Mail-Benachrichtigungen (fire & forget)
+  const recipients = await db.notificationSetting.findMany({ where: { appId: app.id, onRelease: true } });
+  for (const r of recipients) {
+    sendReleaseEmail({ to: r.email, appName: app.name, appSlug: app.slug, version: release.version, releaseType: release.releaseType });
+  }
 
   return Response.json(release, { status: 201 });
 }

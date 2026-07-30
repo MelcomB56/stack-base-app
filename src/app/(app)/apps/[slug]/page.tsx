@@ -16,6 +16,7 @@ import { AppDetailActions } from "@/components/apps/AppDetailActions";
 import { DocsTab } from "@/components/apps/detail/DocsTab";
 import { ActivitiesTab } from "@/components/apps/detail/ActivitiesTab";
 import { ScreenshotsTab } from "@/components/apps/detail/ScreenshotsTab";
+import { NotificationsTab } from "@/components/apps/detail/NotificationsTab";
 
 async function getApp(slug: string) {
   return db.app.findUnique({
@@ -60,6 +61,7 @@ async function getApp(slug: string) {
       screenshots: {
         orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
       },
+      notificationSettings: { orderBy: { createdAt: "asc" } },
       dependencies: {
         include: { dependsOnApp: { select: { id: true, name: true, slug: true, status: true } } },
       },
@@ -245,6 +247,14 @@ export default async function AppDetailPage({ params }: { params: Promise<{ slug
               </span>
             )}
           </TabsTrigger>
+          <TabsTrigger value="notifications">
+            Benachrichtigungen
+            {app.notificationSettings.length > 0 && (
+              <span style={{ marginLeft: 5, padding: "1px 6px", borderRadius: 99, background: "#1A2640", fontSize: 10, color: "#7A8BA6" }}>
+                {app.notificationSettings.length}
+              </span>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="monitoring">
             <Activity size={11} style={{ marginRight: 4 }} />
             Monitoring
@@ -322,6 +332,14 @@ export default async function AppDetailPage({ params }: { params: Promise<{ slug
               ...s,
               createdAt: s.createdAt.toISOString(),
             }))}
+          />
+        </TabsContent>
+
+        <TabsContent value="notifications">
+          <NotificationsTab
+            appSlug={app.slug}
+            initial={app.notificationSettings}
+            emailConfigured={!!process.env.SMTP_HOST}
           />
         </TabsContent>
 

@@ -262,9 +262,10 @@ model App {
   activityLogs   ActivityLog[]
   dependencies   AppDependency[]    @relation("AppDependencies")
   dependents     AppDependency[]    @relation("AppDependents")
-  healthChecks   HealthCheck[]
-  monitorConfigs MonitorConfig[]
-  incidents      Incident[]
+  healthChecks           HealthCheck[]
+  monitorConfigs         MonitorConfig[]
+  incidents              Incident[]
+  notificationSettings   NotificationSetting[]
 
   @@map("apps")
 }
@@ -601,4 +602,20 @@ model WorkerHeartbeat {
   pid       Int?
 
   @@map("worker_heartbeats")
+}
+
+model NotificationSetting {
+  id             String   @id @default(cuid())
+  appId          String   @map("app_id")
+  email          String
+  onStatusChange Boolean  @default(true) @map("on_status_change")
+  onIncident     Boolean  @default(true) @map("on_incident")
+  onRelease      Boolean  @default(false) @map("on_release")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  app App @relation(fields: [appId], references: [id], onDelete: Cascade)
+
+  @@unique([appId, email])
+  @@map("notification_settings")
 }

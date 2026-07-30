@@ -24,7 +24,7 @@ interface Props {
 type ActionMeta = {
   icon: React.ReactNode;
   color: string;
-  label: (meta: Record<string, unknown>) => string;
+  label: (meta: Record<string, unknown>, action?: string) => string;
 };
 
 const ACTION_MAP: Record<string, ActionMeta> = {
@@ -48,7 +48,7 @@ const ACTION_MAP: Record<string, ActionMeta> = {
 const FALLBACK: ActionMeta = {
   icon: <Activity size={13} />,
   color: "#7A8BA6",
-  label: (_, action) => action,
+  label: (_meta, action) => action ?? "Unbekannte Aktion",
 };
 
 function getMeta(action: string) {
