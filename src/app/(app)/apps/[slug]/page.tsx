@@ -13,6 +13,7 @@ import { IncidentsTab } from "@/components/apps/detail/IncidentsTab";
 import { MonitorTab } from "@/components/apps/detail/MonitorTab";
 import { DependenciesTab } from "@/components/apps/detail/DependenciesTab";
 import { AppDetailActions } from "@/components/apps/AppDetailActions";
+import { DocsTab } from "@/components/apps/detail/DocsTab";
 
 async function getApp(slug: string) {
   return db.app.findUnique({
@@ -48,6 +49,11 @@ async function getApp(slug: string) {
       incidents: {
         orderBy: { startedAt: "desc" },
         take: 20,
+      },
+      docPages: {
+        where: { parentId: null },
+        orderBy: [{ type: "asc" }, { sortOrder: "asc" }, { createdAt: "asc" }],
+        include: { createdBy: { select: { name: true } } },
       },
       dependencies: {
         include: { dependsOnApp: { select: { id: true, name: true, slug: true, status: true } } },
@@ -201,6 +207,14 @@ export default async function AppDetailPage({ params }: { params: Promise<{ slug
               </span>
             )}
           </TabsTrigger>
+          <TabsTrigger value="docs">
+            Dokumentation
+            {app.docPages.length > 0 && (
+              <span style={{ marginLeft: 5, padding: "1px 6px", borderRadius: 99, background: "#1A2640", fontSize: 10, color: "#7A8BA6" }}>
+                {app.docPages.length}
+              </span>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="monitoring">
             <Activity size={11} style={{ marginRight: 4 }} />
             Monitoring
@@ -250,6 +264,17 @@ export default async function AppDetailPage({ params }: { params: Promise<{ slug
 
         <TabsContent value="changelog">
           <ChangelogTab appSlug={app.slug} initial={app.changelogEntries} releases={app.releases} />
+        </TabsContent>
+
+        <TabsContent value="docs">
+          <DocsTab
+            appSlug={app.slug}
+            initial={app.docPages.map((d) => ({
+              ...d,
+              createdAt: d.createdAt.toISOString(),
+              updatedAt: d.updatedAt.toISOString(),
+            }))}
+          />
         </TabsContent>
 
         <TabsContent value="monitoring">

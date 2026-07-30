@@ -3,6 +3,21 @@
 Alle wesentlichen Änderungen an Stack-Base werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/).
 
+## [0.3.9-dev] — 2026-07-30
+
+### Added
+
+**Modul 8 — Dokumentation (Markdown-Editor)**
+- Neuer Tab "Dokumentation" in jeder App-Detail-Seite (7. Tab)
+- Sidebar mit Dokumenten-Liste, gruppiert nach Typ: Handbuch, FAQ, API-Referenz, Sonstiges
+- Split-Panel-Editor: Markdown-Textarea links, gerenderte Vorschau rechts (toggle)
+- Vollständiges Markdown-Rendering via `marked` (Tabellen, Listen, Code-Blöcke, Blockquotes, Links)
+- Eigene `doc-content` CSS-Klasse für konsistentes Dark-Theme-Styling
+- CRUD-API: `GET/POST /api/apps/[slug]/docs`, `GET/PUT/DELETE /api/apps/[slug]/docs/[id]`
+- Keyboard-Shortcut Strg+S zum Speichern im Editor
+- Dokumenttypen: MANUAL, FAQ, API, OTHER mit Typ-Icons in der Sidebar
+- Footer zeigt Ersteller und letztes Änderungsdatum
+
 ## [0.3.8-dev] — 2026-07-29
 
 ### Added
