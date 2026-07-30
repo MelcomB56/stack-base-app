@@ -189,6 +189,8 @@ export default async function AppDetailPage({ params }: { params: Promise<{ slug
 
       {/* Tabs */}
       <Tabs defaultValue="overview">
+        <style>{`.tab-bar::-webkit-scrollbar{display:none}`}</style>
+        <div className="tab-bar" style={{ overflowX: "auto", scrollbarWidth: "none" }}>
         <TabsList>
           <TabsTrigger value="overview">Übersicht</TabsTrigger>
           <TabsTrigger value="dependencies">
@@ -260,6 +262,7 @@ export default async function AppDetailPage({ params }: { params: Promise<{ slug
             Monitoring
           </TabsTrigger>
         </TabsList>
+        </div>
 
         <TabsContent value="overview">
           <OverviewTab

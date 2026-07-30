@@ -3,6 +3,11 @@
 Alle wesentlichen Änderungen an Stack-Base werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/).
 
+## [0.4.3-dev] — 2026-07-30
+
+### Fixed
+- Tab-Leiste: scrollbare horizontale Ansicht bei zu vielen Tabs (10 Tabs passen nicht in eine Zeile)
+
 ## [0.4.2-dev] — 2026-07-30
 
 ### Added
