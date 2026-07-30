@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "stack-base-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev:all"],
+      "port": 3000
+    }
+  ]
+}
