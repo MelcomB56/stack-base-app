@@ -127,6 +127,14 @@ enum CostCategory {
   OTHER
 }
 
+enum CertStatus {
+  VALID
+  EXPIRING_SOON
+  EXPIRED
+  ERROR
+  UNKNOWN
+}
+
 // ─────────────────────────────────────────────
 // Modul 4 — Benutzer
 // ─────────────────────────────────────────────
@@ -292,6 +300,7 @@ model App {
   notificationSettings   NotificationSetting[]
   environments           AppEnvironment[]
   costs                  AppCost[]
+  certChecks             CertCheck[]
 
   @@map("apps")
 }
@@ -571,6 +580,29 @@ model AppCost {
   @@index([appId])
   @@index([month])
   @@map("app_costs")
+}
+
+// ─────────────────────────────────────────────
+// Modul 31 — Certificate Management
+// ─────────────────────────────────────────────
+
+model CertCheck {
+  id        String     @id @default(cuid())
+  appId     String     @map("app_id")
+  domain    String     @db.VarChar(253)
+  validFrom DateTime?  @map("valid_from")
+  validTo   DateTime?  @map("valid_to")
+  issuer    String?    @db.VarChar(255)
+  subject   String?    @db.VarChar(255)
+  daysLeft  Int?       @map("days_left")
+  status    CertStatus @default(UNKNOWN)
+  errorMsg  String?    @db.VarChar(500) @map("error_msg")
+  checkedAt DateTime   @default(now()) @map("checked_at")
+
+  app App @relation(fields: [appId], references: [id], onDelete: Cascade)
+
+  @@index([appId, checkedAt])
+  @@map("cert_checks")
 }
 
 // ─────────────────────────────────────────────

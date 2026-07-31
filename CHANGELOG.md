@@ -3,6 +3,19 @@
 Alle wesentlichen Änderungen an Stack-Base werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/).
 
+## [0.4.8-dev] — 2026-07-31
+
+### Added
+
+**Modul 31 — Certificate Management**
+- `CertCheck`-Modell: domain, validFrom/To, issuer, subject, daysLeft, status, errorMsg; Migration 20260731135317_add_cert_checks
+- `CertStatus`-Enum: VALID / EXPIRING_SOON (<30 Tage) / EXPIRED / ERROR / UNKNOWN
+- Worker: täglich 03:00 Uhr + einmalig beim Start (`runCertChecks` via `Promise.allSettled` für alle Apps mit urlProd)
+- Einzel-App-Check: `checkCertForApp()` für manuellen Trigger per API
+- API: `GET /api/apps/[slug]/cert` (letzter Check + 20 Einträge Verlauf), `POST` (sofort prüfen)
+- Zertifikat-Tab in App-Detail: Status-Badge mit Farbe, Ablauf-Balken, Domain/Aussteller/Laufzeit-Details, Verlaufs-Liste, „Jetzt prüfen"-Button
+- Node.js TLS-Check: `tls.connect` mit `rejectUnauthorized: false` (auch abgelaufene Zerts prüfbar)
+
 ## [0.4.7-dev] — 2026-07-31
 
 ### Added

@@ -2,6 +2,7 @@ import cron from "node-cron";
 import { PrismaClient } from "@/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { runHealthchecks } from "./healthcheck";
+import { runCertChecks } from "./certcheck";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const db = new PrismaClient({ adapter });
@@ -52,6 +53,17 @@ async function main() {
     }
   });
 
+  // Zertifikat-Checks täglich um 03:00 Uhr
+  cron.schedule("0 3 * * *", async () => {
+    console.log(`[worker] Zertifikat-Checks starten — ${new Date().toISOString()}`);
+    try {
+      const count = await runCertChecks(db);
+      console.log(`[worker] ${count} Zertifikate geprüft`);
+    } catch (err) {
+      console.error("[worker] Cert-Check Fehler:", err);
+    }
+  });
+
   // Sofort einmal durchlaufen
   try {
     const count = await runHealthchecks();
@@ -59,6 +71,9 @@ async function main() {
   } catch (err) {
     console.error("[worker] Initialer Check fehlgeschlagen:", err);
   }
+
+  // Cert-Checks beim Start (einmalig, nicht blockierend)
+  runCertChecks(db).then((n) => console.log(`[worker] Initialer Cert-Check: ${n} Apps`)).catch(console.error);
 
   // Sauber beenden wenn SIGTERM empfangen
   process.on("SIGTERM", async () => {

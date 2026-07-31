@@ -19,6 +19,7 @@ import { ScreenshotsTab } from "@/components/apps/detail/ScreenshotsTab";
 import { NotificationsTab } from "@/components/apps/detail/NotificationsTab";
 import { EnvironmentsTab } from "@/components/apps/detail/EnvironmentsTab";
 import { CostsTab } from "@/components/apps/detail/CostsTab";
+import { CertTab } from "@/components/apps/detail/CertTab";
 
 async function getApp(slug: string) {
   return db.app.findUnique({
@@ -205,6 +206,9 @@ export default async function AppDetailPage({ params }: { params: Promise<{ slug
               </span>
             )}
           </TabsTrigger>
+          <TabsTrigger value="cert">
+            Zertifikat
+          </TabsTrigger>
           <TabsTrigger value="costs">
             Kosten
             {app.costs.length > 0 && (
@@ -298,6 +302,10 @@ export default async function AppDetailPage({ params }: { params: Promise<{ slug
 
         <TabsContent value="environments">
           <EnvironmentsTab appSlug={app.slug} initialEnvironments={app.environments} />
+        </TabsContent>
+
+        <TabsContent value="cert">
+          <CertTab appSlug={app.slug} urlProd={app.urlProd ?? null} />
         </TabsContent>
 
         <TabsContent value="costs">
