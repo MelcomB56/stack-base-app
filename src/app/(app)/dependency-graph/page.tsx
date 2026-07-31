@@ -27,7 +27,7 @@ export default async function DependencyGraphPage() {
   const externalCount = dependencies.filter((d) => !d.dependsOnAppId).length;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
+    <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
       {/* Header bar */}
       <div style={{
         padding: "10px 20px", borderBottom: "1px solid #1E3050",

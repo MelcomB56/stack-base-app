@@ -3,6 +3,21 @@
 Alle wesentlichen Änderungen an Stack-Base werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/).
 
+## [0.4.6-dev] — 2026-07-31
+
+### Fixed
+
+**Dependency Graph — Canvas-Rendering-Fix**
+- `ctx.setTransform(dpr, 0, 0, dpr, 0, 0)` ersetzt akkumulierendes `ctx.scale(dpr, dpr)` → Nodes waren bei dpr≠1 unsichtbar
+- `clearRect` verwendet jetzt CSS-Pixel-Dimensionen (canvas.width / dpr) statt physische Pixel
+- Page-Container auf `position: absolute; inset: 0` → `height: 100%` in `<main overflowY="auto">` konnte auf 0 fallen (transform.y=0 → alle Nodes am oberen Rand)
+- `layout.tsx`: `<main>` erhält `position: relative` für korrekte absolute Positionierung der Kinder
+- Node-Opacity erhöht: Fill `33` (20%) statt `22` (13%), Stroke `bb` (73%) statt `99` (60%)
+- Hover-Glow über RadialGradient, Nodes größer (Radius 30 statt 26)
+- `s.alive`-Flag ersetzt `s.running` → Loop startet sofort ohne manuelles Enable
+- stateRef: `ready`-Flag verhindert doppeltes Überschreiben des Transforms (React StrictMode)
+- Canvas-Background auf `#080F1A` für optimalen Kontrast
+
 ## [0.4.5-dev] — 2026-07-31
 
 ### Added
