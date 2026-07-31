@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight, ArrowLeft, Plus, X, Trash2, Loader2, Link2 } from "lucide-react";
+import { ArrowRight, ArrowLeft, Plus, X, Trash2, Loader2, Link2, List, Share2 } from "lucide-react";
 import Link from "next/link";
+import { AppDepGraph } from "./AppDepGraph";
 
 type AppRef = { id: string; name: string; slug: string; status: string } | null;
 
@@ -35,15 +36,18 @@ const STATUS_COLOR: Record<string, string> = {
 
 export function DependenciesTab({
   appSlug,
+  appName,
   initial,
   availableApps,
 }: {
   appSlug: string;
+  appName: string;
   initial: { outgoing: Dependency[]; incoming: Dependent[] };
   availableApps: { id: string; name: string; slug: string }[];
 }) {
   const [outgoing, setOutgoing] = useState<Dependency[]>(initial.outgoing);
   const [incoming] = useState<Dependent[]>(initial.incoming);
+  const [view, setView] = useState<"list" | "graph">("list");
   const [showNew, setShowNew] = useState(false);
   const [form, setForm] = useState({
     dependsOnAppId: "",
@@ -86,12 +90,46 @@ export function DependenciesTab({
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       {/* Header */}
-      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        {/* View-Toggle */}
+        <div style={{ display: "flex", gap: 4, background: "#0B1220", border: "1px solid #1E3050", borderRadius: 8, padding: 3 }}>
+          {(["list", "graph"] as const).map((v) => (
+            <button key={v} onClick={() => setView(v)}
+              style={{
+                display: "flex", alignItems: "center", gap: 5, padding: "5px 10px",
+                borderRadius: 6, fontSize: 11, fontWeight: 500, border: "none",
+                background: view === v ? "rgba(37,99,232,0.2)" : "transparent",
+                color: view === v ? "#2563E8" : "#7A8BA6", cursor: "pointer",
+              }}>
+              {v === "list" ? <List size={11} /> : <Share2 size={11} />}
+              {v === "list" ? "Liste" : "Graph"}
+            </button>
+          ))}
+        </div>
         <button onClick={() => setShowNew(true)}
           style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 12px", background: "#2563E8", color: "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
           <Plus size={12} /> Abhängigkeit hinzufügen
         </button>
       </div>
+
+      {/* Graph-View */}
+      {view === "graph" && (
+        <AppDepGraph
+          appName={appName}
+          outgoing={outgoing.map((d) => ({
+            name: d.dependsOnApp?.name ?? d.dependsOnName ?? "?",
+            slug: d.dependsOnApp?.slug ?? null,
+            status: d.dependsOnApp?.status ?? null,
+            relationshipType: d.relationshipType,
+          }))}
+          incoming={incoming.map((d) => ({
+            name: d.app.name,
+            slug: d.app.slug,
+            status: d.app.status,
+            relationshipType: d.relationshipType,
+          }))}
+        />
+      )}
 
       {/* Formular */}
       {showNew && (
@@ -151,6 +189,10 @@ export function DependenciesTab({
           </div>
         </div>
       )}
+
+      {/* Listen-View */}
+      {view === "list" && (
+        <div style={{ display: "contents" }}>
 
       {/* Ausgehende Abhängigkeiten */}
       <div style={{ background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12, padding: 16 }}>
@@ -215,6 +257,9 @@ export function DependenciesTab({
           </div>
         )}
       </div>
+
+        </div>
+      )}
     </div>
   );
 }

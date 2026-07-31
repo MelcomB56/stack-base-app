@@ -326,6 +326,7 @@ export default async function AppDetailPage({ params }: { params: Promise<{ slug
         <TabsContent value="dependencies">
           <DependenciesTab
             appSlug={app.slug}
+            appName={app.name}
             initial={{
               outgoing: app.dependencies.map((d) => ({
                 ...d,

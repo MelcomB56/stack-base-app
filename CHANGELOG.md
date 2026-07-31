@@ -3,6 +3,34 @@
 Alle wesentlichen Änderungen an Stack-Base werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/).
 
+## [0.5.0-dev] — 2026-07-31
+
+### Added
+
+**Modul 28 — Dependency Graph (App-Detail)**
+- Canvas-basierter radialer Dependency-Graph in App-Detail → Tab "Abhängigkeiten"
+- View-Toggle: "Liste" ↔ "Graph" in der Tab-Header-Leiste
+- Zentrale App (Cyan, Radius 36), ausgehende Deps rechts (Halbkreis), eingehende links
+- Pfeil-Rendering mit Beziehungs-Label-Badge (REQUIRES/USES_API/USES_SERVICE/CONTAINS/PLANNED)
+- Status-Farbkodierung auf Knoten (PRODUCTION=grün, DEVELOPMENT=blau, etc.), Radial-Glow-Effekt
+- Legende unten (Beziehungstypen), Richtungs-Legende oben-rechts, DPR-Scaling für Retina
+- `AppDepGraph.tsx` — neues Canvas-Component, kein externer Graphen-Renderer nötig
+
+**Worker-Job-Logging (Settings → Worker-Status)**
+- `WorkerJob`-Modell: id, name, startedAt, finishedAt, status, itemCount, error; Migration `20260731212741_add_worker_jobs`
+- `logJob()` Wrapper in `worker/index.ts`: erstellt DB-Eintrag, updated zu success/error, purgt Logs >30 Tage
+- Alle 3 Cron-Jobs wrapped: healthcheck, certcheck, resourcemonitor
+- API `GET /api/system/worker`: Heartbeat + letzter Lauf pro Job (startedAt, finishedAt, status, itemCount, Dauer)
+- API `POST /api/system/worker`: action=trigger → startet Job async, antwortet sofort
+- `WorkerStatusCard.tsx`: pulsierender Online/Offline-Status-Dot, PID, Meta-Grid, 3-Job-Tabelle mit Schedule-Badge, Dauer, "Ausführen"-Button, Auto-Refresh alle 30s
+
+**Modul 34 Erweiterung — Non-Docker Ressourcen-Monitoring**
+- Neues App-Feld `metricsUrl` (VarChar 500); Migration `20260731213146_add_metrics_url`
+- `fetchMetricsEndpoint()`: HTTP GET auf konfigurierte URL, erwartet JSON `{cpu?, memUsed?, memLimit?, netIn?, netOut?}`
+- `checkResourceForApp()` unterstützt jetzt Docker ODER HTTP-Endpoint (OR-Logik)
+- EditAppForm: Neues Feld "Metrics-URL (Non-Docker)" in Infrastruktur-Sektion
+- ResourceTab: zeigt Metrics-URL im Header statt Docker-Host/Container; "Nicht konfiguriert"-Meldung erklärt beide Optionen
+
 ## [0.4.9-dev] — 2026-07-31
 
 ### Added

@@ -2,6 +2,36 @@ import http from "http";
 import https from "https";
 import type { PrismaClient } from "@/generated/prisma/client";
 
+// ─── HTTP Metrics Endpoint (für Non-Docker-Apps) ─────────────────────────────
+// Erwartet JSON: { cpu: number, memUsed: number, memLimit: number, netIn?: number, netOut?: number }
+interface MetricsEndpointResponse {
+  cpu?: number;
+  memUsed?: number;
+  memLimit?: number;
+  netIn?: number;
+  netOut?: number;
+}
+
+function fetchMetricsEndpoint(url: string): Promise<MetricsEndpointResponse> {
+  return new Promise((resolve, reject) => {
+    const lib = url.startsWith("https") ? https : http;
+    const req = lib.get(url, { timeout: 10_000 }, (res) => {
+      if (res.statusCode && res.statusCode >= 400) {
+        reject(new Error(`HTTP ${res.statusCode} von ${url}`));
+        return;
+      }
+      let body = "";
+      res.on("data", (c) => (body += c));
+      res.on("end", () => {
+        try { resolve(JSON.parse(body)); }
+        catch { reject(new Error("Kein gültiges JSON von Metrics-Endpoint")); }
+      });
+    });
+    req.on("error", reject);
+    req.on("timeout", () => { req.destroy(); reject(new Error("Metrics-Endpoint Timeout")); });
+  });
+}
+
 interface DockerStats {
   cpu_stats: {
     cpu_usage: { total_usage: number };
@@ -82,14 +112,33 @@ function calcNet(stats: DockerStats): { in: bigint; out: bigint } | null {
 export async function checkResourceForApp(
   db: PrismaClient,
   appId: string,
-  dockerHost: string,
-  dockerContainer: string
+  options: { dockerHost?: string; dockerContainer?: string; metricsUrl?: string }
 ): Promise<void> {
-  const raw = await fetchDockerStats(dockerHost, dockerContainer);
+  let cpu: number | null = null;
+  let mem: { used: bigint; limit: bigint; pct: number } | null = null;
+  let net: { in: bigint; out: bigint } | null = null;
 
-  const cpu = calcCpu(raw);
-  const mem = calcMem(raw);
-  const net = calcNet(raw);
+  if (options.dockerHost && options.dockerContainer) {
+    const raw = await fetchDockerStats(options.dockerHost, options.dockerContainer);
+    cpu = calcCpu(raw);
+    mem = calcMem(raw);
+    net = calcNet(raw);
+  } else if (options.metricsUrl) {
+    const raw = await fetchMetricsEndpoint(options.metricsUrl);
+    if (raw.cpu !== undefined) cpu = raw.cpu;
+    if (raw.memUsed !== undefined && raw.memLimit !== undefined && raw.memLimit > 0) {
+      mem = {
+        used: BigInt(Math.round(raw.memUsed)),
+        limit: BigInt(Math.round(raw.memLimit)),
+        pct: (raw.memUsed / raw.memLimit) * 100,
+      };
+    }
+    if (raw.netIn !== undefined && raw.netOut !== undefined) {
+      net = { in: BigInt(Math.round(raw.netIn)), out: BigInt(Math.round(raw.netOut)) };
+    }
+  } else {
+    throw new Error("Weder Docker noch Metrics-URL konfiguriert");
+  }
 
   await db.resourceReading.create({
     data: {
@@ -108,17 +157,23 @@ export async function runResourceChecks(db: PrismaClient): Promise<number> {
   const apps = await db.app.findMany({
     where: {
       deletedAt: null,
-      dockerHost: { not: null },
-      dockerContainer: { not: null },
+      OR: [
+        { dockerHost: { not: null }, dockerContainer: { not: null } },
+        { metricsUrl: { not: null } },
+      ],
     },
-    select: { id: true, name: true, dockerHost: true, dockerContainer: true },
+    select: { id: true, name: true, dockerHost: true, dockerContainer: true, metricsUrl: true },
   });
 
   if (apps.length === 0) return 0;
 
   const results = await Promise.allSettled(
     apps.map((app) =>
-      checkResourceForApp(db, app.id, app.dockerHost!, app.dockerContainer!)
+      checkResourceForApp(db, app.id, {
+        dockerHost: app.dockerHost ?? undefined,
+        dockerContainer: app.dockerContainer ?? undefined,
+        metricsUrl: app.metricsUrl ?? undefined,
+      })
     )
   );
 

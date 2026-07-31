@@ -9,7 +9,7 @@ export async function GET(_req: Request, { params }: Params) {
   const { slug } = await params;
   const app = await db.app.findFirst({
     where: { slug, deletedAt: null },
-    select: { id: true, dockerHost: true, dockerContainer: true },
+    select: { id: true, dockerHost: true, dockerContainer: true, metricsUrl: true },
   });
   if (!app) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
@@ -38,6 +38,7 @@ export async function GET(_req: Request, { params }: Params) {
     })),
     dockerHost: app.dockerHost,
     dockerContainer: app.dockerContainer,
+    metricsUrl: app.metricsUrl,
   });
 }
 
@@ -45,15 +46,19 @@ export async function POST(_req: Request, { params }: Params) {
   const { slug } = await params;
   const app = await db.app.findFirst({
     where: { slug, deletedAt: null },
-    select: { id: true, dockerHost: true, dockerContainer: true },
+    select: { id: true, dockerHost: true, dockerContainer: true, metricsUrl: true },
   });
   if (!app) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if (!app.dockerHost || !app.dockerContainer) {
-    return NextResponse.json({ error: "Kein Docker-Host oder Container konfiguriert" }, { status: 400 });
+  if (!app.dockerHost && !app.metricsUrl) {
+    return NextResponse.json({ error: "Weder Docker noch Metrics-URL konfiguriert" }, { status: 400 });
   }
 
   try {
-    await checkResourceForApp(db, app.id, app.dockerHost, app.dockerContainer);
+    await checkResourceForApp(db, app.id, {
+      dockerHost: app.dockerHost ?? undefined,
+      dockerContainer: app.dockerContainer ?? undefined,
+      metricsUrl: app.metricsUrl ?? undefined,
+    });
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 });
   }

@@ -29,6 +29,7 @@ interface ResourceData {
   history: HistoryPoint[];
   dockerHost: string | null;
   dockerContainer: string | null;
+  metricsUrl: string | null;
 }
 
 function formatBytes(bytes: string | null): string {
@@ -137,7 +138,8 @@ export function ResourceTab({ slug }: { slug: string }) {
     );
   }
 
-  if (!data?.dockerHost || !data?.dockerContainer) {
+  const hasConfig = (data?.dockerHost && data?.dockerContainer) || data?.metricsUrl;
+  if (!hasConfig) {
     return (
       <div style={{
         background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12,
@@ -146,10 +148,15 @@ export function ResourceTab({ slug }: { slug: string }) {
       }}>
         <Settings size={32} style={{ opacity: 0.4 }} />
         <div>
-          <p style={{ margin: 0, fontWeight: 600, color: "#EDF2F7" }}>Kein Container konfiguriert</p>
+          <p style={{ margin: 0, fontWeight: 600, color: "#EDF2F7" }}>Keine Monitoring-Quelle konfiguriert</p>
           <p style={{ margin: "6px 0 0", fontSize: 13 }}>
-            Trage <strong>Docker-Host</strong> und <strong>Container-Name</strong> in den App-Einstellungen ein,
-            um Ressourcen zu überwachen.
+            Trage entweder <strong>Docker-Host + Container</strong> oder eine <strong>Metrics-URL</strong> in
+            den App-Einstellungen ein.
+          </p>
+          <p style={{ margin: "8px 0 0", fontSize: 12, color: "#4A5B6F" }}>
+            Metrics-URL erwartet: <code style={{ background: "#0B1220", padding: "1px 5px", borderRadius: 4, fontSize: 11 }}>
+              GET /metrics → {"{ cpu, memUsed, memLimit }"}
+            </code>
           </p>
         </div>
       </div>
@@ -163,12 +170,20 @@ export function ResourceTab({ slug }: { slug: string }) {
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <div>
-          <p style={{ margin: 0, fontSize: 12, color: "#7A8BA6" }}>
-            Host: <code style={{ color: "#EDF2F7" }}>{data.dockerHost}</code>
-          </p>
-          <p style={{ margin: "2px 0 0", fontSize: 12, color: "#7A8BA6" }}>
-            Container: <code style={{ color: "#EDF2F7" }}>{data.dockerContainer}</code>
-          </p>
+          {data.metricsUrl ? (
+            <p style={{ margin: 0, fontSize: 12, color: "#7A8BA6" }}>
+              Metrics-URL: <code style={{ color: "#EDF2F7" }}>{data.metricsUrl}</code>
+            </p>
+          ) : (
+            <>
+              <p style={{ margin: 0, fontSize: 12, color: "#7A8BA6" }}>
+                Host: <code style={{ color: "#EDF2F7" }}>{data.dockerHost}</code>
+              </p>
+              <p style={{ margin: "2px 0 0", fontSize: 12, color: "#7A8BA6" }}>
+                Container: <code style={{ color: "#EDF2F7" }}>{data.dockerContainer}</code>
+              </p>
+            </>
+          )}
         </div>
         <button
           onClick={refresh}

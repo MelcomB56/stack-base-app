@@ -266,6 +266,7 @@ model App {
   dockerImage     String?   @db.VarChar(200) @map("docker_image")
   dockerHost      String?   @db.VarChar(255) @map("docker_host")
   dockerContainer String?   @db.VarChar(100) @map("docker_container")
+  metricsUrl      String?   @db.VarChar(500) @map("metrics_url")
   apiEndpoint     String?   @db.VarChar(500) @map("api_endpoint")
   language        String?   @db.VarChar(50)
   dbType          String?   @db.VarChar(50) @map("db_type")
@@ -606,6 +607,23 @@ model CertCheck {
 
   @@index([appId, checkedAt])
   @@map("cert_checks")
+}
+
+// ─────────────────────────────────────────────
+// Worker Job Logging
+// ─────────────────────────────────────────────
+
+model WorkerJob {
+  id         String    @id @default(cuid())
+  name       String    @db.VarChar(50)
+  startedAt  DateTime  @map("started_at")
+  finishedAt DateTime? @map("finished_at")
+  status     String    @db.VarChar(20) @default("running")
+  itemCount  Int?      @map("item_count")
+  error      String?   @db.VarChar(500)
+
+  @@index([name, startedAt])
+  @@map("worker_jobs")
 }
 
 // ─────────────────────────────────────────────
