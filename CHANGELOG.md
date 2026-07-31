@@ -3,6 +3,22 @@
 Alle wesentlichen Änderungen an Stack-Base werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/).
 
+## [0.4.5-dev] — 2026-07-31
+
+### Added
+
+**Modul 28 — Dependency Graph**
+- Neue Seite `/dependency-graph` mit interaktivem Canvas-Graphen aller App-Abhängigkeiten
+- Force-Directed-Simulation: Repulsion zwischen allen Nodes, Attraktion entlang Kanten, Zentrum-Gravitation, Dämpfung
+- Nodes farbcodiert nach App-Status (Prod/Dev/Testing/Wartung/Archiv), externe Deps gestrichelt
+- Kanten mit Pfeilspitzen und Typ-Farbe (benötigt/API/Service/enthält/geplant)
+- Interaktion: Node ziehen, Canvas pannen, Scroll-Zoom, Klick → App-Detail-Seite
+- Hover-Tooltip mit App-Name, Status, Beschreibung
+- Steuerelemente: Zoom in/out, Fit to screen, Zurücksetzen
+- Status-Filter-Buttons oben links, Legende (Verbindungstypen + Bedienhinweise) unten links
+- Sidebar-Link "Dep. Graph" im Verwaltungs-Bereich
+- API: `GET /api/apps/dependencies` — alle Apps + Dependency-Relationen
+
 ## [0.4.4-dev] — 2026-07-30
 
 ### Added

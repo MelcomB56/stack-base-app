@@ -71,12 +71,20 @@ const Icons_tag = (
   </svg>
 );
 
+const Icons_graph = (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <circle cx="5" cy="12" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="19" cy="19" r="2"/>
+    <line x1="7" y1="11.5" x2="17" y2="6.5"/><line x1="7" y1="12.5" x2="17" y2="17.5"/>
+  </svg>
+);
+
 const NAV_ADMIN = [
-  { href: "/categories",   label: "Kategorien",   icon: Icons.categories },
-  { href: "/stacks",       label: "Stacks",       icon: Icons.stacks },
-  { href: "/technologies", label: "Technologien", icon: Icons.technologies },
-  { href: "/tags",         label: "Tags",         icon: Icons_tag },
-  { href: "/settings",     label: "Einstellungen",icon: Icons.settings },
+  { href: "/dependency-graph", label: "Dep. Graph",    icon: Icons_graph },
+  { href: "/categories",       label: "Kategorien",    icon: Icons.categories },
+  { href: "/stacks",           label: "Stacks",        icon: Icons.stacks },
+  { href: "/technologies",     label: "Technologien",  icon: Icons.technologies },
+  { href: "/tags",             label: "Tags",          icon: Icons_tag },
+  { href: "/settings",         label: "Einstellungen", icon: Icons.settings },
 ] as const;
 
 function HexLogo() {
@@ -315,7 +323,7 @@ export function Sidebar() {
         </button>
 
         {!collapsed && (
-          <p style={{ padding: "4px 12px 2px", fontSize: 10, color: "#7A8BA6", margin: 0 }}>v0.4.4-dev</p>
+          <p style={{ padding: "4px 12px 2px", fontSize: 10, color: "#7A8BA6", margin: 0 }}>v0.4.5-dev</p>
         )}
       </div>
     </aside>
