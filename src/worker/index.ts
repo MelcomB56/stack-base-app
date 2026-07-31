@@ -3,6 +3,7 @@ import { PrismaClient } from "@/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { runHealthchecks } from "./healthcheck";
 import { runCertChecks } from "./certcheck";
+import { runResourceChecks } from "./resourcemonitor";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const db = new PrismaClient({ adapter });
@@ -74,6 +75,19 @@ async function main() {
 
   // Cert-Checks beim Start (einmalig, nicht blockierend)
   runCertChecks(db).then((n) => console.log(`[worker] Initialer Cert-Check: ${n} Apps`)).catch(console.error);
+
+  // Resource-Checks alle 5 Minuten
+  cron.schedule("*/5 * * * *", async () => {
+    try {
+      const count = await runResourceChecks(db);
+      if (count > 0) console.log(`[worker] Resource-Monitor: ${count} Apps geprüft`);
+    } catch (err) {
+      console.error("[worker] Resource-Monitor Fehler:", err);
+    }
+  });
+
+  // Resource-Check beim Start (einmalig, nicht blockierend)
+  runResourceChecks(db).then((n) => { if (n > 0) console.log(`[worker] Initialer Resource-Check: ${n} Apps`); }).catch(console.error);
 
   // Sauber beenden wenn SIGTERM empfangen
   process.on("SIGTERM", async () => {

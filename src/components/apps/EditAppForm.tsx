@@ -21,7 +21,9 @@ type AppData = {
   urlProd:      string | null;
   urlStaging:   string | null;
   repoUrl:      string | null;
-  dockerImage:  string | null;
+  dockerImage:     string | null;
+  dockerHost:      string | null;
+  dockerContainer: string | null;
   dbType:       string | null;
   contactName:  string | null;
   supportEmail: string | null;
@@ -233,6 +235,8 @@ export function EditAppForm({ app, options }: { app: AppData; options: Options }
           <p style={SECTION_LABEL}>Infrastruktur &amp; Betrieb</p>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <Field label="Docker Image"><DSInput name="dockerImage" defaultValue={app.dockerImage ?? ""} placeholder="org/image:latest" maxLength={200} /></Field>
+            <Field label="Docker Host"><DSInput name="dockerHost" defaultValue={app.dockerHost ?? ""} placeholder="http://192.168.25.50:2375" maxLength={255} /></Field>
+            <Field label="Container Name"><DSInput name="dockerContainer" defaultValue={app.dockerContainer ?? ""} placeholder="myapp-container-1" maxLength={100} /></Field>
             <Field label="Datenbank"><DSInput name="dbType" defaultValue={app.dbType ?? ""} placeholder="z.B. PostgreSQL" maxLength={50} /></Field>
             <Field label="Kritikalität">
               <DSSelect name="criticality" defaultValue={app.criticality ?? ""}>

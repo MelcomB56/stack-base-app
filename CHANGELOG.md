@@ -3,6 +3,21 @@
 Alle wesentlichen Änderungen an Stack-Base werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/).
 
+## [0.4.9-dev] — 2026-07-31
+
+### Added
+
+**Modul 34 — Resource Monitor**
+- `ResourceReading`-Modell: appId, cpuPercent, memUsed/memLimit/memPercent (BigInt, Bytes), netIn/netOut, readAt; Migration 20260731211815_add_docker_fields_and_resource_readings
+- Neue App-Felder: `dockerHost` (z.B. `http://192.168.25.50:2375`) und `dockerContainer` (Container-Name)
+- Worker: `runResourceChecks()` alle 5 Minuten + einmalig beim Start; Docker Stats API über HTTP (`/containers/{id}/stats?stream=false`); `Promise.allSettled` — ein Fehler blockiert nicht andere Apps
+- CPU-Berechnung: delta/sys-delta × num_cpus × 100; RAM: usage − cache; Netz: Summe aller Interfaces
+- Auto-Purge: Readings älter als 7 Tage werden nach jedem Worker-Lauf gelöscht
+- API: `GET /api/apps/[slug]/resources` (letztes Reading + 24h-Historie), `POST` (sofort abfragen)
+- Ressourcen-Tab in App-Detail: CPU/RAM-Balkenmesser (farbkodiert: grün/gelb/rot), 3 Stat-Chips (CPU%, RAM used/limit, Netz I/O), Sparklines für CPU + RAM über 24h (Recharts AreaChart)
+- Konfigurationsmeldung wenn kein Docker-Host/Container gesetzt
+- EditAppForm: Docker-Host und Container-Name als neue Felder in „Infrastruktur & Betrieb"
+
 ## [0.4.8-dev] — 2026-07-31
 
 ### Added

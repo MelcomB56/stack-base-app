@@ -264,6 +264,8 @@ model App {
   maintenanceEnd  DateTime? @map("maintenance_end")
   repoUrl         String?   @db.VarChar(500) @map("repo_url")
   dockerImage     String?   @db.VarChar(200) @map("docker_image")
+  dockerHost      String?   @db.VarChar(255) @map("docker_host")
+  dockerContainer String?   @db.VarChar(100) @map("docker_container")
   apiEndpoint     String?   @db.VarChar(500) @map("api_endpoint")
   language        String?   @db.VarChar(50)
   dbType          String?   @db.VarChar(50) @map("db_type")
@@ -301,6 +303,7 @@ model App {
   environments           AppEnvironment[]
   costs                  AppCost[]
   certChecks             CertCheck[]
+  resourceReadings       ResourceReading[]
 
   @@map("apps")
 }
@@ -603,6 +606,27 @@ model CertCheck {
 
   @@index([appId, checkedAt])
   @@map("cert_checks")
+}
+
+// ─────────────────────────────────────────────
+// Modul 34 — Resource Monitor
+// ─────────────────────────────────────────────
+
+model ResourceReading {
+  id         String   @id @default(cuid())
+  appId      String   @map("app_id")
+  cpuPercent Float?   @map("cpu_percent")
+  memUsed    BigInt?  @map("mem_used")
+  memLimit   BigInt?  @map("mem_limit")
+  memPercent Float?   @map("mem_percent")
+  netIn      BigInt?  @map("net_in")
+  netOut     BigInt?  @map("net_out")
+  readAt     DateTime @default(now()) @map("read_at")
+
+  app App @relation(fields: [appId], references: [id], onDelete: Cascade)
+
+  @@index([appId, readAt])
+  @@map("resource_readings")
 }
 
 // ─────────────────────────────────────────────
