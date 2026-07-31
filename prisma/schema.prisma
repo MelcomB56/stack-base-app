@@ -118,6 +118,15 @@ enum EnvironmentStatus {
   MAINTENANCE
 }
 
+enum CostCategory {
+  SERVER
+  DOMAIN
+  CDN
+  STORAGE
+  LICENSE
+  OTHER
+}
+
 // ─────────────────────────────────────────────
 // Modul 4 — Benutzer
 // ─────────────────────────────────────────────
@@ -282,6 +291,7 @@ model App {
   incidents              Incident[]
   notificationSettings   NotificationSetting[]
   environments           AppEnvironment[]
+  costs                  AppCost[]
 
   @@map("apps")
 }
@@ -540,6 +550,27 @@ model ActivityLog {
   @@index([action])
   @@index([createdAt])
   @@map("activity_log")
+}
+
+// ─────────────────────────────────────────────
+// Modul 29 — Cost Tracking
+// ─────────────────────────────────────────────
+
+model AppCost {
+  id        String       @id @default(cuid())
+  appId     String       @map("app_id")
+  month     String       @db.VarChar(7)   // "2026-07"
+  amount    Decimal      @db.Decimal(10, 2)
+  category  CostCategory @default(SERVER)
+  note      String?      @db.VarChar(255)
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+
+  app App @relation(fields: [appId], references: [id], onDelete: Cascade)
+
+  @@index([appId])
+  @@index([month])
+  @@map("app_costs")
 }
 
 // ─────────────────────────────────────────────

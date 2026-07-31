@@ -3,6 +3,18 @@
 Alle wesentlichen Änderungen an Stack-Base werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/).
 
+## [0.4.7-dev] — 2026-07-31
+
+### Added
+
+**Modul 29 — Cost Tracking**
+- Neues `AppCost`-Modell (month, amount, category, note) + `CostCategory`-Enum (Server/Domain/CDN/Storage/Lizenz/Sonstiges)
+- Kosten-Tab in App-Detail-Seite: 3 Summary-Cards (Aktueller Monat mit Trend-Pfeil, Vormonat, Gesamt Ø/Monat)
+- Einträge nach Monat gruppiert, inline editierbar, löschbar
+- Formular: Monat (Datepicker), Betrag, Kategorie, optionale Notiz
+- API: `GET/POST /api/apps/[slug]/costs`, `PATCH/DELETE /api/apps/[slug]/costs/[id]`
+- Dashboard-Widget „Hosting-Kosten": Gesamtkosten aktueller Monat + Delta vs. Vormonat
+
 ## [0.4.6-dev] — 2026-07-31
 
 ### Fixed

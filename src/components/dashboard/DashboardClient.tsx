@@ -6,6 +6,7 @@ import { ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, Tooltip } fr
 type Stats = {
   total: number; production: number; development: number;
   testing: number; maintenance: number; archived: number;
+  costCurrentMonth: number; costPrevMonth: number; costMonth: string;
 };
 type ActivityEntry = {
   id: string; action: string; appName: string | null;
@@ -249,6 +250,47 @@ function ActivityFeed({ items }: { items: ActivityEntry[] }) {
   );
 }
 
+// ─── Cost Widget ──────────────────────────────────────────────────────────────
+
+function CostWidget({ stats }: { stats: Stats }) {
+  const fmt = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
+  const delta = stats.costCurrentMonth - stats.costPrevMonth;
+  const [y, m] = stats.costMonth.split("-");
+  const months = ["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
+  const label = `${months[parseInt(m) - 1]} ${y}`;
+
+  return (
+    <div style={{ background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12, padding: 18 }}>
+      <div style={{ fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 8, marginBottom: 14, color: "#EDF2F7" }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="2">
+          <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
+        </svg>
+        Hosting-Kosten
+      </div>
+      <div style={{ display: "flex", gap: 20 }}>
+        <div>
+          <p style={{ fontSize: 10, color: "#7A8BA6", margin: "0 0 4px", textTransform: "uppercase", letterSpacing: ".1em" }}>{label}</p>
+          <p style={{ fontSize: 24, fontWeight: 700, color: "#EDF2F7", margin: 0, fontVariantNumeric: "tabular-nums" }}>{fmt(stats.costCurrentMonth)}</p>
+          {stats.costPrevMonth > 0 && (
+            <p style={{ fontSize: 11, margin: "4px 0 0", color: delta > 0 ? "#EF4444" : delta < 0 ? "#10B981" : "#7A8BA6", display: "flex", alignItems: "center", gap: 3 }}>
+              {delta > 0 ? "↑" : delta < 0 ? "↓" : "="} {delta !== 0 ? fmt(Math.abs(delta)) : "Unverändert"} vs. Vormonat
+            </p>
+          )}
+          {stats.costPrevMonth === 0 && stats.costCurrentMonth === 0 && (
+            <p style={{ fontSize: 11, color: "#7A8BA6", margin: "4px 0 0" }}>Noch keine Kosten erfasst</p>
+          )}
+        </div>
+        {stats.costPrevMonth > 0 && (
+          <div style={{ borderLeft: "1px solid #1E3050", paddingLeft: 20 }}>
+            <p style={{ fontSize: 10, color: "#7A8BA6", margin: "0 0 4px", textTransform: "uppercase", letterSpacing: ".1em" }}>Vormonat</p>
+            <p style={{ fontSize: 16, fontWeight: 600, color: "#7A8BA6", margin: 0, fontVariantNumeric: "tabular-nums" }}>{fmt(stats.costPrevMonth)}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
 export function DashboardClient({ stats, recentActivity, topApps }: {
@@ -295,6 +337,9 @@ export function DashboardClient({ stats, recentActivity, topApps }: {
           iconPath={<><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></>}
         />
       </div>
+
+      {/* Cost Widget — full width */}
+      <CostWidget stats={stats} />
 
       {/* Bottom Grid — 3 Spalten */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, flex: 1 }}>

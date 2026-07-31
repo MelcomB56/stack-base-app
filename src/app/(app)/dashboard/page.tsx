@@ -3,7 +3,10 @@ import { AppStatus } from "@/generated/prisma/client";
 import { DashboardClient } from "@/components/dashboard/DashboardClient";
 
 export default async function DashboardPage() {
-  const [total, byStatus, recentActivity, topApps] = await Promise.all([
+  const currentMonth = new Date().toISOString().slice(0, 7);
+  const prevMonth = (() => { const d = new Date(); d.setMonth(d.getMonth() - 1); return d.toISOString().slice(0, 7); })();
+
+  const [total, byStatus, recentActivity, topApps, costCurrent, costPrev] = await Promise.all([
     db.app.count({ where: { deletedAt: null } }),
     db.app.groupBy({
       by: ["status"],
@@ -24,6 +27,8 @@ export default async function DashboardPage() {
       orderBy: { updatedAt: "desc" },
       take: 5,
     }),
+    db.appCost.aggregate({ where: { month: currentMonth }, _sum: { amount: true } }),
+    db.appCost.aggregate({ where: { month: prevMonth }, _sum: { amount: true } }),
   ]);
 
   const statusMap = Object.fromEntries(
@@ -39,6 +44,9 @@ export default async function DashboardPage() {
         testing:     statusMap["TESTING"]     ?? 0,
         maintenance: statusMap["MAINTENANCE"] ?? 0,
         archived:    statusMap["ARCHIVED"]    ?? 0,
+        costCurrentMonth: Number(costCurrent._sum.amount ?? 0),
+        costPrevMonth:    Number(costPrev._sum.amount ?? 0),
+        costMonth: currentMonth,
       }}
       recentActivity={recentActivity.map((a) => ({
         id: a.id,

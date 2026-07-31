@@ -18,6 +18,7 @@ import { ActivitiesTab } from "@/components/apps/detail/ActivitiesTab";
 import { ScreenshotsTab } from "@/components/apps/detail/ScreenshotsTab";
 import { NotificationsTab } from "@/components/apps/detail/NotificationsTab";
 import { EnvironmentsTab } from "@/components/apps/detail/EnvironmentsTab";
+import { CostsTab } from "@/components/apps/detail/CostsTab";
 
 async function getApp(slug: string) {
   return db.app.findUnique({
@@ -64,6 +65,7 @@ async function getApp(slug: string) {
       },
       notificationSettings: { orderBy: { createdAt: "asc" } },
       environments: { orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }] },
+      costs: { orderBy: [{ month: "desc" }, { category: "asc" }] },
       dependencies: {
         include: { dependsOnApp: { select: { id: true, name: true, slug: true, status: true } } },
       },
@@ -203,6 +205,14 @@ export default async function AppDetailPage({ params }: { params: Promise<{ slug
               </span>
             )}
           </TabsTrigger>
+          <TabsTrigger value="costs">
+            Kosten
+            {app.costs.length > 0 && (
+              <span style={{ marginLeft: 5, padding: "1px 6px", borderRadius: 99, background: "#1A2640", fontSize: 10, color: "#7A8BA6" }}>
+                {app.costs.length}
+              </span>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="dependencies">
             Abhängigkeiten
             {(app.dependencies.length + app.dependents.length) > 0 && (
@@ -288,6 +298,13 @@ export default async function AppDetailPage({ params }: { params: Promise<{ slug
 
         <TabsContent value="environments">
           <EnvironmentsTab appSlug={app.slug} initialEnvironments={app.environments} />
+        </TabsContent>
+
+        <TabsContent value="costs">
+          <CostsTab
+            appSlug={app.slug}
+            initialCosts={app.costs.map((c) => ({ ...c, amount: Number(c.amount) }))}
+          />
         </TabsContent>
 
         <TabsContent value="dependencies">
