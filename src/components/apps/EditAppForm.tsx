@@ -256,11 +256,11 @@ export function EditAppForm({ app, options }: { app: AppData; options: Options }
             Deploye den Stack-Base Agent auf deinem Server, trage URL + Token ein. Funktioniert für Docker und Non-Docker, intern und extern.
           </p>
           <div style={{ background: "#0B1220", border: "1px solid #1E3050", borderRadius: 8, padding: "10px 14px", fontSize: 12, fontFamily: "monospace", color: "#7A8BA6", lineHeight: 1.6, marginBottom: 4 }}>
-            <span style={{ color: "#4A5B6F" }}># Docker (mit Container-Monitoring):</span>
+            <span style={{ color: "#4A5B6F" }}># Mit Container-Monitoring (überwacht einen spezifischen Container):</span>
             <br />
             docker run -d -p 9101:9101 -e SB_CONTAINER=myapp -v /var/run/docker.sock:/var/run/docker.sock ghcr.io/jan-seifarth/stackbase-agent:latest
             <br />
-            <span style={{ color: "#4A5B6F" }}># Ohne Docker (System-Metriken):</span>
+            <span style={{ color: "#4A5B6F" }}># Nur Host-System-Metriken (CPU/RAM/Netzwerk des Servers):</span>
             <br />
             docker run -d -p 9101:9101 ghcr.io/jan-seifarth/stackbase-agent:latest
           </div>
