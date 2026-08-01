@@ -167,21 +167,37 @@ export function ResourceTab({ slug }: { slug: string }) {
 
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <Step n={1} title="Agent deployen">
-            <p style={{ margin: "0 0 6px", fontSize: 12, color: "#7A8BA6" }}>Mit Container-Monitoring (überwacht einen spezifischen Container):</p>
+            <p style={{ margin: "0 0 6px", fontSize: 12, color: "#7A8BA6" }}>
+              <strong style={{ color: "#EDF2F7" }}>Variante A</strong> — Container-Monitoring (überwacht einen spezifischen Container):
+            </p>
             <CopyCode text={`docker run -d --name stackbase-agent \\
   -p 9101:9101 \\
   -e SB_CONTAINER=dein-container \\
   -v /var/run/docker.sock:/var/run/docker.sock \\
   ghcr.io/melcomb56/stackbase-agent:latest`} />
-            <p style={{ margin: "8px 0 6px", fontSize: 12, color: "#7A8BA6" }}>Nur Host-System-Metriken (CPU/RAM/Netzwerk des Servers):</p>
+            <p style={{ margin: "10px 0 6px", fontSize: 12, color: "#7A8BA6" }}>
+              <strong style={{ color: "#EDF2F7" }}>Variante B</strong> — Nur Host-System-Metriken (CPU/RAM/Netzwerk des Servers):
+            </p>
             <CopyCode text="docker run -d --name stackbase-agent -p 9101:9101 ghcr.io/melcomb56/stackbase-agent:latest" />
+            <p style={{ margin: "10px 0 6px", fontSize: 12, color: "#7A8BA6" }}>
+              <strong style={{ color: "#EDF2F7" }}>Variante C</strong> — Natives Binary (ohne Docker):
+            </p>
+            <CopyCode text={`curl -L https://github.com/MelcomB56/stack-base-app/releases/latest/download/stackbase-agent-linux-amd64 \\
+  -o stackbase-agent && chmod +x stackbase-agent
+SB_API_KEY=mein-token ./stackbase-agent`} />
+            <p style={{ margin: "6px 0 0", fontSize: 11, color: "#4A5B6F" }}>
+              Als systemd-Dienst: Vollständige Anleitung unter <span style={{ color: "#2563E8" }}>Docs → Stack-Base Agent einrichten</span>.
+            </p>
           </Step>
 
-          <Step n={2} title="Token aus Agent-Log kopieren">
-            <p style={{ margin: 0, fontSize: 12, color: "#7A8BA6" }}>
+          <Step n={2} title="Token ablesen">
+            <p style={{ margin: "0 0 6px", fontSize: 12, color: "#7A8BA6" }}>
               Der Agent gibt beim Start den Token aus: <code style={{ background: "#0B1220", padding: "1px 6px", borderRadius: 4, fontSize: 11, color: "#EDF2F7" }}>sb_xxxxxxxxxxxx...</code>
             </p>
+            <p style={{ margin: "0 0 4px", fontSize: 11, color: "#4A5B6F" }}>Variante A / B (Docker):</p>
             <CopyCode text="docker logs stackbase-agent" />
+            <p style={{ margin: "6px 0 4px", fontSize: 11, color: "#4A5B6F" }}>Variante C (systemd):</p>
+            <CopyCode text="journalctl -u stackbase-agent | grep Token" />
           </Step>
 
           <Step n={3} title="Agent-URL + Token in Einstellungen eintragen">
