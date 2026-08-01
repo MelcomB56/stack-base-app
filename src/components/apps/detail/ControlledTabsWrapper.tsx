@@ -20,15 +20,17 @@ interface TabCounts {
 export function ControlledTabsWrapper({
   children,
   counts,
+  agentConfigured,
 }: {
   children: React.ReactNode;
   counts: TabCounts;
+  agentConfigured?: boolean;
 }) {
   const [value, setValue] = useState("overview");
 
   return (
     <Tabs value={value} onValueChange={setValue}>
-      <AppTabBar counts={counts} activeTab={value} onTabChange={setValue} />
+      <AppTabBar counts={counts} activeTab={value} onTabChange={setValue} agentConfigured={agentConfigured} />
       {children}
     </Tabs>
   );

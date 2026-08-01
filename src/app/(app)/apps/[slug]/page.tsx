@@ -195,7 +195,7 @@ export default async function AppDetailPage({ params }: { params: Promise<{ slug
       </div>
 
       {/* Tabs */}
-      <ControlledTabsWrapper counts={{
+      <ControlledTabsWrapper agentConfigured={!!app.agentUrl} counts={{
         environments:   app.environments.length       || undefined,
         costs:          app.costs.length              || undefined,
         dependencies:   (app.dependencies.length + app.dependents.length) || undefined,

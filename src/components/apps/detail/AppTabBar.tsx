@@ -21,6 +21,7 @@ interface AppTabBarProps {
   counts: TabCounts;
   activeTab: string;
   onTabChange: (value: string) => void;
+  agentConfigured?: boolean;
 }
 
 const SECONDARY_TABS = [
@@ -47,7 +48,7 @@ function Badge({ count, danger }: { count?: number; danger?: boolean }) {
   );
 }
 
-export function AppTabBar({ counts, activeTab, onTabChange }: AppTabBarProps) {
+export function AppTabBar({ counts, activeTab, onTabChange, agentConfigured }: AppTabBarProps) {
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
   const isSecondaryActive = SECONDARY_VALUES.has(activeTab as typeof SECONDARY_TABS[number]["value"]);
@@ -74,7 +75,15 @@ export function AppTabBar({ counts, activeTab, onTabChange }: AppTabBarProps) {
               Environments<Badge count={counts.environments} />
             </TabsTrigger>
             <TabsTrigger value="cert">Zertifikat</TabsTrigger>
-            <TabsTrigger value="resources">Ressourcen</TabsTrigger>
+            <TabsTrigger value="resources">
+              Ressourcen
+              <span style={{
+                display: "inline-block", width: 6, height: 6, borderRadius: "50%",
+                background: agentConfigured ? "#10B981" : "#4A5B6F",
+                marginLeft: 5, flexShrink: 0,
+                boxShadow: agentConfigured ? "0 0 5px #10B981" : "none",
+              }} />
+            </TabsTrigger>
             <TabsTrigger value="dependencies">
               Abhängigkeiten<Badge count={counts.dependencies} />
             </TabsTrigger>
