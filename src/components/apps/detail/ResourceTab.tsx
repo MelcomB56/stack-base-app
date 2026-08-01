@@ -163,9 +163,9 @@ export function ResourceTab({ slug }: { slug: string }) {
   -p 9101:9101 \\
   -e SB_CONTAINER=dein-container \\
   -v /var/run/docker.sock:/var/run/docker.sock \\
-  ghcr.io/melcomB56/stackbase-agent:latest`} />
+  ghcr.io/melcomb56/stackbase-agent:latest`} />
             <p style={{ margin: "8px 0 6px", fontSize: 12, color: "#7A8BA6" }}>Nur Host-System-Metriken (CPU/RAM/Netzwerk des Servers):</p>
-            <CopyCode text="docker run -d --name stackbase-agent -p 9101:9101 ghcr.io/melcomB56/stackbase-agent:latest" />
+            <CopyCode text="docker run -d --name stackbase-agent -p 9101:9101 ghcr.io/melcomb56/stackbase-agent:latest" />
           </Step>
 
           <Step n={2} title="Token aus Agent-Log kopieren">

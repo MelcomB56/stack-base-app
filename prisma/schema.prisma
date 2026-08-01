@@ -444,7 +444,7 @@ model ChangelogEntry {
 
 model DocPage {
   id          String      @id @default(uuid())
-  appId       String      @map("app_id")
+  appId       String?     @map("app_id")
   parentId    String?     @map("parent_id")
   title       String      @db.VarChar(200)
   slug        String      @db.VarChar(200)
@@ -456,7 +456,7 @@ model DocPage {
   createdAt   DateTime    @default(now()) @map("created_at")
   updatedAt   DateTime    @updatedAt @map("updated_at")
 
-  app       App       @relation(fields: [appId], references: [id], onDelete: Cascade)
+  app       App?      @relation(fields: [appId], references: [id], onDelete: Cascade)
   parent    DocPage?  @relation("DocPageHierarchy", fields: [parentId], references: [id])
   children  DocPage[] @relation("DocPageHierarchy")
   createdBy User      @relation("DocPageCreator", fields: [createdById], references: [id])

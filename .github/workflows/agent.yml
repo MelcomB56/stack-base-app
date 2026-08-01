@@ -9,7 +9,7 @@ on:
     types: [published]
 
 env:
-  IMAGE: ghcr.io/melcomB56/stackbase-agent
+  IMAGE: ghcr.io/melcomb56/stackbase-agent
 
 jobs:
   build-and-push:
