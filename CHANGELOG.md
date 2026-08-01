@@ -7,6 +7,14 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/).
 
 ### Added
 
+**Plattform-Dokumentationsbereich (Docs)**
+- Neue Seite `/docs` im Hauptmenü (Sidebar-Eintrag "Docs", Datei-Icon)
+- `PlatformDocsPage`: Zwei-Panel-Layout (Sidebar mit Typen-Gruppierung + Hauptbereich), Markdown-Editor mit Vorschau-Toggle, Strg+S zum Speichern
+- API-Routen `GET/POST /api/platform-docs` + `PUT/DELETE /api/platform-docs/[id]`
+- `DocPage.appId` nullable (Migration `20260801161425`): `appId = null` = plattformweites Dokument
+- Auto-Seed: Agent-Einrichtungsanleitung wird beim ersten Aufruf automatisch angelegt
+- Gemeinsame Konstante `src/lib/agent-guide.ts` (von Seite und API genutzt)
+
 **Modul 34 — Stack-Base Agent (portabler Monitoring-Agent)**
 - Neues Go-Binary `agent/main.go` (kein Runtime, keine Deps): deploye auf beliebigem Server, Stack-Base fragt `GET /metrics` per Bearer-Auth ab
 - Docker-Modus: wenn `SB_CONTAINER` gesetzt + Docker-Socket vorhanden → Docker Stats API (CPU %, RAM, Netzwerk per Container)
