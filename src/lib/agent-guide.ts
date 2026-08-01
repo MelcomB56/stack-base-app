@@ -85,9 +85,9 @@ export const AGENT_GUIDE = `<div class="ag">
     <h2>Voraussetzungen</h2>
     <div class="info">
       <ul class="check-list">
-        <li>Docker ist auf dem Zielserver installiert</li>
         <li>Port <strong>9101</strong> ist von Stack-Base aus erreichbar (Firewall, ggf. Port-Freigabe)</li>
-        <li>Bei Container-Monitoring: Der zu überwachende Container läuft bereits</li>
+        <li>Variante A+B: Docker ist installiert · Variante C: kein Docker nötig</li>
+        <li>Variante A: Der zu überwachende Container läuft bereits</li>
       </ul>
     </div>
   </div>
@@ -135,6 +135,52 @@ export const AGENT_GUIDE = `<div class="ag">
   ghcr.io/melcomb56/stackbase-agent:latest</pre>
           </div>
         </div>
+
+        <div style="margin-top:8px;">
+          <div class="variant-header">
+            <span class="dot" style="background:var(--green);"></span>
+            Variante C — Natives Binary (ohne Docker)
+          </div>
+          <p class="step-desc" style="margin-bottom:6px;">Kein Docker nötig. Binary direkt auf dem Server ausführen, ideal für VMs und Bare-Metal-Server.</p>
+          <div class="code-block">
+            <div class="code-label">Binary herunterladen und starten (Linux amd64)</div>
+            <pre><span class="comment"># Binary herunterladen</span>
+<span class="cmd">curl</span> <span class="flag">-L</span> https://github.com/MelcomB56/stack-base-app/releases/latest/download/stackbase-agent-linux-amd64 \\
+  <span class="flag">-o</span> stackbase-agent
+<span class="cmd">chmod</span> +x stackbase-agent
+
+<span class="comment"># Direkt starten (Token wird in der Ausgabe angezeigt)</span>
+<span class="env-var">SB_API_KEY</span>=<span class="value">mein-token</span> ./stackbase-agent</pre>
+          </div>
+          <div class="note" style="margin-top:8px;"><strong>Arm64-Server</strong> (z.B. Raspberry Pi, Apple Silicon): <ic>stackbase-agent-linux-arm64</ic> verwenden.</div>
+          <div class="code-block" style="margin-top:10px;">
+            <div class="code-label">Als systemd-Service einrichten (empfohlen für Autostart)</div>
+            <pre><span class="comment"># Binary nach /usr/local/bin verschieben</span>
+<span class="cmd">sudo mv</span> stackbase-agent /usr/local/bin/stackbase-agent
+
+<span class="comment"># Service-Datei erstellen</span>
+<span class="cmd">sudo tee</span> /etc/systemd/system/stackbase-agent.service <span class="flag">&lt;&lt;EOF</span>
+[Unit]
+Description=Stack-Base Agent
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/stackbase-agent
+Restart=always
+Environment=<span class="env-var">SB_API_KEY</span>=<span class="value">mein-token</span>
+Environment=<span class="env-var">SB_PORT</span>=<span class="value">9101</span>
+
+[Install]
+WantedBy=multi-user.target
+<span class="flag">EOF</span>
+
+<span class="comment"># Service aktivieren und starten</span>
+<span class="cmd">sudo systemctl</span> daemon-reload
+<span class="cmd">sudo systemctl</span> enable --now stackbase-agent
+<span class="cmd">sudo systemctl</span> status stackbase-agent</pre>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
@@ -142,11 +188,15 @@ export const AGENT_GUIDE = `<div class="ag">
   <div class="step">
     <div class="step-num">2</div>
     <div class="step-body">
-      <div class="step-title">Token aus den Logs kopieren</div>
-      <p class="step-desc">Der Agent generiert beim ersten Start automatisch einen Zugriffstoken und zeigt ihn in den Logs an.</p>
+      <div class="step-title">Token ablesen</div>
+      <p class="step-desc">Der Agent gibt beim ersten Start den Token aus. Variante A+B: in den Docker-Logs. Variante C: direkt in der Terminal-Ausgabe oder im systemd-Journal.</p>
       <div class="code-block">
-        <div class="code-label">Logs abrufen</div>
+        <div class="code-label">Docker-Logs (Variante A/B)</div>
         <pre><span class="cmd">docker logs</span> stackbase-agent</pre>
+      </div>
+      <div class="code-block" style="margin-top:6px;">
+        <div class="code-label">systemd-Journal (Variante C)</div>
+        <pre><span class="cmd">sudo journalctl</span> <span class="flag">-u</span> stackbase-agent <span class="flag">--no-pager</span> | <span class="cmd">grep</span> Token</pre>
       </div>
       <p class="step-desc" style="margin-top:8px;">In der Ausgabe erscheint:</p>
       <div class="token-box">
