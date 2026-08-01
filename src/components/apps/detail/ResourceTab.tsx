@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Activity, Cpu, MemoryStick, RefreshCw, ArrowDownUp, AlertCircle, Settings } from "lucide-react";
+import { Activity, Cpu, MemoryStick, RefreshCw, ArrowDownUp, AlertCircle, Settings, Copy, Check } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
 interface Reading {
@@ -27,6 +27,7 @@ interface HistoryPoint {
 interface ResourceData {
   latest: Reading | null;
   history: HistoryPoint[];
+  agentUrl: string | null;
   dockerHost: string | null;
   dockerContainer: string | null;
   metricsUrl: string | null;
@@ -108,7 +109,7 @@ export function ResourceTab({ slug }: { slug: string }) {
   useEffect(() => { load(); }, [load]);
 
   async function refresh() {
-    if (!data?.dockerHost || !data?.dockerContainer) return;
+    if (!data?.agentUrl && !data?.dockerHost && !data?.metricsUrl) return;
     setRefreshing(true);
     try {
       const res = await fetch(`/api/apps/${slug}/resources`, { method: "POST" });
@@ -138,26 +139,47 @@ export function ResourceTab({ slug }: { slug: string }) {
     );
   }
 
-  const hasConfig = (data?.dockerHost && data?.dockerContainer) || data?.metricsUrl;
+  const hasConfig = data?.agentUrl || (data?.dockerHost && data?.dockerContainer) || data?.metricsUrl;
   if (!hasConfig) {
     return (
       <div style={{
         background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12,
-        padding: 32, display: "flex", flexDirection: "column", alignItems: "center",
-        gap: 12, color: "#7A8BA6", textAlign: "center",
+        padding: 28, display: "flex", flexDirection: "column", gap: 20,
       }}>
-        <Settings size={32} style={{ opacity: 0.4 }} />
-        <div>
-          <p style={{ margin: 0, fontWeight: 600, color: "#EDF2F7" }}>Keine Monitoring-Quelle konfiguriert</p>
-          <p style={{ margin: "6px 0 0", fontSize: 13 }}>
-            Trage entweder <strong>Docker-Host + Container</strong> oder eine <strong>Metrics-URL</strong> in
-            den App-Einstellungen ein.
-          </p>
-          <p style={{ margin: "8px 0 0", fontSize: 12, color: "#4A5B6F" }}>
-            Metrics-URL erwartet: <code style={{ background: "#0B1220", padding: "1px 5px", borderRadius: 4, fontSize: 11 }}>
-              GET /metrics → {"{ cpu, memUsed, memLimit }"}
-            </code>
-          </p>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <Settings size={28} style={{ opacity: 0.35, flexShrink: 0 }} />
+          <div>
+            <p style={{ margin: 0, fontWeight: 600, fontSize: 15, color: "#EDF2F7" }}>Kein Agent konfiguriert</p>
+            <p style={{ margin: "4px 0 0", fontSize: 13, color: "#7A8BA6" }}>
+              Deploye den Stack-Base Agent auf deinem Server — funktioniert für Docker und Non-Docker, intern und extern.
+            </p>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <Step n={1} title="Agent deployen">
+            <p style={{ margin: "0 0 6px", fontSize: 12, color: "#7A8BA6" }}>Mit Docker-Monitoring (empfohlen):</p>
+            <CopyCode text={`docker run -d --name stackbase-agent \\
+  -p 9101:9101 \\
+  -e SB_CONTAINER=dein-container \\
+  -v /var/run/docker.sock:/var/run/docker.sock \\
+  ghcr.io/jan-seifarth/stackbase-agent:latest`} />
+            <p style={{ margin: "8px 0 6px", fontSize: 12, color: "#7A8BA6" }}>Ohne Docker (nur System-Metriken):</p>
+            <CopyCode text="docker run -d --name stackbase-agent -p 9101:9101 ghcr.io/jan-seifarth/stackbase-agent:latest" />
+          </Step>
+
+          <Step n={2} title="Token aus Agent-Log kopieren">
+            <p style={{ margin: 0, fontSize: 12, color: "#7A8BA6" }}>
+              Der Agent gibt beim Start den Token aus: <code style={{ background: "#0B1220", padding: "1px 6px", borderRadius: 4, fontSize: 11, color: "#EDF2F7" }}>sb_xxxxxxxxxxxx...</code>
+            </p>
+            <CopyCode text="docker logs stackbase-agent" />
+          </Step>
+
+          <Step n={3} title="Agent-URL + Token in Einstellungen eintragen">
+            <p style={{ margin: 0, fontSize: 12, color: "#7A8BA6" }}>
+              {"Einstellungen → Ressourcen-Monitoring → Agent-URL + Token eingeben und speichern."}
+            </p>
+          </Step>
         </div>
       </div>
     );
@@ -170,14 +192,18 @@ export function ResourceTab({ slug }: { slug: string }) {
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <div>
-          {data.metricsUrl ? (
+          {data.agentUrl ? (
+            <p style={{ margin: 0, fontSize: 12, color: "#7A8BA6" }}>
+              Stack-Base Agent: <code style={{ color: "#EDF2F7" }}>{data.agentUrl}</code>
+            </p>
+          ) : data.metricsUrl ? (
             <p style={{ margin: 0, fontSize: 12, color: "#7A8BA6" }}>
               Metrics-URL: <code style={{ color: "#EDF2F7" }}>{data.metricsUrl}</code>
             </p>
           ) : (
             <>
               <p style={{ margin: 0, fontSize: 12, color: "#7A8BA6" }}>
-                Host: <code style={{ color: "#EDF2F7" }}>{data.dockerHost}</code>
+                Docker Host: <code style={{ color: "#EDF2F7" }}>{data.dockerHost}</code>
               </p>
               <p style={{ margin: "2px 0 0", fontSize: 12, color: "#7A8BA6" }}>
                 Container: <code style={{ color: "#EDF2F7" }}>{data.dockerContainer}</code>
@@ -268,6 +294,42 @@ function StatChip({ icon, label, value }: { icon: React.ReactNode; label: string
   );
 }
 
+function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
+  return (
+    <div style={{ display: "flex", gap: 12 }}>
+      <div style={{ width: 24, height: 24, borderRadius: "50%", background: "rgba(37,99,232,0.15)", border: "1px solid rgba(37,99,232,0.3)", color: "#2563E8", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        {n}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ margin: "0 0 6px", fontSize: 12, fontWeight: 600, color: "#EDF2F7" }}>{title}</p>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function CopyCode({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  function copy() {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+  return (
+    <div style={{ position: "relative" }}>
+      <pre style={{ margin: 0, padding: "8px 40px 8px 10px", background: "#0B1220", border: "1px solid #1E3050", borderRadius: 6, fontSize: 11, fontFamily: "monospace", color: "#EDF2F7", overflowX: "auto", whiteSpace: "pre-wrap", wordBreak: "break-all" }}>
+        {text}
+      </pre>
+      <button
+        onClick={copy}
+        style={{ position: "absolute", top: 6, right: 6, padding: "2px 4px", background: "transparent", border: "none", cursor: "pointer", color: copied ? "#10B981" : "#7A8BA6" }}
+      >
+        {copied ? <Check size={13} /> : <Copy size={13} />}
+      </button>
+    </div>
+  );
+}
+
 function SparkCard({
   title, dataKey, data, color, unit,
 }: {
@@ -292,7 +354,10 @@ function SparkCard({
           <YAxis domain={[0, 100]} tick={{ fontSize: 9, fill: "#4A5B6F" }} tickFormatter={(v) => `${v}${unit}`} />
           <Tooltip
             contentStyle={tooltipStyle}
-            formatter={(v: number) => [`${v.toFixed(1)}${unit}`, dataKey === "cpu" ? "CPU" : "RAM"]}
+            formatter={(v) => {
+              const n = typeof v === "number" ? v : 0;
+              return [`${n.toFixed(1)}${unit}`, dataKey === "cpu" ? "CPU" : "RAM"];
+            }}
             labelStyle={{ color: "#7A8BA6" }}
           />
           <Area

@@ -9,7 +9,7 @@ export async function GET(_req: Request, { params }: Params) {
   const { slug } = await params;
   const app = await db.app.findFirst({
     where: { slug, deletedAt: null },
-    select: { id: true, dockerHost: true, dockerContainer: true, metricsUrl: true },
+    select: { id: true, agentUrl: true, dockerHost: true, dockerContainer: true, metricsUrl: true },
   });
   if (!app) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
@@ -36,6 +36,7 @@ export async function GET(_req: Request, { params }: Params) {
       memUsed: r.memUsed?.toString(),
       memLimit: r.memLimit?.toString(),
     })),
+    agentUrl: app.agentUrl,
     dockerHost: app.dockerHost,
     dockerContainer: app.dockerContainer,
     metricsUrl: app.metricsUrl,
@@ -46,15 +47,17 @@ export async function POST(_req: Request, { params }: Params) {
   const { slug } = await params;
   const app = await db.app.findFirst({
     where: { slug, deletedAt: null },
-    select: { id: true, dockerHost: true, dockerContainer: true, metricsUrl: true },
+    select: { id: true, agentUrl: true, agentToken: true, dockerHost: true, dockerContainer: true, metricsUrl: true },
   });
   if (!app) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if (!app.dockerHost && !app.metricsUrl) {
-    return NextResponse.json({ error: "Weder Docker noch Metrics-URL konfiguriert" }, { status: 400 });
+  if (!app.agentUrl && !app.dockerHost && !app.metricsUrl) {
+    return NextResponse.json({ error: "Keine Monitoring-Quelle konfiguriert" }, { status: 400 });
   }
 
   try {
     await checkResourceForApp(db, app.id, {
+      agentUrl: app.agentUrl ?? undefined,
+      agentToken: app.agentToken ?? undefined,
       dockerHost: app.dockerHost ?? undefined,
       dockerContainer: app.dockerContainer ?? undefined,
       metricsUrl: app.metricsUrl ?? undefined,

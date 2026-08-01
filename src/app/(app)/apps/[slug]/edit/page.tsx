@@ -20,9 +20,8 @@ export default async function EditAppPage({ params }: Props) {
         urlStaging:   true,
         repoUrl:      true,
         dockerImage:     true,
-        dockerHost:      true,
-        dockerContainer: true,
-        metricsUrl:      true,
+        agentUrl:        true,
+        agentToken:      true,
         dbType:          true,
         contactName:  true,
         supportEmail: true,
@@ -47,9 +46,8 @@ export default async function EditAppPage({ params }: Props) {
     <EditAppForm
       app={{
         ...app,
-        dockerHost:      app.dockerHost ?? null,
-        dockerContainer: app.dockerContainer ?? null,
-        metricsUrl:      app.metricsUrl ?? null,
+        agentUrl:      app.agentUrl ?? null,
+        agentToken:    app.agentToken ?? null,
         criticality:   app.criticality ?? null,
         vendor:        app.vendor ?? null,
         githubToken:   app.githubToken ?? null,

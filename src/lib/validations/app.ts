@@ -17,6 +17,8 @@ export const createAppSchema = z.object({
   dockerHost: z.string().max(255).optional(),
   dockerContainer: z.string().max(100).optional(),
   metricsUrl: urlOrEmpty.optional(),
+  agentUrl: urlOrEmpty.optional(),
+  agentToken: z.string().max(200).optional(),
   apiEndpoint: urlOrEmpty.optional(),
   language: z.string().max(50).optional(),
   dbType: z.string().max(50).optional(),

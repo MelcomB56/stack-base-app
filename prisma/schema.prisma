@@ -267,6 +267,8 @@ model App {
   dockerHost      String?   @db.VarChar(255) @map("docker_host")
   dockerContainer String?   @db.VarChar(100) @map("docker_container")
   metricsUrl      String?   @db.VarChar(500) @map("metrics_url")
+  agentUrl        String?   @db.VarChar(500) @map("agent_url")
+  agentToken      String?   @db.VarChar(200) @map("agent_token")
   apiEndpoint     String?   @db.VarChar(500) @map("api_endpoint")
   language        String?   @db.VarChar(50)
   dbType          String?   @db.VarChar(50) @map("db_type")

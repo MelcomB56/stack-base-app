@@ -2,8 +2,47 @@ import http from "http";
 import https from "https";
 import type { PrismaClient } from "@/generated/prisma/client";
 
-// ─── HTTP Metrics Endpoint (für Non-Docker-Apps) ─────────────────────────────
-// Erwartet JSON: { cpu: number, memUsed: number, memLimit: number, netIn?: number, netOut?: number }
+// ─── Stack-Base Agent (primäre Quelle) ───────────────────────────────────────
+interface AgentMetricsResponse {
+  cpu?: number;
+  memUsed?: number;
+  memTotal?: number;
+  memPercent?: number;
+  netIn?: number;
+  netOut?: number;
+  source?: "docker" | "system";
+  container?: string;
+}
+
+function fetchAgentMetrics(agentUrl: string, agentToken: string): Promise<AgentMetricsResponse> {
+  return new Promise((resolve, reject) => {
+    const url = new URL("/metrics", agentUrl);
+    const lib = url.protocol === "https:" ? https : http;
+    const options: http.RequestOptions = {
+      hostname: url.hostname,
+      port: url.port || (url.protocol === "https:" ? 443 : 80),
+      path: "/metrics",
+      method: "GET",
+      headers: { Authorization: `Bearer ${agentToken}` },
+      timeout: 10_000,
+    };
+    const req = lib.request(options, (res) => {
+      if (res.statusCode === 401) { reject(new Error("Agent: Ungültiger Token (401)")); return; }
+      if (res.statusCode && res.statusCode >= 400) { reject(new Error(`Agent: HTTP ${res.statusCode}`)); return; }
+      let body = "";
+      res.on("data", (c) => (body += c));
+      res.on("end", () => {
+        try { resolve(JSON.parse(body)); }
+        catch { reject(new Error("Agent: Kein gültiges JSON")); }
+      });
+    });
+    req.on("error", reject);
+    req.on("timeout", () => { req.destroy(); reject(new Error("Agent: Timeout")); });
+    req.end();
+  });
+}
+
+// ─── HTTP Metrics Endpoint (Legacy / Non-Docker-Apps) ────────────────────────
 interface MetricsEndpointResponse {
   cpu?: number;
   memUsed?: number;
@@ -112,13 +151,26 @@ function calcNet(stats: DockerStats): { in: bigint; out: bigint } | null {
 export async function checkResourceForApp(
   db: PrismaClient,
   appId: string,
-  options: { dockerHost?: string; dockerContainer?: string; metricsUrl?: string }
+  options: { agentUrl?: string; agentToken?: string; dockerHost?: string; dockerContainer?: string; metricsUrl?: string }
 ): Promise<void> {
   let cpu: number | null = null;
   let mem: { used: bigint; limit: bigint; pct: number } | null = null;
   let net: { in: bigint; out: bigint } | null = null;
 
-  if (options.dockerHost && options.dockerContainer) {
+  if (options.agentUrl) {
+    const raw = await fetchAgentMetrics(options.agentUrl, options.agentToken ?? "");
+    if (raw.cpu !== undefined) cpu = raw.cpu;
+    if (raw.memUsed !== undefined && raw.memTotal !== undefined && raw.memTotal > 0) {
+      mem = {
+        used: BigInt(Math.round(raw.memUsed)),
+        limit: BigInt(Math.round(raw.memTotal)),
+        pct: raw.memPercent ?? (raw.memUsed / raw.memTotal * 100),
+      };
+    }
+    if (raw.netIn !== undefined && raw.netOut !== undefined) {
+      net = { in: BigInt(Math.round(raw.netIn)), out: BigInt(Math.round(raw.netOut)) };
+    }
+  } else if (options.dockerHost && options.dockerContainer) {
     const raw = await fetchDockerStats(options.dockerHost, options.dockerContainer);
     cpu = calcCpu(raw);
     mem = calcMem(raw);
@@ -137,7 +189,7 @@ export async function checkResourceForApp(
       net = { in: BigInt(Math.round(raw.netIn)), out: BigInt(Math.round(raw.netOut)) };
     }
   } else {
-    throw new Error("Weder Docker noch Metrics-URL konfiguriert");
+    throw new Error("Keine Monitoring-Quelle konfiguriert");
   }
 
   await db.resourceReading.create({
@@ -158,11 +210,12 @@ export async function runResourceChecks(db: PrismaClient): Promise<number> {
     where: {
       deletedAt: null,
       OR: [
+        { agentUrl: { not: null } },
         { dockerHost: { not: null }, dockerContainer: { not: null } },
         { metricsUrl: { not: null } },
       ],
     },
-    select: { id: true, name: true, dockerHost: true, dockerContainer: true, metricsUrl: true },
+    select: { id: true, name: true, agentUrl: true, agentToken: true, dockerHost: true, dockerContainer: true, metricsUrl: true },
   });
 
   if (apps.length === 0) return 0;
@@ -170,6 +223,8 @@ export async function runResourceChecks(db: PrismaClient): Promise<number> {
   const results = await Promise.allSettled(
     apps.map((app) =>
       checkResourceForApp(db, app.id, {
+        agentUrl: app.agentUrl ?? undefined,
+        agentToken: app.agentToken ?? undefined,
         dockerHost: app.dockerHost ?? undefined,
         dockerContainer: app.dockerContainer ?? undefined,
         metricsUrl: app.metricsUrl ?? undefined,

@@ -3,6 +3,22 @@
 Alle wesentlichen Änderungen an Stack-Base werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/).
 
+## [0.6.0-dev] — 2026-08-01
+
+### Added
+
+**Modul 34 — Stack-Base Agent (portabler Monitoring-Agent)**
+- Neues Go-Binary `agent/main.go` (kein Runtime, keine Deps): deploye auf beliebigem Server, Stack-Base fragt `GET /metrics` per Bearer-Auth ab
+- Docker-Modus: wenn `SB_CONTAINER` gesetzt + Docker-Socket vorhanden → Docker Stats API (CPU %, RAM, Netzwerk per Container)
+- System-Modus: Fallback auf `/proc/stat` (CPU), `/proc/meminfo` (RAM), `/proc/net/dev` (Netzwerk)
+- Automatische Token-Generierung beim Start (`sb_<48hex>`), oder via `SB_API_KEY` Env-Var setzen
+- `agent/go.mod` (module `github.com/jan-seifarth/stackbase-agent`, go 1.22)
+- Neue App-Felder `agentUrl` + `agentToken` (Prisma-Migration `20260801154009_add_agent_url_token`)
+- Worker: `agentUrl` hat höchste Priorität, dann `dockerHost` (legacy), dann `metricsUrl` (legacy)
+- EditAppForm: altes Docker-Host/Container/Metrics-URL durch neues "Ressourcen-Monitoring"-Panel ersetzt — zeigt Docker-Befehle + Agent-URL/Token-Felder
+- ResourceTab: 3-Schritt-Setup-Guide mit Copy-Button wenn kein Agent konfiguriert; bei gesetzter agentUrl → Header zeigt Agent-URL
+- API-Route `GET /api/apps/[slug]/resources`: gibt `agentUrl` zurück; `POST`: nutzt Agent-Priority
+
 ## [0.5.0-dev] — 2026-07-31
 
 ### Added

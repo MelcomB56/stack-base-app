@@ -21,10 +21,9 @@ type AppData = {
   urlProd:      string | null;
   urlStaging:   string | null;
   repoUrl:      string | null;
-  dockerImage:     string | null;
-  dockerHost:      string | null;
-  dockerContainer: string | null;
-  metricsUrl:      string | null;
+  dockerImage:  string | null;
+  agentUrl:     string | null;
+  agentToken:   string | null;
   dbType:       string | null;
   contactName:  string | null;
   supportEmail: string | null;
@@ -236,9 +235,6 @@ export function EditAppForm({ app, options }: { app: AppData; options: Options }
           <p style={SECTION_LABEL}>Infrastruktur &amp; Betrieb</p>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <Field label="Docker Image"><DSInput name="dockerImage" defaultValue={app.dockerImage ?? ""} placeholder="org/image:latest" maxLength={200} /></Field>
-            <Field label="Docker Host"><DSInput name="dockerHost" defaultValue={app.dockerHost ?? ""} placeholder="http://192.168.25.50:2375" maxLength={255} /></Field>
-            <Field label="Container Name"><DSInput name="dockerContainer" defaultValue={app.dockerContainer ?? ""} placeholder="myapp-container-1" maxLength={100} /></Field>
-            <Field label="Metrics-URL (Non-Docker)"><DSInput name="metricsUrl" type="url" defaultValue={app.metricsUrl ?? ""} placeholder="http://server:3001/metrics" maxLength={500} /></Field>
             <Field label="Datenbank"><DSInput name="dbType" defaultValue={app.dbType ?? ""} placeholder="z.B. PostgreSQL" maxLength={50} /></Field>
             <Field label="Kritikalität">
               <DSSelect name="criticality" defaultValue={app.criticality ?? ""}>
@@ -247,6 +243,33 @@ export function EditAppForm({ app, options }: { app: AppData; options: Options }
             </Field>
             <Field label="Anbieter / Hersteller">
               <DSInput name="vendor" defaultValue={app.vendor ?? ""} placeholder="z.B. Atlassian, Microsoft" maxLength={100} />
+            </Field>
+          </div>
+        </div>
+
+        {/* Ressourcen-Monitoring */}
+        <div style={PANEL}>
+          <p style={{ ...SECTION_LABEL, display: "flex", alignItems: "center", gap: 6 }}>
+            Ressourcen-Monitoring
+          </p>
+          <p style={{ fontSize: 12, color: "#7A8BA6", margin: "0 0 4px" }}>
+            Deploye den Stack-Base Agent auf deinem Server, trage URL + Token ein. Funktioniert für Docker und Non-Docker, intern und extern.
+          </p>
+          <div style={{ background: "#0B1220", border: "1px solid #1E3050", borderRadius: 8, padding: "10px 14px", fontSize: 12, fontFamily: "monospace", color: "#7A8BA6", lineHeight: 1.6, marginBottom: 4 }}>
+            <span style={{ color: "#4A5B6F" }}># Docker (mit Container-Monitoring):</span>
+            <br />
+            docker run -d -p 9101:9101 -e SB_CONTAINER=myapp -v /var/run/docker.sock:/var/run/docker.sock ghcr.io/jan-seifarth/stackbase-agent:latest
+            <br />
+            <span style={{ color: "#4A5B6F" }}># Ohne Docker (System-Metriken):</span>
+            <br />
+            docker run -d -p 9101:9101 ghcr.io/jan-seifarth/stackbase-agent:latest
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <Field label="Agent-URL">
+              <DSInput name="agentUrl" type="url" defaultValue={app.agentUrl ?? ""} placeholder="http://192.168.25.45:9101" maxLength={500} />
+            </Field>
+            <Field label="Agent-Token (vom Agent beim Start angezeigt)">
+              <DSInput name="agentToken" type="password" defaultValue={app.agentToken ?? ""} placeholder="sb_xxxxxxxxxxxxxxxx" maxLength={200} />
             </Field>
           </div>
         </div>
