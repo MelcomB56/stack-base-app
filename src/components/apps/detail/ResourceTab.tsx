@@ -157,17 +157,15 @@ export function ResourceTab({ slug }: { slug: string }) {
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <Step n={1} title="Agent bauen & deployen">
-            <p style={{ margin: "0 0 6px", fontSize: 12, color: "#7A8BA6" }}>Image einmalig bauen (im Projektverzeichnis):</p>
-            <CopyCode text="docker build -t stackbase-agent ./agent" />
-            <p style={{ margin: "8px 0 6px", fontSize: 12, color: "#7A8BA6" }}>Mit Container-Monitoring (überwacht einen spezifischen Container):</p>
+          <Step n={1} title="Agent deployen">
+            <p style={{ margin: "0 0 6px", fontSize: 12, color: "#7A8BA6" }}>Mit Container-Monitoring (überwacht einen spezifischen Container):</p>
             <CopyCode text={`docker run -d --name stackbase-agent \\
   -p 9101:9101 \\
   -e SB_CONTAINER=dein-container \\
   -v /var/run/docker.sock:/var/run/docker.sock \\
-  stackbase-agent`} />
-            <p style={{ margin: "8px 0 6px", fontSize: 12, color: "#7A8BA6" }}>Nur Host-System-Metriken:</p>
-            <CopyCode text="docker run -d --name stackbase-agent -p 9101:9101 stackbase-agent" />
+  ghcr.io/melcomB56/stackbase-agent:latest`} />
+            <p style={{ margin: "8px 0 6px", fontSize: 12, color: "#7A8BA6" }}>Nur Host-System-Metriken (CPU/RAM/Netzwerk des Servers):</p>
+            <CopyCode text="docker run -d --name stackbase-agent -p 9101:9101 ghcr.io/melcomB56/stackbase-agent:latest" />
           </Step>
 
           <Step n={2} title="Token aus Agent-Log kopieren">
