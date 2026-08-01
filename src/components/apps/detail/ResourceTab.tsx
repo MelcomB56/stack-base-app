@@ -97,24 +97,24 @@ export function ResourceTab({ slug }: { slug: string }) {
   const [agentStatus, setAgentStatus] = useState<AgentStatus>("unknown");
   const [agentLatency, setAgentLatency] = useState<number | null>(null);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (): Promise<ResourceData | null> => {
     try {
       const res = await fetch(`/api/apps/${slug}/resources`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      setData(await res.json());
+      const d: ResourceData = await res.json();
+      setData(d);
       setError(null);
+      return d;
     } catch (e) {
       setError(String(e));
+      return null;
     } finally {
       setLoading(false);
     }
   }, [slug]);
 
-  useEffect(() => { load(); }, [load]);
-
-  async function refresh() {
-    if (!data?.agentUrl && !data?.dockerHost && !data?.metricsUrl) return;
-    setRefreshing(true);
+  const refresh = useCallback(async (silent = false) => {
+    if (!silent) setRefreshing(true);
     const t0 = Date.now();
     try {
       const res = await fetch(`/api/apps/${slug}/resources`, { method: "POST" });
@@ -128,11 +128,18 @@ export function ResourceTab({ slug }: { slug: string }) {
     } catch (e) {
       setAgentStatus("error");
       setAgentLatency(null);
-      setError(String(e));
+      if (!silent) setError(String(e));
     } finally {
-      setRefreshing(false);
+      if (!silent) setRefreshing(false);
     }
-  }
+  }, [slug, load]);
+
+  // Beim Mount: Daten laden, dann Agent automatisch abfragen wenn konfiguriert
+  useEffect(() => {
+    load().then((d) => {
+      if (d?.agentUrl || d?.dockerHost || d?.metricsUrl) refresh(true);
+    });
+  }, [load, refresh]);
 
   const chartData = (data?.history ?? []).map((p) => ({
     time: formatTime(p.readAt),
