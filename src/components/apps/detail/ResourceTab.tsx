@@ -200,9 +200,11 @@ SB_API_KEY=mein-token ./stackbase-agent`} />
             <CopyCode text="journalctl -u stackbase-agent | grep Token" />
           </Step>
 
-          <Step n={3} title="Agent-URL + Token in Einstellungen eintragen">
+          <Step n={3} title="Agent-URL + Token eintragen">
             <p style={{ margin: 0, fontSize: 12, color: "#7A8BA6" }}>
-              {"Einstellungen → Ressourcen-Monitoring → Agent-URL + Token eingeben und speichern."}
+              Oben rechts:{" "}
+              <strong style={{ color: "#EDF2F7" }}>Aktionen &rarr; Bearbeiten</strong>
+              {" → Abschnitt 'Ressourcen-Monitoring' → Agent-URL + Token eingeben und speichern."}
             </p>
           </Step>
         </div>
