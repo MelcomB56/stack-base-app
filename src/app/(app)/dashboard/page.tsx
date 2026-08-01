@@ -1,13 +1,10 @@
 import { db } from "@/lib/db";
-import { AppStatus } from "@/generated/prisma/client";
 import { DashboardClient } from "@/components/dashboard/DashboardClient";
 
 export default async function DashboardPage() {
   const currentMonth = new Date().toISOString().slice(0, 7);
-  const prevMonth = (() => { const d = new Date(); d.setMonth(d.getMonth() - 1); return d.toISOString().slice(0, 7); })();
 
-  const [total, byStatus, recentActivity, topApps, costCurrent, costPrev] = await Promise.all([
-    db.app.count({ where: { deletedAt: null } }),
+  const [byStatus, recentActivity, apps, costCurrent, openIncidentCount] = await Promise.all([
     db.app.groupBy({
       by: ["status"],
       where: { deletedAt: null },
@@ -15,25 +12,38 @@ export default async function DashboardPage() {
     }),
     db.activityLog.findMany({
       orderBy: { createdAt: "desc" },
-      take: 8,
+      take: 10,
       include: {
         app: { select: { name: true, slug: true } },
         user: { select: { name: true } },
       },
     }),
     db.app.findMany({
-      where: { deletedAt: null, status: { not: AppStatus.ARCHIVED } },
-      select: { name: true, status: true, slug: true },
-      orderBy: { updatedAt: "desc" },
-      take: 5,
+      where: { deletedAt: null },
+      select: {
+        id: true, name: true, slug: true, status: true, urlProd: true, logoUrl: true,
+        incidents: {
+          where: { status: { not: "RESOLVED" } },
+          select: { id: true },
+        },
+        healthChecks: {
+          orderBy: { checkedAt: "desc" },
+          take: 1,
+          select: { status: true, responseTime: true, checkedAt: true },
+        },
+      },
+      orderBy: { name: "asc" },
     }),
     db.appCost.aggregate({ where: { month: currentMonth }, _sum: { amount: true } }),
-    db.appCost.aggregate({ where: { month: prevMonth }, _sum: { amount: true } }),
+    db.incident.count({ where: { status: { not: "RESOLVED" }, app: { deletedAt: null } } }),
   ]);
 
-  const statusMap = Object.fromEntries(
-    byStatus.map((s) => [s.status, s._count.status])
-  );
+  const statusMap = Object.fromEntries(byStatus.map((s) => [s.status, s._count.status]));
+  const total = Object.values(statusMap).reduce((a, b) => a + b, 0);
+
+  const productionUp = apps.filter(
+    (a) => a.status === "PRODUCTION" && a.healthChecks[0]?.status === "UP"
+  ).length;
 
   return (
     <DashboardClient
@@ -44,10 +54,23 @@ export default async function DashboardPage() {
         testing:     statusMap["TESTING"]     ?? 0,
         maintenance: statusMap["MAINTENANCE"] ?? 0,
         archived:    statusMap["ARCHIVED"]    ?? 0,
+        productionUp,
+        openIncidents: openIncidentCount,
         costCurrentMonth: Number(costCurrent._sum.amount ?? 0),
-        costPrevMonth:    Number(costPrev._sum.amount ?? 0),
         costMonth: currentMonth,
       }}
+      apps={apps.map((a) => ({
+        id: a.id,
+        name: a.name,
+        slug: a.slug,
+        status: a.status,
+        urlProd: a.urlProd ?? null,
+        logoUrl: a.logoUrl ?? null,
+        openIncidents: a.incidents.length,
+        health: a.healthChecks[0]
+          ? { status: a.healthChecks[0].status, responseTime: a.healthChecks[0].responseTime ?? null, checkedAt: a.healthChecks[0].checkedAt.toISOString() }
+          : null,
+      }))}
       recentActivity={recentActivity.map((a) => ({
         id: a.id,
         action: a.action,
@@ -56,7 +79,6 @@ export default async function DashboardPage() {
         userName: a.user?.name ?? "System",
         createdAt: a.createdAt.toISOString(),
       }))}
-      topApps={topApps}
     />
   );
 }

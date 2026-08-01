@@ -1,201 +1,51 @@
 "use client";
 
 import Link from "next/link";
-import { ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, Tooltip } from "recharts";
+import { Globe, AlertTriangle, ExternalLink } from "lucide-react";
+
+// ─── Types ───────────────────────────────────────────────────────────────────
 
 type Stats = {
-  total: number; production: number; development: number;
-  testing: number; maintenance: number; archived: number;
-  costCurrentMonth: number; costPrevMonth: number; costMonth: string;
+  total: number;
+  production: number; development: number; testing: number;
+  maintenance: number; archived: number;
+  productionUp: number;
+  openIncidents: number;
+  costCurrentMonth: number;
+  costMonth: string;
 };
+
+type AppRow = {
+  id: string; name: string; slug: string; status: string;
+  urlProd: string | null; logoUrl: string | null;
+  openIncidents: number;
+  health: { status: string; responseTime: number | null; checkedAt: string } | null;
+};
+
 type ActivityEntry = {
   id: string; action: string; appName: string | null;
   appSlug: string | null; userName: string; createdAt: string;
 };
-type TopApp = { name: string; status: string; slug: string };
 
-function makeSpark(base: number) {
-  return Array.from({ length: 10 }, (_, i) => ({
-    v: Math.max(0, base + Math.round((Math.random() - 0.45) * (base * 0.4 + 2) * (i / 5 + 0.5))),
-  }));
-}
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
-// ─── StatCard ────────────────────────────────────────────────────────────────
-
-function StatCard({ label, value, iconBg, iconColor, iconPath, sparkColor, trend }: {
-  label: string; value: number; iconBg: string; iconColor: string;
-  iconPath: React.ReactNode; sparkColor: string; trend?: string;
-}) {
-  const spark = makeSpark(value);
-  return (
-    <div
-      style={{
-        background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12,
-        padding: 14, display: "flex", flexDirection: "column", gap: 8,
-        transition: "border-color 200ms", cursor: "default",
-      }}
-      onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = "#263450"; }}
-      onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = "#1E3050"; }}
-    >
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
-        <div style={{
-          width: 30, height: 30, borderRadius: 8,
-          background: iconBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-        }}>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={iconColor} strokeWidth="2">
-            {iconPath}
-          </svg>
-        </div>
-        {trend && (
-          <span style={{ fontSize: 10, color: "#10B981", display: "flex", alignItems: "center", gap: 2 }}>
-            ↑ {trend}
-          </span>
-        )}
-      </div>
-      <div>
-        <div style={{ fontSize: 22, fontWeight: 700, fontVariantNumeric: "tabular-nums", lineHeight: 1.1, color: "#EDF2F7" }}>
-          {value}
-        </div>
-        <div style={{ fontSize: 11, color: "#7A8BA6", marginTop: 1 }}>{label}</div>
-      </div>
-      <div style={{ height: 36, margin: "0 -4px" }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={spark} margin={{ top: 2, right: 0, bottom: 2, left: 0 }}>
-            <Line type="monotone" dataKey="v" stroke={sparkColor} strokeWidth={1.5} dot={false} isAnimationActive={false} />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
-  );
-}
-
-// ─── Donut ────────────────────────────────────────────────────────────────────
-
-const DONUT_COLORS = {
-  production:  "#10B981",
-  development: "#3B82F6",
-  testing:     "#F59E0B",
-  maintenance: "#F97316",
-  archived:    "#6B7280",
+const STATUS_LABEL: Record<string, string> = {
+  PRODUCTION: "Produktion", DEVELOPMENT: "Entwicklung",
+  TESTING: "Testing", MAINTENANCE: "Wartung", ARCHIVED: "Archiviert",
 };
 
-function StatusDonut({ stats }: { stats: Stats }) {
-  const data = [
-    { name: "Produktion",  value: stats.production,  color: DONUT_COLORS.production },
-    { name: "Entwicklung", value: stats.development, color: DONUT_COLORS.development },
-    { name: "Testing",     value: stats.testing,     color: DONUT_COLORS.testing },
-    { name: "Wartung",     value: stats.maintenance, color: DONUT_COLORS.maintenance },
-    { name: "Archiviert",  value: stats.archived,    color: DONUT_COLORS.archived },
-  ].filter((d) => d.value > 0);
-
-  const empty = data.length === 0;
-
-  return (
-    <div style={{ background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12, padding: 18, display: "flex", flexDirection: "column" }}>
-      <div style={{ fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 8, marginBottom: 16, color: "#EDF2F7" }}>
-        <span style={{ width: 6, height: 16, borderRadius: 3, background: "#2563E8", flexShrink: 0, display: "inline-block" }} />
-        Status-Übersicht
-      </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 16, flex: 1 }}>
-        <div style={{ position: "relative", width: 112, height: 112, flexShrink: 0 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={empty ? [{ name: "Leer", value: 1 }] : data}
-                cx="50%" cy="50%"
-                innerRadius={38} outerRadius={54}
-                dataKey="value" paddingAngle={2} isAnimationActive={false}
-              >
-                {empty
-                  ? <Cell fill="#1A2640" />
-                  : data.map((d, i) => <Cell key={i} fill={d.color} />)
-                }
-              </Pie>
-              {!empty && (
-                <Tooltip
-                  contentStyle={{ background: "#111C2D", border: "1px solid #1E3050", borderRadius: 8, fontSize: 12 }}
-                  itemStyle={{ color: "#EDF2F7" }}
-                />
-              )}
-            </PieChart>
-          </ResponsiveContainer>
-          <div style={{
-            position: "absolute", inset: 0, display: "flex", flexDirection: "column",
-            alignItems: "center", justifyContent: "center", pointerEvents: "none",
-          }}>
-            <span style={{ fontSize: 20, fontWeight: 700, color: "#EDF2F7" }}>{stats.total}</span>
-            <span style={{ fontSize: 9, color: "#7A8BA6", marginTop: 1 }}>Gesamt</span>
-          </div>
-        </div>
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 7 }}>
-          {[
-            { label: "Produktion",  value: stats.production,  color: DONUT_COLORS.production },
-            { label: "Entwicklung", value: stats.development, color: DONUT_COLORS.development },
-            { label: "Testing",     value: stats.testing,     color: DONUT_COLORS.testing },
-            { label: "Wartung",     value: stats.maintenance, color: DONUT_COLORS.maintenance },
-            { label: "Archiviert",  value: stats.archived,    color: DONUT_COLORS.archived },
-          ].map(({ label, value, color }) => (
-            <div key={label} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "#EDF2F7" }}>
-              <span style={{ width: 8, height: 8, borderRadius: "50%", background: color, flexShrink: 0 }} />
-              <span style={{ flex: 1, color: "#7A8BA6" }}>{label}</span>
-              <span style={{ fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{value}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Top Apps ─────────────────────────────────────────────────────────────────
-
-const STATUS_BAR_COLOR: Record<string, string> = {
-  PRODUCTION:  "#10B981",
-  DEVELOPMENT: "#3B82F6",
-  TESTING:     "#F59E0B",
-  MAINTENANCE: "#F97316",
-  ARCHIVED:    "#6B7280",
+const STATUS_COLOR: Record<string, string> = {
+  PRODUCTION: "#10B981", DEVELOPMENT: "#3B82F6",
+  TESTING: "#F59E0B", MAINTENANCE: "#F97316", ARCHIVED: "#6B7280",
 };
 
-function TopApps({ apps, total }: { apps: TopApp[]; total: number }) {
-  return (
-    <div style={{ background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12, padding: 18, display: "flex", flexDirection: "column" }}>
-      <div style={{ fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 8, marginBottom: 16, color: "#EDF2F7" }}>
-        <span style={{ width: 6, height: 16, borderRadius: 3, background: "#22D3EE", flexShrink: 0, display: "inline-block" }} />
-        Top Apps
-      </div>
-      {apps.length === 0 ? (
-        <p style={{ fontSize: 12, color: "#7A8BA6", textAlign: "center", padding: "16px 0" }}>Noch keine Apps vorhanden</p>
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 11, flex: 1 }}>
-          {apps.map((app) => {
-            const pct = total > 0 ? Math.round((1 / Math.max(total, 1)) * 100) : 0;
-            const barColor = STATUS_BAR_COLOR[app.status] ?? "#6B7280";
-            return (
-              <Link key={app.slug} href={`/apps/${app.slug}`} style={{ textDecoration: "none" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4, fontSize: 12 }}>
-                  <span style={{ fontWeight: 500, color: "#EDF2F7" }}>{app.name}</span>
-                  <span style={{ color: "#7A8BA6", fontVariantNumeric: "tabular-nums" }}>{pct}%</span>
-                </div>
-                <div style={{ height: 6, background: "#1A2640", borderRadius: 99, overflow: "hidden" }}>
-                  <div style={{ height: "100%", width: `${Math.max(20, pct)}%`, background: barColor, borderRadius: 99 }} />
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
+const HEALTH_COLOR: Record<string, string> = {
+  UP: "#10B981", DEGRADED: "#F59E0B", DOWN: "#EF4444", UNKNOWN: "#6B7280",
+};
 
-// ─── Activity Feed ────────────────────────────────────────────────────────────
-
-const ACTION_LABEL: Record<string, string> = {
-  "app.created":    "angelegt",
-  "app.updated":    "aktualisiert",
-  "app.deleted":    "gelöscht",
-  "status.changed": "Status geändert",
+const HEALTH_ORDER: Record<string, number> = { DOWN: 0, DEGRADED: 1, UNKNOWN: 2, UP: 3 };
+const APP_STATUS_ORDER: Record<string, number> = {
+  PRODUCTION: 0, MAINTENANCE: 1, TESTING: 2, DEVELOPMENT: 3, ARCHIVED: 4,
 };
 
 function timeAgo(iso: string) {
@@ -203,148 +53,260 @@ function timeAgo(iso: string) {
   if (diff < 1)  return "gerade eben";
   if (diff < 60) return `vor ${diff} Min.`;
   const h = Math.round(diff / 60);
-  if (h < 24)    return `vor ${h} Std.`;
-  return `vor ${Math.round(h / 24)} Tagen`;
+  if (h < 24)   return `vor ${h} Std.`;
+  return `vor ${Math.round(h / 24)} d`;
 }
 
-function ActivityFeed({ items }: { items: ActivityEntry[] }) {
+const ACTION_LABEL: Record<string, string> = {
+  "app.created": "angelegt",
+  "app.updated": "aktualisiert",
+  "app.deleted": "gelöscht",
+  "status.changed": "Status geändert",
+};
+
+function sortApps(apps: AppRow[]): AppRow[] {
+  return [...apps].sort((a, b) => {
+    const sa = APP_STATUS_ORDER[a.status] ?? 9;
+    const sb = APP_STATUS_ORDER[b.status] ?? 9;
+    if (sa !== sb) return sa - sb;
+    // Within same status: problems first
+    const ha = HEALTH_ORDER[a.health?.status ?? "UNKNOWN"] ?? 2;
+    const hb = HEALTH_ORDER[b.health?.status ?? "UNKNOWN"] ?? 2;
+    if (ha !== hb) return ha - hb;
+    return a.name.localeCompare(b.name, "de");
+  });
+}
+
+// ─── KPI Strip ───────────────────────────────────────────────────────────────
+
+function KpiStrip({ stats }: { stats: Stats }) {
+  const chips = [
+    { label: "Apps gesamt",      value: stats.total,          color: "#7A8BA6" },
+    { label: "Produktion",       value: stats.production,     color: "#10B981" },
+    { label: "Entwicklung",      value: stats.development,    color: "#3B82F6" },
+    { label: "Offene Incidents", value: stats.openIncidents,  color: stats.openIncidents > 0 ? "#EF4444" : "#7A8BA6" },
+  ];
+
   return (
-    <div style={{ background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12, padding: 18, display: "flex", flexDirection: "column" }}>
-      <div style={{ fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 8, marginBottom: 16, color: "#EDF2F7" }}>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563E8" strokeWidth="2">
-          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-        </svg>
-        Letzte Aktivitäten
-      </div>
-      {items.length === 0 ? (
-        <p style={{ fontSize: 12, color: "#7A8BA6", textAlign: "center", padding: "16px 0" }}>Noch keine Aktivitäten</p>
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
-          {items.map((entry, idx) => (
-            <div key={entry.id} style={{ display: "flex", gap: 12 }}>
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#2563E8", marginTop: 4, flexShrink: 0 }} />
-                {idx < items.length - 1 && (
-                  <div style={{ width: 1, flex: 1, background: "#1E3050", marginTop: 4, minHeight: 14 }} />
-                )}
-              </div>
-              <div style={{ paddingBottom: 13, flex: 1, minWidth: 0 }}>
-                <p style={{ fontSize: 12, lineHeight: 1.4, color: "#EDF2F7", margin: 0 }}>
-                  <span style={{ fontWeight: 600 }}>{entry.userName}</span>
-                  {" hat "}
-                  {entry.appName && entry.appSlug ? (
-                    <Link href={`/apps/${entry.appSlug}`} style={{ color: "#2563E8", textDecoration: "none" }}>
-                      {entry.appName}
-                    </Link>
-                  ) : "eine App"}
-                  {" "}
-                  <span style={{ color: "#7A8BA6" }}>{ACTION_LABEL[entry.action] ?? entry.action}</span>
-                </p>
-                <p style={{ fontSize: 10, color: "#7A8BA6", marginTop: 2, marginBottom: 0 }}>{timeAgo(entry.createdAt)}</p>
-              </div>
-            </div>
-          ))}
+    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+      {chips.map((c) => (
+        <div key={c.label} style={{
+          display: "flex", alignItems: "center", gap: 7,
+          padding: "5px 12px", borderRadius: 99,
+          background: "#111C2D", border: "1px solid #1E3050",
+          fontSize: 12,
+        }}>
+          <span style={{ width: 7, height: 7, borderRadius: "50%", background: c.color, flexShrink: 0 }} />
+          <span style={{ color: "#7A8BA6" }}>{c.label}</span>
+          <span style={{ fontWeight: 700, color: "#EDF2F7", fontVariantNumeric: "tabular-nums" }}>{c.value}</span>
         </div>
-      )}
+      ))}
     </div>
   );
 }
 
-// ─── Cost Widget ──────────────────────────────────────────────────────────────
+// ─── Incident Banner ─────────────────────────────────────────────────────────
 
-function CostWidget({ stats }: { stats: Stats }) {
-  const fmt = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
-  const delta = stats.costCurrentMonth - stats.costPrevMonth;
-  const [y, m] = stats.costMonth.split("-");
-  const months = ["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
-  const label = `${months[parseInt(m) - 1]} ${y}`;
+function IncidentBanner({ count }: { count: number }) {
+  if (count === 0) return null;
+  return (
+    <Link href="/apps" style={{ textDecoration: "none" }}>
+      <div style={{
+        display: "flex", alignItems: "center", gap: 10,
+        padding: "10px 16px", borderRadius: 10,
+        background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.3)",
+        color: "#FCA5A5", fontSize: 13, fontWeight: 500,
+        transition: "background 150ms",
+      }}>
+        <AlertTriangle size={15} style={{ flexShrink: 0, color: "#EF4444" }} />
+        {count === 1 ? "1 offener Incident" : `${count} offene Incidents`} — jetzt prüfen
+        <ExternalLink size={12} style={{ marginLeft: "auto", opacity: 0.6 }} />
+      </div>
+    </Link>
+  );
+}
+
+// ─── App List ─────────────────────────────────────────────────────────────────
+
+function AppList({ apps }: { apps: AppRow[] }) {
+  const sorted = sortApps(apps.filter((a) => a.status !== "ARCHIVED"));
 
   return (
-    <div style={{ background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12, padding: 18 }}>
-      <div style={{ fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 8, marginBottom: 14, color: "#EDF2F7" }}>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="2">
-          <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
-        </svg>
-        Hosting-Kosten
+    <div style={{ background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12, overflow: "hidden" }}>
+      {/* Header */}
+      <div style={{ padding: "14px 18px 12px", borderBottom: "1px solid #1E3050", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <span style={{ fontSize: 13, fontWeight: 600, color: "#EDF2F7" }}>Apps</span>
+        <Link href="/apps" style={{ fontSize: 12, color: "#2563E8", textDecoration: "none", display: "flex", alignItems: "center", gap: 4 }}>
+          Alle anzeigen <ExternalLink size={11} />
+        </Link>
       </div>
-      <div style={{ display: "flex", gap: 20 }}>
-        <div>
-          <p style={{ fontSize: 10, color: "#7A8BA6", margin: "0 0 4px", textTransform: "uppercase", letterSpacing: ".1em" }}>{label}</p>
-          <p style={{ fontSize: 24, fontWeight: 700, color: "#EDF2F7", margin: 0, fontVariantNumeric: "tabular-nums" }}>{fmt(stats.costCurrentMonth)}</p>
-          {stats.costPrevMonth > 0 && (
-            <p style={{ fontSize: 11, margin: "4px 0 0", color: delta > 0 ? "#EF4444" : delta < 0 ? "#10B981" : "#7A8BA6", display: "flex", alignItems: "center", gap: 3 }}>
-              {delta > 0 ? "↑" : delta < 0 ? "↓" : "="} {delta !== 0 ? fmt(Math.abs(delta)) : "Unverändert"} vs. Vormonat
-            </p>
-          )}
-          {stats.costPrevMonth === 0 && stats.costCurrentMonth === 0 && (
-            <p style={{ fontSize: 11, color: "#7A8BA6", margin: "4px 0 0" }}>Noch keine Kosten erfasst</p>
-          )}
-        </div>
-        {stats.costPrevMonth > 0 && (
-          <div style={{ borderLeft: "1px solid #1E3050", paddingLeft: 20 }}>
-            <p style={{ fontSize: 10, color: "#7A8BA6", margin: "0 0 4px", textTransform: "uppercase", letterSpacing: ".1em" }}>Vormonat</p>
-            <p style={{ fontSize: 16, fontWeight: 600, color: "#7A8BA6", margin: 0, fontVariantNumeric: "tabular-nums" }}>{fmt(stats.costPrevMonth)}</p>
-          </div>
+
+      {/* Rows */}
+      <div>
+        {sorted.length === 0 && (
+          <p style={{ padding: "24px 18px", fontSize: 13, color: "#7A8BA6", margin: 0 }}>Keine Apps vorhanden.</p>
         )}
+        {sorted.map((app, idx) => {
+          const hStatus = app.health?.status ?? null;
+          const hColor = hStatus ? HEALTH_COLOR[hStatus] ?? "#6B7280" : "#2A3850";
+          const isLast = idx === sorted.length - 1;
+
+          return (
+            <Link key={app.slug} href={`/apps/${app.slug}`} style={{ textDecoration: "none" }}>
+              <div style={{
+                display: "flex", alignItems: "center", gap: 12,
+                padding: "11px 18px",
+                borderBottom: isLast ? "none" : "1px solid #152035",
+                transition: "background 120ms",
+              }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.03)"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.background = "transparent"; }}
+              >
+                {/* Health dot */}
+                <span style={{
+                  width: 8, height: 8, borderRadius: "50%", flexShrink: 0,
+                  background: hColor,
+                  boxShadow: hStatus === "UP" ? `0 0 6px ${hColor}` : hStatus === "DOWN" ? `0 0 6px ${hColor}` : "none",
+                }} />
+
+                {/* Logo or icon */}
+                {app.logoUrl ? (
+                  <img src={app.logoUrl} alt="" style={{ width: 22, height: 22, borderRadius: 5, objectFit: "contain", flexShrink: 0 }} />
+                ) : (
+                  <div style={{ width: 22, height: 22, borderRadius: 5, background: `${STATUS_COLOR[app.status] ?? "#6B7280"}20`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <Globe size={11} style={{ color: STATUS_COLOR[app.status] ?? "#6B7280" }} />
+                  </div>
+                )}
+
+                {/* Name */}
+                <span style={{ flex: 1, fontSize: 13, fontWeight: 500, color: "#EDF2F7", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {app.name}
+                </span>
+
+                {/* Open incidents badge */}
+                {app.openIncidents > 0 && (
+                  <span style={{ padding: "1px 7px", borderRadius: 99, fontSize: 10, fontWeight: 700, background: "rgba(239,68,68,0.15)", color: "#F87171", border: "1px solid rgba(239,68,68,0.3)", flexShrink: 0 }}>
+                    {app.openIncidents} Incident{app.openIncidents > 1 ? "s" : ""}
+                  </span>
+                )}
+
+                {/* Status badge */}
+                <span style={{
+                  padding: "2px 8px", borderRadius: 99, fontSize: 10, fontWeight: 600, flexShrink: 0,
+                  background: `${STATUS_COLOR[app.status] ?? "#6B7280"}18`,
+                  color: STATUS_COLOR[app.status] ?? "#6B7280",
+                  border: `1px solid ${STATUS_COLOR[app.status] ?? "#6B7280"}33`,
+                }}>
+                  {STATUS_LABEL[app.status] ?? app.status}
+                </span>
+
+                {/* Response time or health info */}
+                <span style={{ fontSize: 11, color: "#4A5B6F", fontVariantNumeric: "tabular-nums", flexShrink: 0, minWidth: 60, textAlign: "right" }}>
+                  {app.health?.responseTime != null
+                    ? `${app.health.responseTime} ms`
+                    : app.health?.checkedAt
+                      ? hStatus === "DOWN" ? "DOWN" : "—"
+                      : "kein Monitor"}
+                </span>
+              </div>
+            </Link>
+          );
+        })}
       </div>
+    </div>
+  );
+}
+
+// ─── Activity Feed ────────────────────────────────────────────────────────────
+
+function ActivityFeed({ items }: { items: ActivityEntry[] }) {
+  return (
+    <div style={{ background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12, overflow: "hidden" }}>
+      <div style={{ padding: "14px 18px 12px", borderBottom: "1px solid #1E3050" }}>
+        <span style={{ fontSize: 13, fontWeight: 600, color: "#EDF2F7" }}>Letzte Aktivitäten</span>
+      </div>
+      <div style={{ padding: "4px 0" }}>
+        {items.length === 0 && (
+          <p style={{ padding: "24px 18px", fontSize: 13, color: "#7A8BA6", margin: 0 }}>Noch keine Aktivitäten.</p>
+        )}
+        {items.map((entry, idx) => (
+          <div key={entry.id} style={{ display: "flex", gap: 12, padding: "10px 18px", borderBottom: idx < items.length - 1 ? "1px solid #152035" : "none" }}>
+            {/* Timeline dot */}
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 3, flexShrink: 0 }}>
+              <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#2563E8" }} />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: 12, color: "#EDF2F7", margin: 0, lineHeight: 1.5 }}>
+                <span style={{ fontWeight: 600 }}>{entry.userName}</span>
+                {" hat "}
+                {entry.appName && entry.appSlug ? (
+                  <Link href={`/apps/${entry.appSlug}`} style={{ color: "#60A5FA", textDecoration: "none" }}>
+                    {entry.appName}
+                  </Link>
+                ) : "eine App"}
+                {" "}
+                <span style={{ color: "#7A8BA6" }}>{ACTION_LABEL[entry.action] ?? entry.action}</span>
+              </p>
+              <p style={{ fontSize: 10, color: "#4A5B6F", margin: "2px 0 0" }}>{timeAgo(entry.createdAt)}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Cost Strip ───────────────────────────────────────────────────────────────
+
+function CostStrip({ costCurrentMonth, costMonth }: { costCurrentMonth: number; costMonth: string }) {
+  if (costCurrentMonth === 0) return null;
+  const [y, m] = costMonth.split("-");
+  const months = ["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
+  const label = `${months[parseInt(m) - 1]} ${y}`;
+  const fmt = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
+
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", justifyContent: "space-between",
+      padding: "10px 16px", borderRadius: 10,
+      background: "#111C2D", border: "1px solid #1E3050", fontSize: 13,
+    }}>
+      <span style={{ color: "#7A8BA6" }}>Hosting-Kosten {label}</span>
+      <span style={{ fontWeight: 700, color: "#EDF2F7", fontVariantNumeric: "tabular-nums" }}>{fmt(costCurrentMonth)}</span>
     </div>
   );
 }
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
-export function DashboardClient({ stats, recentActivity, topApps }: {
-  stats: Stats; recentActivity: ActivityEntry[]; topApps: TopApp[];
+export function DashboardClient({ stats, apps, recentActivity }: {
+  stats: Stats;
+  apps: AppRow[];
+  recentActivity: ActivityEntry[];
 }) {
+  const now = new Date().toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+
   return (
-    <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
+    <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 14, maxWidth: 1200 }}>
+
       {/* Header */}
-      <div>
-        <h1 style={{ fontSize: 20, fontWeight: 700, letterSpacing: "-0.02em", color: "#EDF2F7", margin: 0 }}>Dashboard</h1>
-        <p style={{ fontSize: 13, color: "#7A8BA6", marginTop: 2, marginBottom: 0 }}>Übersicht aller Apps und Aktivitäten</p>
+      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+        <div>
+          <h1 style={{ fontSize: 20, fontWeight: 700, letterSpacing: "-0.02em", color: "#EDF2F7", margin: 0 }}>Dashboard</h1>
+          <p style={{ fontSize: 12, color: "#4A5B6F", marginTop: 2, marginBottom: 0 }}>{now}</p>
+        </div>
+        <KpiStrip stats={stats} />
       </div>
 
-      {/* Stat Cards — 6 Spalten */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(6,1fr)", gap: 12 }}>
-        <StatCard
-          label="Apps gesamt" value={stats.total} sparkColor="#3B82F6"
-          iconBg="rgba(37,99,232,0.15)" iconColor="#2563E8" trend="+2"
-          iconPath={<><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></>}
-        />
-        <StatCard
-          label="Produktion" value={stats.production} sparkColor="#10B981"
-          iconBg="rgba(16,185,129,0.15)" iconColor="#10B981"
-          iconPath={<><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></>}
-        />
-        <StatCard
-          label="Entwicklung" value={stats.development} sparkColor="#60A5FA"
-          iconBg="rgba(59,130,246,0.15)" iconColor="#60A5FA"
-          iconPath={<><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></>}
-        />
-        <StatCard
-          label="Testing" value={stats.testing} sparkColor="#F59E0B"
-          iconBg="rgba(245,158,11,0.15)" iconColor="#F59E0B"
-          iconPath={<><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v11m0 0H5a2 2 0 00-2-2m6 2v5a2 2 0 002 2h2a2 2 0 002-2v-5m-6 0h6"/></>}
-        />
-        <StatCard
-          label="Wartung" value={stats.maintenance} sparkColor="#F97316"
-          iconBg="rgba(249,115,22,0.15)" iconColor="#FB923C"
-          iconPath={<><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></>}
-        />
-        <StatCard
-          label="Archiviert" value={stats.archived} sparkColor="#6B7280"
-          iconBg="rgba(107,114,128,0.12)" iconColor="#9CA3AF"
-          iconPath={<><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></>}
-        />
-      </div>
+      {/* Incident banner */}
+      <IncidentBanner count={stats.openIncidents} />
 
-      {/* Cost Widget — full width */}
-      <CostWidget stats={stats} />
+      {/* Cost strip (only if data exists) */}
+      <CostStrip costCurrentMonth={stats.costCurrentMonth} costMonth={stats.costMonth} />
 
-      {/* Bottom Grid — 3 Spalten */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, flex: 1 }}>
-        <StatusDonut stats={stats} />
-        <TopApps apps={topApps} total={stats.total} />
+      {/* Main grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: 14, alignItems: "start" }}>
+        <AppList apps={apps} />
         <ActivityFeed items={recentActivity} />
       </div>
     </div>
