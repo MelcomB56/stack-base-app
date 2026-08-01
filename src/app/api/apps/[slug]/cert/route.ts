@@ -16,7 +16,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ slu
     db.certCheck.findMany({
       where: { appId: app.id },
       orderBy: { checkedAt: "desc" },
-      take: 20,
+      take: 10,
       select: { id: true, status: true, daysLeft: true, checkedAt: true, errorMsg: true },
     }),
   ]);

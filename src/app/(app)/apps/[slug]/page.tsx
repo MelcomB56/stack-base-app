@@ -3,9 +3,10 @@ import { auth } from "@/auth";
 import { notFound } from "next/navigation";
 import { AppStatusBadge } from "@/components/apps/AppStatusBadge";
 import { AppStatus } from "@/generated/prisma/client";
-import { Globe, ChevronRight, Activity, AlertTriangle, Shield } from "lucide-react";
+import { Globe, ChevronRight, AlertTriangle, Shield } from "lucide-react";
 import Link from "next/link";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TabsContent } from "@/components/ui/tabs";
+import { ControlledTabsWrapper } from "@/components/apps/detail/ControlledTabsWrapper";
 import { ReleasesTab } from "@/components/apps/ReleasesTab";
 import { ChangelogTab } from "@/components/apps/ChangelogTab";
 import { OverviewTab } from "@/components/apps/detail/OverviewTab";
@@ -194,103 +195,18 @@ export default async function AppDetailPage({ params }: { params: Promise<{ slug
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="overview">
-        <style>{`.tab-bar::-webkit-scrollbar{display:none}`}</style>
-        <div className="tab-bar" style={{ overflowX: "auto", scrollbarWidth: "none" }}>
-        <TabsList>
-          <TabsTrigger value="overview">Übersicht</TabsTrigger>
-          <TabsTrigger value="environments">
-            Environments
-            {app.environments.length > 0 && (
-              <span style={{ marginLeft: 5, padding: "1px 6px", borderRadius: 99, background: "#1A2640", fontSize: 10, color: "#7A8BA6" }}>
-                {app.environments.length}
-              </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="cert">
-            Zertifikat
-          </TabsTrigger>
-          <TabsTrigger value="resources">
-            Ressourcen
-          </TabsTrigger>
-          <TabsTrigger value="costs">
-            Kosten
-            {app.costs.length > 0 && (
-              <span style={{ marginLeft: 5, padding: "1px 6px", borderRadius: 99, background: "#1A2640", fontSize: 10, color: "#7A8BA6" }}>
-                {app.costs.length}
-              </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="dependencies">
-            Abhängigkeiten
-            {(app.dependencies.length + app.dependents.length) > 0 && (
-              <span style={{ marginLeft: 5, padding: "1px 6px", borderRadius: 99, background: "#1A2640", fontSize: 10, color: "#7A8BA6" }}>
-                {app.dependencies.length + app.dependents.length}
-              </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="incidents">
-            Incidents
-            {openIncidents.length > 0 && (
-              <span style={{ marginLeft: 5, padding: "1px 6px", borderRadius: 99, background: "rgba(239,68,68,0.2)", fontSize: 10, color: "#F87171", fontWeight: 700 }}>
-                {openIncidents.length}
-              </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="releases">
-            Releases
-            {app.releases.length > 0 && (
-              <span style={{ marginLeft: 5, padding: "1px 6px", borderRadius: 99, background: "#1A2640", fontSize: 10, color: "#7A8BA6" }}>
-                {app.releases.length}
-              </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="changelog">
-            Changelog
-            {app.changelogEntries.length > 0 && (
-              <span style={{ marginLeft: 5, padding: "1px 6px", borderRadius: 99, background: "#1A2640", fontSize: 10, color: "#7A8BA6" }}>
-                {app.changelogEntries.length}
-              </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="activities">
-            Aktivitäten
-            {activityLogs.length > 0 && (
-              <span style={{ marginLeft: 5, padding: "1px 6px", borderRadius: 99, background: "#1A2640", fontSize: 10, color: "#7A8BA6" }}>
-                {activityLogs.length}{activityCursor ? "+" : ""}
-              </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="docs">
-            Dokumentation
-            {app.docPages.length > 0 && (
-              <span style={{ marginLeft: 5, padding: "1px 6px", borderRadius: 99, background: "#1A2640", fontSize: 10, color: "#7A8BA6" }}>
-                {app.docPages.length}
-              </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="screenshots">
-            Screenshots
-            {app.screenshots.length > 0 && (
-              <span style={{ marginLeft: 5, padding: "1px 6px", borderRadius: 99, background: "#1A2640", fontSize: 10, color: "#7A8BA6" }}>
-                {app.screenshots.length}
-              </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="notifications">
-            Benachrichtigungen
-            {app.notificationSettings.length > 0 && (
-              <span style={{ marginLeft: 5, padding: "1px 6px", borderRadius: 99, background: "#1A2640", fontSize: 10, color: "#7A8BA6" }}>
-                {app.notificationSettings.length}
-              </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="monitoring">
-            <Activity size={11} style={{ marginRight: 4 }} />
-            Monitoring
-          </TabsTrigger>
-        </TabsList>
-        </div>
+      <ControlledTabsWrapper counts={{
+        environments:   app.environments.length       || undefined,
+        costs:          app.costs.length              || undefined,
+        dependencies:   (app.dependencies.length + app.dependents.length) || undefined,
+        openIncidents:  openIncidents.length          || undefined,
+        releases:       app.releases.length           || undefined,
+        changelog:      app.changelogEntries.length   || undefined,
+        activities:     activityLogs.length           || undefined,
+        docs:           app.docPages.length           || undefined,
+        screenshots:    app.screenshots.length        || undefined,
+        notifications:  app.notificationSettings.length || undefined,
+      }}>
 
         <TabsContent value="overview">
           <OverviewTab
@@ -410,7 +326,7 @@ export default async function AppDetailPage({ params }: { params: Promise<{ slug
             ]}
           />
         </TabsContent>
-      </Tabs>
+      </ControlledTabsWrapper>
     </div>
   );
 }
