@@ -87,11 +87,15 @@ const tooltipStyle = {
   color: "#EDF2F7",
 };
 
+type AgentStatus = "unknown" | "ok" | "error";
+
 export function ResourceTab({ slug }: { slug: string }) {
   const [data, setData] = useState<ResourceData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [agentStatus, setAgentStatus] = useState<AgentStatus>("unknown");
+  const [agentLatency, setAgentLatency] = useState<number | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -111,14 +115,19 @@ export function ResourceTab({ slug }: { slug: string }) {
   async function refresh() {
     if (!data?.agentUrl && !data?.dockerHost && !data?.metricsUrl) return;
     setRefreshing(true);
+    const t0 = Date.now();
     try {
       const res = await fetch(`/api/apps/${slug}/resources`, { method: "POST" });
       if (!res.ok) {
         const j = await res.json().catch(() => ({}));
         throw new Error(j.error ?? `HTTP ${res.status}`);
       }
+      setAgentStatus("ok");
+      setAgentLatency(Date.now() - t0);
       await load();
     } catch (e) {
+      setAgentStatus("error");
+      setAgentLatency(null);
       setError(String(e));
     } finally {
       setRefreshing(false);
@@ -191,7 +200,7 @@ export function ResourceTab({ slug }: { slug: string }) {
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
           {data.agentUrl ? (
             <p style={{ margin: 0, fontSize: 12, color: "#7A8BA6" }}>
               Stack-Base Agent: <code style={{ color: "#EDF2F7" }}>{data.agentUrl}</code>
@@ -205,11 +214,12 @@ export function ResourceTab({ slug }: { slug: string }) {
               <p style={{ margin: 0, fontSize: 12, color: "#7A8BA6" }}>
                 Docker Host: <code style={{ color: "#EDF2F7" }}>{data.dockerHost}</code>
               </p>
-              <p style={{ margin: "2px 0 0", fontSize: 12, color: "#7A8BA6" }}>
+              <p style={{ margin: 0, fontSize: 12, color: "#7A8BA6" }}>
                 Container: <code style={{ color: "#EDF2F7" }}>{data.dockerContainer}</code>
               </p>
             </>
           )}
+          <AgentStatusBadge status={agentStatus} latency={agentLatency} />
         </div>
         <button
           onClick={refresh}
@@ -326,6 +336,21 @@ function CopyCode({ text }: { text: string }) {
       >
         {copied ? <Check size={13} /> : <Copy size={13} />}
       </button>
+    </div>
+  );
+}
+
+function AgentStatusBadge({ status, latency }: { status: AgentStatus; latency: number | null }) {
+  const cfg = {
+    unknown: { color: "#7A8BA6", bg: "rgba(122,139,166,0.1)", border: "rgba(122,139,166,0.2)", dot: "#7A8BA6", label: "Status unbekannt" },
+    ok:      { color: "#10B981", bg: "rgba(16,185,129,0.1)",  border: "rgba(16,185,129,0.25)", dot: "#10B981", label: latency ? `Erreichbar · ${latency} ms` : "Erreichbar" },
+    error:   { color: "#EF4444", bg: "rgba(239,68,68,0.1)",   border: "rgba(239,68,68,0.25)", dot: "#EF4444", label: "Nicht erreichbar" },
+  }[status];
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "3px 10px", borderRadius: 20, background: cfg.bg, border: `1px solid ${cfg.border}`, width: "fit-content" }}>
+      <span style={{ width: 6, height: 6, borderRadius: "50%", background: cfg.dot, flexShrink: 0, boxShadow: status === "ok" ? `0 0 6px ${cfg.dot}` : "none" }} />
+      <span style={{ fontSize: 11, fontWeight: 600, color: cfg.color, letterSpacing: ".02em" }}>{cfg.label}</span>
     </div>
   );
 }

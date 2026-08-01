@@ -28,11 +28,12 @@ const TYPE_META: Record<DocPageType, { label: string; icon: React.ReactNode; col
 
 const TYPES: DocPageType[] = ["MANUAL", "FAQ", "API", "OTHER"];
 
-function renderMarkdown(md: string): string {
+function renderContent(content: string): string {
+  if (content.trimStart().startsWith("<")) return content;
   try {
-    const r = marked.parse(md, { async: false });
+    const r = marked.parse(content, { async: false });
     return typeof r === "string" ? r : "";
-  } catch { return md; }
+  } catch { return content; }
 }
 
 interface Props { initial: Doc[] }
@@ -41,6 +42,14 @@ export function PlatformDocsPage({ initial }: Props) {
   const [docs, setDocs] = useState<Doc[]>(initial);
   const [selected, setSelected] = useState<Doc | null>(initial[0] ?? null);
   const [mode, setMode] = useState<"view" | "edit" | "new">("view");
+
+  useEffect(() => {
+    if (initial.length > 0) return;
+    fetch("/api/platform-docs")
+      .then((r) => r.json())
+      .then((d: Doc[]) => { if (d.length > 0) { setDocs(d); setSelected(d[0]); } })
+      .catch(() => {});
+  }, [initial.length]);
   const [preview, setPreview] = useState(false);
   const [form, setForm] = useState({ title: "", content: "", type: "MANUAL" as DocPageType, isPublic: false });
   const [saving, setSaving] = useState(false);
@@ -205,7 +214,7 @@ export function PlatformDocsPage({ initial }: Props) {
             </div>
             <div style={{ padding: "24px 28px", minHeight: 300 }}>
               {selected.content ? (
-                <div className="doc-content" dangerouslySetInnerHTML={{ __html: renderMarkdown(selected.content) }} />
+                <div className="doc-content" dangerouslySetInnerHTML={{ __html: renderContent(selected.content) }} />
               ) : (
                 <p style={{ color: "#7A8BA6", fontSize: 13, fontStyle: "italic" }}>Kein Inhalt. Klicke auf "Bearbeiten".</p>
               )}
