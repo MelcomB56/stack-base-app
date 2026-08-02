@@ -18,6 +18,7 @@ export default async function EditAppPage({ params }: Props) {
         language:     true,
         urlProd:      true,
         urlStaging:   true,
+        logoUrl:      true,
         repoUrl:      true,
         dockerImage:     true,
         agentUrl:        true,
@@ -46,6 +47,7 @@ export default async function EditAppPage({ params }: Props) {
     <EditAppForm
       app={{
         ...app,
+        logoUrl:       app.logoUrl ?? null,
         agentUrl:      app.agentUrl ?? null,
         agentToken:    app.agentToken ?? null,
         criticality:   app.criticality ?? null,

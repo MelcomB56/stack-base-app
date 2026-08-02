@@ -31,6 +31,7 @@ export const createAppSchema = z.object({
   criticality: z.enum(["CRITICAL", "HIGH", "MEDIUM", "LOW"]).optional(),
   vendor: z.string().max(100).optional(),
   githubToken: z.string().max(255).optional(),
+  logoUrl: urlOrEmpty.optional(),
 });
 
 export const updateAppSchema = createAppSchema.partial();

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Loader2, Save, Trash2, Tag, Layers, Cpu, FolderOpen } from "lucide-react";
 import Link from "next/link";
@@ -29,6 +29,7 @@ type AppData = {
   supportEmail: string | null;
   criticality:  string | null;
   vendor:       string | null;
+  logoUrl:      string | null;
   githubToken:  string | null;
   categoryIds:  string[];
   tagIds:       string[];
@@ -139,6 +140,8 @@ export function EditAppForm({ app, options }: { app: AppData; options: Options }
   const [loading,  setLoading]  = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error,    setError]    = useState<string | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string>(app.logoUrl ?? "");
+  const [previewError, setPreviewError] = useState(false);
 
   // Relation-States
   const [categoryIds,   setCategoryIds]   = useState<string[]>(app.categoryIds);
@@ -210,6 +213,37 @@ export function EditAppForm({ app, options }: { app: AppData; options: Options }
           <p style={SECTION_LABEL}>Basis-Informationen</p>
           <Field label="Name *"><DSInput name="name" required defaultValue={app.name} maxLength={100} /></Field>
           <Field label="Kurzbeschreibung *"><DSInput name="shortDesc" required defaultValue={app.shortDesc} maxLength={255} /></Field>
+
+          {/* Logo / Icon URL */}
+          <Field label="Logo / Icon URL">
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ flexShrink: 0, width: 40, height: 40, borderRadius: 8, border: "1px solid #1E3050", overflow: "hidden", background: "#1A2640", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {logoPreview && !previewError ? (
+                  <img
+                    src={logoPreview}
+                    alt="Logo-Vorschau"
+                    onError={() => setPreviewError(true)}
+                    onLoad={() => setPreviewError(false)}
+                    style={{ width: 40, height: 40, objectFit: "contain" }}
+                  />
+                ) : (
+                  <span style={{ fontSize: 18 }}>🖼️</span>
+                )}
+              </div>
+              <DSInput
+                name="logoUrl"
+                type="url"
+                defaultValue={app.logoUrl ?? ""}
+                placeholder="https://example.de/icon.png (leer = automatisch)"
+                onChange={(e) => { setLogoPreview(e.target.value); setPreviewError(false); }}
+                style={{ flex: 1 }}
+              />
+            </div>
+            <p style={{ fontSize: 11, color: "#4A5B6F", margin: "4px 0 0" }}>
+              Leer lassen für automatische Favicon-Erkennung. PNG, SVG oder ICO empfohlen.
+            </p>
+          </Field>
+
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <Field label="Status">
               <DSSelect name="status" defaultValue={app.status}>
