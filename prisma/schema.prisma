@@ -135,6 +135,28 @@ enum CertStatus {
   UNKNOWN
 }
 
+enum TargetType {
+  SERVER
+  CLOUD
+  KUBERNETES
+  PAAS
+  OTHER
+}
+
+enum RuntimeType {
+  DOCKER
+  DOCKER_COMPOSE
+  KUBERNETES
+  SYSTEMD
+  PM2
+  BARE_PROCESS
+  STATIC
+  SERVERLESS
+  PAAS
+  IIS
+  OTHER
+}
+
 // ─────────────────────────────────────────────
 // Modul 4 — Benutzer
 // ─────────────────────────────────────────────
@@ -246,6 +268,26 @@ model StackTechnology {
 }
 
 // ─────────────────────────────────────────────
+// Deployment Targets
+// ─────────────────────────────────────────────
+
+model DeploymentTarget {
+  id        String     @id @default(uuid())
+  name      String     @unique @db.VarChar(100)
+  type      TargetType @default(SERVER)
+  host      String?    @db.VarChar(255)
+  provider  String?    @db.VarChar(100)
+  region    String?    @db.VarChar(100)
+  notes     String?    @db.VarChar(500)
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+
+  apps App[]
+
+  @@map("deployment_targets")
+}
+
+// ─────────────────────────────────────────────
 // Modul 2 — Apps (Kern)
 // ─────────────────────────────────────────────
 
@@ -276,15 +318,20 @@ model App {
   contactName     String?      @db.VarChar(100) @map("contact_name")
   criticality     Criticality? @default(MEDIUM)
   vendor          String?      @db.VarChar(100)
-  githubToken     String?      @db.VarChar(255) @map("github_token")
-  githubSyncedAt  DateTime?    @map("github_synced_at")
-  createdById     String       @map("created_by")
+  githubToken          String?      @db.VarChar(255) @map("github_token")
+  githubSyncedAt       DateTime?    @map("github_synced_at")
+  deploymentTargetId   String?      @map("deployment_target_id")
+  runtimeType          RuntimeType? @map("runtime_type")
+  hostPort             Int?         @map("host_port")
+  containerPort        Int?         @map("container_port")
+  createdById          String       @map("created_by")
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
   deletedAt       DateTime? @map("deleted_at")
 
   // Relations
-  createdBy      User               @relation("AppCreator", fields: [createdById], references: [id])
+  createdBy        User               @relation("AppCreator", fields: [createdById], references: [id])
+  deploymentTarget DeploymentTarget?  @relation(fields: [deploymentTargetId], references: [id], onDelete: SetNull)
   categories     AppCategory[]
   tags           AppTag[]
   stacks         AppStack[]

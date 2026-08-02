@@ -30,18 +30,25 @@ type AppData = {
   criticality:  string | null;
   vendor:       string | null;
   logoUrl:      string | null;
-  githubToken:  string | null;
-  categoryIds:  string[];
+  githubToken:        string | null;
+  deploymentTargetId: string | null;
+  runtimeType:        string | null;
+  hostPort:           number | null;
+  containerPort:      number | null;
+  categoryIds:        string[];
   tagIds:       string[];
   stackIds:     string[];
   technologyIds: string[];
 };
+
+type DeploymentTarget = { id: string; name: string; type: string; host: string | null };
 
 type Options = {
   categories:   Category[];
   stacks:       Stack[];
   technologies: Technology[];
   tags:         TagItem[];
+  targets:      DeploymentTarget[];
 };
 
 // ─── Style-Konstanten ───────────────────────────────────────────────────────
@@ -345,6 +352,48 @@ export function EditAppForm({ app, options }: { app: AppData; options: Options }
               <DSInput name="vendor" defaultValue={app.vendor ?? ""} placeholder="z.B. Atlassian, Microsoft" maxLength={100} />
             </Field>
           </div>
+        </div>
+
+        {/* Hosting */}
+        <div style={PANEL}>
+          <p style={SECTION_LABEL}>Hosting</p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <Field label="Deployment Target">
+              <DSSelect name="deploymentTargetId" defaultValue={app.deploymentTargetId ?? ""}>
+                <option value="">— kein Target —</option>
+                {options.targets.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}{t.host ? ` (${t.host})` : ""}
+                  </option>
+                ))}
+              </DSSelect>
+            </Field>
+            <Field label="Laufzeit-Typ">
+              <DSSelect name="runtimeType" defaultValue={app.runtimeType ?? ""}>
+                <option value="">— nicht angegeben —</option>
+                <option value="DOCKER">Docker</option>
+                <option value="DOCKER_COMPOSE">Docker Compose</option>
+                <option value="KUBERNETES">Kubernetes</option>
+                <option value="SYSTEMD">Systemd Service</option>
+                <option value="PM2">PM2</option>
+                <option value="BARE_PROCESS">Bare Process</option>
+                <option value="STATIC">Static / Webserver</option>
+                <option value="SERVERLESS">Serverless / FaaS</option>
+                <option value="PAAS">PaaS (Heroku, Render …)</option>
+                <option value="IIS">IIS / Windows Service</option>
+                <option value="OTHER">Sonstiges</option>
+              </DSSelect>
+            </Field>
+            <Field label="Host-Port (extern)">
+              <DSInput name="hostPort" type="number" min="1" max="65535" defaultValue={app.hostPort?.toString() ?? ""} placeholder="z.B. 3001" />
+            </Field>
+            <Field label="Container-Port (intern)">
+              <DSInput name="containerPort" type="number" min="1" max="65535" defaultValue={app.containerPort?.toString() ?? ""} placeholder="z.B. 3000" />
+            </Field>
+          </div>
+          <p style={{ fontSize: 11, color: "#4A5B6F", margin: "4px 0 0" }}>
+            Targets verwalten unter <a href="/targets" style={{ color: "#2563E8", textDecoration: "none" }}>Verwaltung → Targets</a>
+          </p>
         </div>
 
         {/* Ressourcen-Monitoring */}

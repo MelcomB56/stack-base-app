@@ -30,8 +30,12 @@ export const createAppSchema = z.object({
   technologyIds: z.array(z.string().uuid()).optional(),
   criticality: z.enum(["CRITICAL", "HIGH", "MEDIUM", "LOW"]).optional(),
   vendor: z.string().max(100).optional(),
-  githubToken: z.string().max(255).optional(),
-  logoUrl: urlOrEmpty.optional(),
+  githubToken:        z.string().max(255).optional(),
+  logoUrl:            urlOrEmpty.optional(),
+  deploymentTargetId: z.string().uuid().optional().nullable(),
+  runtimeType:        z.enum(["DOCKER","DOCKER_COMPOSE","KUBERNETES","SYSTEMD","PM2","BARE_PROCESS","STATIC","SERVERLESS","PAAS","IIS","OTHER"]).optional().nullable(),
+  hostPort:           z.coerce.number().int().min(1).max(65535).optional().nullable(),
+  containerPort:      z.coerce.number().int().min(1).max(65535).optional().nullable(),
 });
 
 export const updateAppSchema = createAppSchema.partial();
