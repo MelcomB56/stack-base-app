@@ -76,7 +76,6 @@ async function getApp(slug: string) {
         include: { app: { select: { id: true, name: true, slug: true, status: true } } },
       },
       deploymentTarget: { select: { name: true, type: true, host: true, provider: true, region: true } },
-      hostingNotes: true,
     },
   });
 }
