@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { ExternalLink, Globe } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { AppStatusBadge, type AppStatus } from "./AppStatusBadge";
+import { AppLogo } from "./AppLogo";
 
 const STATUS_COLOR: Record<string, string> = {
   PRODUCTION:  "#10B981",
@@ -64,23 +65,14 @@ export function AppCard({ app, healthStatus }: AppCardProps) {
         <div style={{ padding: 18, display: "flex", flexDirection: "column", gap: 14, flex: 1 }}>
           {/* Header: Logo + Name + Status */}
           <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-            {app.logoUrl ? (
-              <img
-                src={app.logoUrl}
-                alt={app.name}
-                style={{ width: 44, height: 44, borderRadius: 10, objectFit: "contain", flexShrink: 0 }}
-              />
-            ) : (
-              <div
-                style={{
-                  width: 44, height: 44, borderRadius: 10,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  flexShrink: 0, background: `${accentColor}22`,
-                }}
-              >
-                <Globe size={20} style={{ color: accentColor }} />
-              </div>
-            )}
+            <AppLogo
+              logoUrl={app.logoUrl}
+              urlProd={app.urlProd}
+              name={app.name}
+              accentColor={accentColor}
+              size={44}
+              borderRadius={10}
+            />
 
             <div style={{ flex: 1, minWidth: 0, paddingTop: 2 }}>
               <p style={{

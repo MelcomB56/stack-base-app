@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Globe, ExternalLink, ShieldAlert, Activity } from "lucide-react";
+import { ExternalLink, ShieldAlert, Activity } from "lucide-react";
+import { AppLogo } from "@/components/apps/AppLogo";
 import {
   AreaChart, Area, ResponsiveContainer, Tooltip,
   PieChart, Pie, Cell,
@@ -223,12 +224,14 @@ function AppList({ apps }: { apps: AppRow[] }) {
               onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.background = "transparent"; }}
             >
               <span className={isDown ? "pulse-dot" : ""} style={{ width: 7, height: 7, borderRadius: "50%", flexShrink: 0, background: hColor }} />
-              {app.logoUrl
-                ? <img src={app.logoUrl} alt="" style={{ width: 20, height: 20, borderRadius: 4, objectFit: "contain", flexShrink: 0 }} />
-                : <div style={{ width: 20, height: 20, borderRadius: 4, background: `${STATUS_COLOR[app.status] ?? "#6B7280"}18`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <Globe size={10} style={{ color: STATUS_COLOR[app.status] ?? "#6B7280" }} />
-                  </div>
-              }
+              <AppLogo
+                logoUrl={app.logoUrl}
+                urlProd={app.urlProd}
+                name={app.name}
+                accentColor={STATUS_COLOR[app.status] ?? "#6B7280"}
+                size={20}
+                borderRadius={4}
+              />
               <span style={{ flex: 1, fontSize: 12, fontWeight: 500, color: "#EDF2F7", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {app.name}
               </span>
