@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Loader2, Save, Trash2, Tag, Layers, Cpu, FolderOpen } from "lucide-react";
+import { ArrowLeft, Loader2, Save, Trash2, Tag, Layers, Cpu, FolderOpen, Upload, X } from "lucide-react";
 import Link from "next/link";
 
 // ─── Typen ─────────────────────────────────────────────────────────────────
@@ -140,8 +140,11 @@ export function EditAppForm({ app, options }: { app: AppData; options: Options }
   const [loading,  setLoading]  = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error,    setError]    = useState<string | null>(null);
-  const [logoPreview, setLogoPreview] = useState<string>(app.logoUrl ?? "");
+  const [logoUrl, setLogoUrl] = useState<string>(app.logoUrl ?? "");
   const [previewError, setPreviewError] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Relation-States
   const [categoryIds,   setCategoryIds]   = useState<string[]>(app.categoryIds);
@@ -151,6 +154,29 @@ export function EditAppForm({ app, options }: { app: AppData; options: Options }
 
   function toggle(ids: string[], setIds: (v: string[]) => void, id: string) {
     setIds(ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]);
+  }
+
+  async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setUploadError(null);
+    const fd = new FormData();
+    fd.append("file", file);
+    try {
+      const res = await fetch(`/api/apps/${app.slug}/logo`, { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) { setUploadError(data.error ?? "Upload fehlgeschlagen"); return; }
+      setLogoUrl(data.logoUrl);
+      setPreviewError(false);
+    } catch { setUploadError("Netzwerkfehler beim Upload"); }
+    finally { setUploading(false); if (fileInputRef.current) fileInputRef.current.value = ""; }
+  }
+
+  async function handleLogoRemove() {
+    setLogoUrl("");
+    setPreviewError(false);
+    setUploadError(null);
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -214,13 +240,14 @@ export function EditAppForm({ app, options }: { app: AppData; options: Options }
           <Field label="Name *"><DSInput name="name" required defaultValue={app.name} maxLength={100} /></Field>
           <Field label="Kurzbeschreibung *"><DSInput name="shortDesc" required defaultValue={app.shortDesc} maxLength={255} /></Field>
 
-          {/* Logo / Icon URL */}
-          <Field label="Logo / Icon URL">
+          {/* Logo / Icon */}
+          <Field label="Logo / Icon">
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              {/* Vorschau */}
               <div style={{ flexShrink: 0, width: 40, height: 40, borderRadius: 8, border: "1px solid #1E3050", overflow: "hidden", background: "#1A2640", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                {logoPreview && !previewError ? (
+                {logoUrl && !previewError ? (
                   <img
-                    src={logoPreview}
+                    src={logoUrl}
                     alt="Logo-Vorschau"
                     onError={() => setPreviewError(true)}
                     onLoad={() => setPreviewError(false)}
@@ -230,17 +257,56 @@ export function EditAppForm({ app, options }: { app: AppData; options: Options }
                   <span style={{ fontSize: 18 }}>🖼️</span>
                 )}
               </div>
+
+              {/* URL-Eingabe (controlled) */}
+              <input type="hidden" name="logoUrl" value={logoUrl} />
               <DSInput
-                name="logoUrl"
                 type="url"
-                defaultValue={app.logoUrl ?? ""}
+                value={logoUrl}
                 placeholder="https://example.de/icon.png (leer = automatisch)"
-                onChange={(e) => { setLogoPreview(e.target.value); setPreviewError(false); }}
+                onChange={(e) => { setLogoUrl(e.target.value); setPreviewError(false); setUploadError(null); }}
                 style={{ flex: 1 }}
               />
+
+              {/* Upload-Button */}
+              <button
+                type="button"
+                title="Datei hochladen"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 5, padding: "7px 12px", background: "#1A2640", border: "1px solid #1E3050", borderRadius: 8, color: "#EDF2F7", fontSize: 12, cursor: uploading ? "not-allowed" : "pointer", whiteSpace: "nowrap" }}
+              >
+                {uploading ? <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> : <Upload size={13} />}
+                {uploading ? "Lädt…" : "Hochladen"}
+              </button>
+
+              {/* Entfernen */}
+              {logoUrl && (
+                <button
+                  type="button"
+                  title="Logo entfernen"
+                  onClick={handleLogoRemove}
+                  style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, background: "transparent", border: "1px solid #1E3050", borderRadius: 8, color: "#EF4444", cursor: "pointer" }}
+                >
+                  <X size={13} />
+                </button>
+              )}
             </div>
+
+            {/* verstecktes File-Input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/svg+xml,image/x-icon"
+              style={{ display: "none" }}
+              onChange={handleLogoUpload}
+            />
+
+            {uploadError && (
+              <p style={{ fontSize: 11, color: "#EF4444", margin: "4px 0 0" }}>{uploadError}</p>
+            )}
             <p style={{ fontSize: 11, color: "#4A5B6F", margin: "4px 0 0" }}>
-              Leer lassen für automatische Favicon-Erkennung. PNG, SVG oder ICO empfohlen.
+              URL eintragen oder Datei hochladen (PNG, SVG, WebP, ICO · max. 2 MB). Leer = automatische Favicon-Erkennung.
             </p>
           </Field>
 
