@@ -100,21 +100,18 @@ function LogoFull() {
     <img
       src="/logo.png"
       alt="Stack-Base"
-      style={{ height: 32, width: "auto", display: "block", borderRadius: 4 }}
+      style={{ height: 32, width: "auto", display: "block" }}
     />
   );
 }
 
 function LogoIcon() {
-  // Zeigt nur den linken Würfel-Teil des Logos (ca. 30% der Breite)
   return (
-    <div style={{ width: 32, height: 32, overflow: "hidden", borderRadius: 4, flexShrink: 0 }}>
-      <img
-        src="/logo.png"
-        alt="Stack-Base"
-        style={{ height: 32, width: "auto", display: "block" }}
-      />
-    </div>
+    <img
+      src="/logo-icon.png"
+      alt="Stack-Base"
+      style={{ width: 32, height: 32, display: "block", objectFit: "contain" }}
+    />
   );
 }
 
