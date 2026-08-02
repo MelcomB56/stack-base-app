@@ -124,9 +124,8 @@ export default function LoginPage() {
       }}>
 
         {/* Logo */}
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, marginBottom: 28 }}>
-          <img src="/logo-icon.png" alt="Stack-Base" style={{ width: 64, height: 64, objectFit: "contain" }} />
-          <img src="/logo.png" alt="Stack-Base" style={{ height: 22, width: "auto", objectFit: "contain" }} />
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 28 }}>
+          <img src="/logo.png" alt="Stack-Base" style={{ height: 48, width: "auto", objectFit: "contain" }} />
         </div>
 
         {/* Title */}
