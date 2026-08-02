@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Globe } from "lucide-react";
 
 interface AppLogoProps {
@@ -13,18 +13,11 @@ interface AppLogoProps {
 }
 
 export function AppLogo({ logoUrl, urlProd, name, accentColor = "#2563E8", size = 44, borderRadius = 10 }: AppLogoProps) {
-  const [faviconUrl, setFaviconUrl] = useState<string | null>(null);
   const [imgError, setImgError] = useState(false);
 
-  useEffect(() => {
-    if (logoUrl || !urlProd) return;
-    fetch(`/api/favicon?url=${encodeURIComponent(urlProd)}`)
-      .then((r) => r.json())
-      .then((d) => { if (d.faviconUrl) setFaviconUrl(d.faviconUrl); })
-      .catch(() => {});
-  }, [logoUrl, urlProd]);
-
-  const src = logoUrl ?? (!imgError ? faviconUrl : null);
+  const src = !imgError
+    ? (logoUrl ?? (urlProd ? `/api/favicon?url=${encodeURIComponent(urlProd)}` : null))
+    : null;
 
   if (src) {
     return (
