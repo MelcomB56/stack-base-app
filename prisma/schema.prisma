@@ -143,6 +143,12 @@ enum TargetType {
   OTHER
 }
 
+enum TargetStatus {
+  ACTIVE
+  MAINTENANCE
+  OFFLINE
+}
+
 enum RuntimeType {
   DOCKER
   DOCKER_COMPOSE
@@ -274,8 +280,9 @@ model StackTechnology {
 model DeploymentTarget {
   id        String     @id @default(uuid())
   name      String     @unique @db.VarChar(100)
-  type      TargetType @default(SERVER)
-  host      String?    @db.VarChar(255)
+  type      TargetType   @default(SERVER)
+  status    TargetStatus @default(ACTIVE)
+  host      String?      @db.VarChar(255)
   provider  String?    @db.VarChar(100)
   region    String?    @db.VarChar(100)
   notes     String?    @db.VarChar(500)

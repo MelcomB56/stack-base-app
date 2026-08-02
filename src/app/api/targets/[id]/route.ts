@@ -7,6 +7,7 @@ import { z } from "zod";
 const schema = z.object({
   name:     z.string().min(1).max(100).optional(),
   type:     z.enum(["SERVER", "CLOUD", "KUBERNETES", "PAAS", "OTHER"]).optional(),
+  status:   z.enum(["ACTIVE", "MAINTENANCE", "OFFLINE"]).optional(),
   host:     z.string().max(255).optional(),
   provider: z.string().max(100).optional(),
   region:   z.string().max(100).optional(),
@@ -29,6 +30,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       data: {
         ...(data.name     !== undefined && { name:     data.name }),
         ...(data.type     !== undefined && { type:     data.type }),
+        ...(data.status   !== undefined && { status:   data.status }),
         ...(data.host     !== undefined && { host:     data.host     || null }),
         ...(data.provider !== undefined && { provider: data.provider || null }),
         ...(data.region   !== undefined && { region:   data.region   || null }),

@@ -7,6 +7,7 @@ import { z } from "zod";
 const schema = z.object({
   name:     z.string().min(1).max(100),
   type:     z.enum(["SERVER", "CLOUD", "KUBERNETES", "PAAS", "OTHER"]).default("SERVER"),
+  status:   z.enum(["ACTIVE", "MAINTENANCE", "OFFLINE"]).default("ACTIVE"),
   host:     z.string().max(255).optional(),
   provider: z.string().max(100).optional(),
   region:   z.string().max(100).optional(),
@@ -29,12 +30,13 @@ export async function POST(req: NextRequest) {
   const parsed = schema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const { name, type, host, provider, region, notes } = parsed.data;
+  const { name, type, status, host, provider, region, notes } = parsed.data;
   try {
     const target = await db.deploymentTarget.create({
       data: {
         name,
         type,
+        status,
         host:     host     || null,
         provider: provider || null,
         region:   region   || null,

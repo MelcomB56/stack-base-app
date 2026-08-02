@@ -36,6 +36,7 @@ async function getApps(params: SearchParams) {
       include: {
         categories: { include: { category: true } },
         tags: { include: { tag: true } },
+        deploymentTarget: { select: { id: true, name: true, status: true } },
       },
       orderBy: { name: "asc" },
       skip: (page - 1) * limit,
@@ -152,7 +153,7 @@ export default async function AppsPage({ searchParams }: { searchParams: Promise
           {apps.map((app) => (
             <AppCard
               key={app.id}
-              app={{ ...app, logoUrl: app.logoUrl ?? null, urlProd: app.urlProd ?? null }}
+              app={{ ...app, logoUrl: app.logoUrl ?? null, urlProd: app.urlProd ?? null, deploymentTarget: app.deploymentTarget ?? null }}
               healthStatus={healthMap[app.id] ?? null}
             />
           ))}
