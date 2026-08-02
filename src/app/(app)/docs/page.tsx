@@ -2,10 +2,30 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { PlatformDocsPage } from "@/components/docs/PlatformDocsPage";
+import { PLATFORM_DOCS } from "@/lib/platform-docs";
 
 export default async function DocsPage() {
   const session = await auth();
   if (!session) redirect("/login");
+
+  // Idempotent seed: create any missing platform docs
+  const existing = await db.docPage.findMany({ where: { appId: null }, select: { title: true } });
+  const existingTitles = new Set(existing.map((d) => d.title));
+  const missing = PLATFORM_DOCS.filter((d) => !existingTitles.has(d.title));
+  if (missing.length > 0) {
+    await db.docPage.createMany({
+      data: missing.map((d) => ({
+        appId: null,
+        title: d.title,
+        slug: d.slug,
+        content: d.content,
+        type: "MANUAL" as const,
+        isPublic: false,
+        sortOrder: d.sortOrder,
+        createdById: session.user!.id!,
+      })),
+    });
+  }
 
   const docs = await db.docPage.findMany({
     where: { appId: null },
