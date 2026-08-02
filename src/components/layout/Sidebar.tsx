@@ -95,13 +95,26 @@ const NAV_ADMIN = [
   { href: "/settings",         label: "Einstellungen", icon: Icons.settings },
 ] as const;
 
-function HexLogo() {
+function LogoFull() {
   return (
-    <svg viewBox="0 0 32 32" width="32" height="32" fill="none">
-      <path d="M16 2L28 9V23L16 30L4 23V9Z" fill="#2563E8" stroke="#22D3EE" strokeWidth="1"/>
-      <path d="M16 7L23 11V19L16 23L9 19V11Z" fill="none" stroke="rgba(255,255,255,.28)" strokeWidth="1"/>
-      <text x="16" y="20" textAnchor="middle" fontSize="9" fontWeight="700" fill="white" fontFamily="sans-serif">SB</text>
-    </svg>
+    <img
+      src="/logo.png"
+      alt="Stack-Base"
+      style={{ height: 32, width: "auto", display: "block", borderRadius: 4 }}
+    />
+  );
+}
+
+function LogoIcon() {
+  // Zeigt nur den linken Würfel-Teil des Logos (ca. 30% der Breite)
+  return (
+    <div style={{ width: 32, height: 32, overflow: "hidden", borderRadius: 4, flexShrink: 0 }}>
+      <img
+        src="/logo.png"
+        alt="Stack-Base"
+        style={{ height: 32, width: "auto", display: "block" }}
+      />
+    </div>
   );
 }
 
@@ -141,16 +154,8 @@ export function Sidebar() {
         gap: 12,
         justifyContent: collapsed ? "center" : "flex-start",
       }}>
-        <Link href="/dashboard" style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none" }}>
-          <div style={{ flexShrink: 0 }}><HexLogo /></div>
-          {!collapsed && (
-            <div>
-              <p style={{ fontSize: 13, fontWeight: 700, letterSpacing: ".06em", color: "#EDF2F7", margin: 0 }}>STACK·BASE</p>
-              <p style={{ fontSize: 8, letterSpacing: ".15em", textTransform: "uppercase", color: "#7A8BA6", marginTop: 1 }}>
-                One Platform. All Ops.
-              </p>
-            </div>
-          )}
+        <Link href="/dashboard" style={{ display: "flex", alignItems: "center", textDecoration: "none" }}>
+          {collapsed ? <LogoIcon /> : <LogoFull />}
         </Link>
       </div>
 
