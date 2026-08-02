@@ -8,24 +8,31 @@ export default async function DocsPage() {
   const session = await auth();
   if (!session) redirect("/login");
 
-  // Idempotent seed: create any missing platform docs
-  const existing = await db.docPage.findMany({ where: { appId: null }, select: { title: true } });
-  const existingTitles = new Set(existing.map((d) => d.title));
-  const missing = PLATFORM_DOCS.filter((d) => !existingTitles.has(d.title));
+  // Sync platform docs: create missing, update content of existing seeded docs
+  const existing = await db.docPage.findMany({ where: { appId: null }, select: { id: true, title: true, content: true } });
+  const existingMap = new Map(existing.map((d) => [d.title, d]));
+
+  const missing = PLATFORM_DOCS.filter((d) => !existingMap.has(d.title));
   if (missing.length > 0) {
     await db.docPage.createMany({
       data: missing.map((d) => ({
-        appId: null,
-        title: d.title,
-        slug: d.slug,
-        content: d.content,
-        type: "MANUAL" as const,
-        isPublic: false,
-        sortOrder: d.sortOrder,
+        appId: null, title: d.title, slug: d.slug, content: d.content,
+        type: "MANUAL" as const, isPublic: false, sortOrder: d.sortOrder,
         createdById: session.user!.id!,
       })),
     });
   }
+
+  // Update content if changed in code (only for seeded docs, identified by matching title)
+  const updates = PLATFORM_DOCS.filter((d) => {
+    const row = existingMap.get(d.title);
+    return row && row.content !== d.content;
+  });
+  await Promise.all(
+    updates.map((d) =>
+      db.docPage.update({ where: { id: existingMap.get(d.title)!.id }, data: { content: d.content } })
+    )
+  );
 
   const docs = await db.docPage.findMany({
     where: { appId: null },

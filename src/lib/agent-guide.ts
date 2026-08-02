@@ -253,16 +253,56 @@ WantedBy=multi-user.target
   <hr>
 
   <div class="section">
+    <h2>Mehrere Apps auf einem Server</h2>
+    <div class="info">
+      Jeder Agent überwacht genau <strong>einen</strong> Container. Laufen auf einem Server mehrere Apps, die ins Monitoring sollen, wird pro App eine eigene Agent-Instanz gestartet — auf unterschiedlichen Ports.
+    </div>
+    <div class="code-block" style="margin-top:12px;">
+      <div class="code-label">Beispiel: 2 Apps auf demselben Server</div>
+      <pre><span class="comment"># App 1 — eigener Name + Port 9101</span>
+<span class="cmd">docker run</span> <span class="flag">-d</span> <span class="flag">--name</span> <span class="value">stackbase-agent-app1</span> \\
+  <span class="flag">--restart</span> unless-stopped \\
+  <span class="flag">-p</span> <span class="value">9101</span>:9101 \\
+  <span class="flag">-e</span> <span class="env-var">SB_CONTAINER</span>=<span class="value">meine-erste-app</span> \\
+  <span class="flag">-v</span> /var/run/docker.sock:/var/run/docker.sock \\
+  ghcr.io/melcomb56/stackbase-agent:latest
+
+<span class="comment"># App 2 — eigener Name + Port 9102</span>
+<span class="cmd">docker run</span> <span class="flag">-d</span> <span class="flag">--name</span> <span class="value">stackbase-agent-app2</span> \\
+  <span class="flag">--restart</span> unless-stopped \\
+  <span class="flag">-p</span> <span class="value">9102</span>:9101 \\
+  <span class="flag">-e</span> <span class="env-var">SB_CONTAINER</span>=<span class="value">meine-zweite-app</span> \\
+  <span class="flag">-v</span> /var/run/docker.sock:/var/run/docker.sock \\
+  ghcr.io/melcomb56/stackbase-agent:latest</pre>
+    </div>
+    <div class="note" style="margin-top:10px;">
+      <strong>Benennung:</strong> Container-Namen und Ports müssen eindeutig sein.<br>
+      <strong>In Stack-Base:</strong> Für jede App separat unter <ic>Aktionen → Bearbeiten → Ressourcen-Monitoring</ic> die passende URL eintragen:<br>
+      App 1 → <ic>http://SERVER-IP:9101</ic> &nbsp;·&nbsp; App 2 → <ic>http://SERVER-IP:9102</ic>
+    </div>
+    <div class="warn" style="margin-top:8px;">
+      Firewall-Regel für jeden verwendeten Port setzen: <ic>ufw allow 9101</ic>, <ic>ufw allow 9102</ic> usw.
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="section">
     <h2>Troubleshooting</h2>
 
     <div class="trouble-item">
+      <div class="trouble-q">„The container name is already in use"</div>
+      <div class="trouble-a">Ein Container mit diesem Namen läuft bereits (oder ist gestoppt). Entfernen und neu starten: <code>docker rm -f stackbase-agent</code> — dann <code>docker run …</code> erneut ausführen.</div>
+    </div>
+
+    <div class="trouble-item">
       <div class="trouble-q">„Connection refused" beim Abfragen</div>
-      <div class="trouble-a">Port 9101 ist nicht erreichbar. Firewall prüfen: <code>ufw allow 9101</code> · Container-Status: <code>docker ps | grep stackbase-agent</code></div>
+      <div class="trouble-a">Port nicht erreichbar. Firewall prüfen: <code>ufw allow 9101</code> · Container-Status: <code>docker ps | grep stackbase-agent</code></div>
     </div>
 
     <div class="trouble-item">
       <div class="trouble-q">„Unauthorized" (401)</div>
-      <div class="trouble-a">Token stimmt nicht. Logs neu lesen: <code>docker logs stackbase-agent</code> und Token in Stack-Base aktualisieren.</div>
+      <div class="trouble-a">Token stimmt nicht. Logs neu lesen: <code>docker logs stackbase-agent-app1</code> und Token in Stack-Base aktualisieren.</div>
     </div>
 
     <div class="trouble-item">
