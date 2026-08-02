@@ -5,18 +5,6 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Loader2, Eye, EyeOff, AlertCircle } from "lucide-react";
 
-// ─── Logo ──────────────────────────────────────────────────────────────────
-
-function HexLogo() {
-  return (
-    <svg viewBox="0 0 40 40" width="32" height="32" fill="none">
-      <path d="M20 2L35 11V29L20 38L5 29V11Z" fill="#2563E8" />
-      <path d="M20 8L29 13V23L20 28L11 23V13Z" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
-      <text x="20" y="24" textAnchor="middle" fontSize="11" fontWeight="700" fill="white" fontFamily="sans-serif">SB</text>
-    </svg>
-  );
-}
-
 // ─── Provider-Icons ────────────────────────────────────────────────────────
 
 function MicrosoftIcon() {
@@ -136,16 +124,14 @@ export default function LoginPage() {
       }}>
 
         {/* Logo */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 22 }}>
-          <HexLogo />
-          <span style={{ fontSize: 16, fontWeight: 700, letterSpacing: ".1em", color: "#EDF2F7" }}>
-            STACK·BASE
-          </span>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, marginBottom: 28 }}>
+          <img src="/logo-icon.png" alt="Stack-Base" style={{ width: 64, height: 64, objectFit: "contain" }} />
+          <img src="/logo.png" alt="Stack-Base" style={{ height: 22, width: "auto", objectFit: "contain" }} />
         </div>
 
         {/* Title */}
-        <h1 style={{ fontSize: 22, fontWeight: 700, color: "#EDF2F7", margin: "0 0 6px", letterSpacing: "-0.01em" }}>
-          Willkommen zurück!
+        <h1 style={{ fontSize: 20, fontWeight: 700, color: "#EDF2F7", margin: "0 0 4px", letterSpacing: "-0.01em" }}>
+          Willkommen zurück
         </h1>
         <p style={{ fontSize: 13, color: "#6B7E99", margin: "0 0 24px" }}>
           Melde dich an, um fortzufahren.

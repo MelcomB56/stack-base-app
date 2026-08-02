@@ -1,0 +1,23 @@
+{
+  "name": "Stack-Base",
+  "short_name": "Stack-Base",
+  "description": "One Platform. All Operations.",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#060D18",
+  "theme_color": "#2563E8",
+  "icons": [
+    {
+      "src": "/logo-icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

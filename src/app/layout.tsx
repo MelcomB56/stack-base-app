@@ -17,6 +17,12 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Stack-Base",
   description: "One Platform. All Operations.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    title: "Stack-Base",
+    statusBarStyle: "black-translucent",
+  },
 };
 
 export default function RootLayout({
