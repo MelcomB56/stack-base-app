@@ -76,6 +76,7 @@ async function getApp(slug: string) {
         include: { app: { select: { id: true, name: true, slug: true, status: true } } },
       },
       deploymentTarget: { select: { name: true, type: true, host: true, provider: true, region: true } },
+      hostingNotes: true,
     },
   });
 }
@@ -219,6 +220,7 @@ export default async function AppDetailPage({ params }: { params: Promise<{ slug
               runtimeType:      app.runtimeType ?? null,
               hostPort:         app.hostPort ?? null,
               containerPort:    app.containerPort ?? null,
+              hostingNotes:     app.hostingNotes ?? null,
             }}
             healthChecks={healthData.map((h) => ({ ...h, checkedAt: h.checkedAt.toISOString() }))}
             monitorConfigs={app.monitorConfigs}

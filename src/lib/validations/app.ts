@@ -36,6 +36,7 @@ export const createAppSchema = z.object({
   runtimeType:        z.enum(["DOCKER","DOCKER_COMPOSE","KUBERNETES","SYSTEMD","PM2","BARE_PROCESS","STATIC","SERVERLESS","PAAS","IIS","OTHER"]).optional().nullable(),
   hostPort:           z.coerce.number().int().min(1).max(65535).optional().nullable(),
   containerPort:      z.coerce.number().int().min(1).max(65535).optional().nullable(),
+  hostingNotes:       z.string().max(2000).optional().nullable(),
 });
 
 export const updateAppSchema = createAppSchema.partial();

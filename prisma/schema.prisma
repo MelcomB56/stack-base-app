@@ -324,6 +324,7 @@ model App {
   runtimeType          RuntimeType? @map("runtime_type")
   hostPort             Int?         @map("host_port")
   containerPort        Int?         @map("container_port")
+  hostingNotes         String?      @map("hosting_notes")
   createdById          String       @map("created_by")
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")

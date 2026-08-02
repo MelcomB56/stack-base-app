@@ -36,6 +36,7 @@ type AppOverviewProps = {
     runtimeType: string | null;
     hostPort: number | null;
     containerPort: number | null;
+    hostingNotes: string | null;
   };
   healthChecks: HealthCheck[];
   monitorConfigs: { enabled: boolean; checkUrl: string | null }[];
@@ -213,6 +214,12 @@ export function OverviewTab({ app, healthChecks, monitorConfigs }: AppOverviewPr
                       {app.hostPort ?? "?"}:{app.containerPort ?? "?"}
                       <span style={{ color: "#4A5B6F", fontFamily: "inherit", fontSize: 11 }}> (extern:intern)</span>
                     </span>
+                  </div>
+                )}
+                {app.hostingNotes && (
+                  <div style={{ marginTop: 4, padding: "8px 10px", background: "#0B1220", borderRadius: 8, border: "1px solid #1A2640" }}>
+                    <p style={{ fontSize: 11, color: "#7A8BA6", margin: "0 0 4px", letterSpacing: ".08em", textTransform: "uppercase" }}>Notizen</p>
+                    <p style={{ fontSize: 12, color: "#C8D8EC", fontFamily: "monospace", whiteSpace: "pre-wrap", margin: 0, lineHeight: 1.6 }}>{app.hostingNotes}</p>
                   </div>
                 )}
               </div>

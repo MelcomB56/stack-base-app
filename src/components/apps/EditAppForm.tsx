@@ -35,6 +35,7 @@ type AppData = {
   runtimeType:        string | null;
   hostPort:           number | null;
   containerPort:      number | null;
+  hostingNotes:       string | null;
   categoryIds:        string[];
   tagIds:       string[];
   stackIds:     string[];
@@ -391,6 +392,16 @@ export function EditAppForm({ app, options }: { app: AppData; options: Options }
               <DSInput name="containerPort" type="number" min="1" max="65535" defaultValue={app.containerPort?.toString() ?? ""} placeholder="z.B. 3000" />
             </Field>
           </div>
+          <Field label="Hosting-Notizen">
+            <textarea
+              name="hostingNotes"
+              defaultValue={app.hostingNotes ?? ""}
+              maxLength={2000}
+              rows={3}
+              placeholder="z.B. pm2 start npm --name infrascope -- start, hinter nginx auf Port 80"
+              style={{ width: "100%", background: "#0B1220", border: "1px solid #1E3050", borderRadius: 8, padding: "8px 10px", color: "#EDF2F7", fontSize: 12, fontFamily: "monospace", resize: "vertical", outline: "none", boxSizing: "border-box" }}
+            />
+          </Field>
           <p style={{ fontSize: 11, color: "#4A5B6F", margin: "4px 0 0" }}>
             Targets verwalten unter <a href="/targets" style={{ color: "#2563E8", textDecoration: "none" }}>Verwaltung → Targets</a>
           </p>
