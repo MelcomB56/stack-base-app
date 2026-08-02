@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Globe } from "lucide-react";
 
 interface AppLogoProps {
@@ -12,25 +12,26 @@ interface AppLogoProps {
   borderRadius?: number;
 }
 
-function faviconFromUrl(url: string): string | null {
-  try {
-    return new URL(url).origin + "/favicon.ico";
-  } catch {
-    return null;
-  }
-}
-
 export function AppLogo({ logoUrl, urlProd, name, accentColor = "#2563E8", size = 44, borderRadius = 10 }: AppLogoProps) {
-  const [error, setError] = useState(false);
+  const [faviconUrl, setFaviconUrl] = useState<string | null>(null);
+  const [imgError, setImgError] = useState(false);
 
-  const src = logoUrl ?? (!error && urlProd ? faviconFromUrl(urlProd) : null);
+  useEffect(() => {
+    if (logoUrl || !urlProd) return;
+    fetch(`/api/favicon?url=${encodeURIComponent(urlProd)}`)
+      .then((r) => r.json())
+      .then((d) => { if (d.faviconUrl) setFaviconUrl(d.faviconUrl); })
+      .catch(() => {});
+  }, [logoUrl, urlProd]);
+
+  const src = logoUrl ?? (!imgError ? faviconUrl : null);
 
   if (src) {
     return (
       <img
         src={src}
         alt={name}
-        onError={() => setError(true)}
+        onError={() => setImgError(true)}
         style={{ width: size, height: size, borderRadius, objectFit: "contain", flexShrink: 0 }}
       />
     );
