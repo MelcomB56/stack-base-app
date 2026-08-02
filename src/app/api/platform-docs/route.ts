@@ -1,33 +1,10 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { PLATFORM_DOCS } from "@/lib/platform-docs";
 
 export async function GET() {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const existing = await db.docPage.findMany({
-    where: { appId: null },
-    select: { title: true },
-  });
-  const existingTitles = new Set(existing.map((d) => d.title));
-
-  const missing = PLATFORM_DOCS.filter((d) => !existingTitles.has(d.title));
-  if (missing.length > 0) {
-    await db.docPage.createMany({
-      data: missing.map((d) => ({
-        appId: null,
-        title: d.title,
-        slug: d.slug,
-        content: d.content,
-        type: "MANUAL" as const,
-        isPublic: false,
-        sortOrder: d.sortOrder,
-        createdById: session.user!.id!,
-      })),
-    });
-  }
 
   const docs = await db.docPage.findMany({
     where: { appId: null },
