@@ -32,6 +32,10 @@ type AppOverviewProps = {
     stacks: { stack: { id: string; name: string } }[];
     technologies: { technology: { id: string; name: string; logoUrl: string | null } }[];
     releases: { isCurrent: boolean; version: string }[];
+    deploymentTarget: { name: string; type: string; host: string | null; provider: string | null; region: string | null } | null;
+    runtimeType: string | null;
+    hostPort: number | null;
+    containerPort: number | null;
   };
   healthChecks: HealthCheck[];
   monitorConfigs: { enabled: boolean; checkUrl: string | null }[];
@@ -178,6 +182,42 @@ export function OverviewTab({ app, healthChecks, monitorConfigs }: AppOverviewPr
               ))}
             </div>
           </div>
+
+          {/* Hosting */}
+          {(app.deploymentTarget || app.runtimeType || app.hostPort) && (
+            <div style={{ background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12, padding: 16 }}>
+              <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: ".15em", textTransform: "uppercase", color: "#7A8BA6", margin: "0 0 12px" }}>Hosting</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {app.deploymentTarget && (
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 12 }}>
+                    <span style={{ color: "#7A8BA6", marginTop: 1, flexShrink: 0 }}><Server size={11} /></span>
+                    <span style={{ color: "#7A8BA6", minWidth: 80, flexShrink: 0 }}>Target</span>
+                    <span style={{ color: "#EDF2F7" }}>
+                      {app.deploymentTarget.name}
+                      {app.deploymentTarget.host && <span style={{ color: "#4A5B6F", marginLeft: 5 }}>({app.deploymentTarget.host})</span>}
+                    </span>
+                  </div>
+                )}
+                {app.runtimeType && (
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 12 }}>
+                    <span style={{ color: "#7A8BA6", marginTop: 1, flexShrink: 0 }}><Layers size={11} /></span>
+                    <span style={{ color: "#7A8BA6", minWidth: 80, flexShrink: 0 }}>Laufzeit</span>
+                    <span style={{ color: "#EDF2F7", fontFamily: "monospace" }}>{app.runtimeType.replace("_", " ")}</span>
+                  </div>
+                )}
+                {(app.hostPort || app.containerPort) && (
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 12 }}>
+                    <span style={{ color: "#7A8BA6", marginTop: 1, flexShrink: 0 }}><Activity size={11} /></span>
+                    <span style={{ color: "#7A8BA6", minWidth: 80, flexShrink: 0 }}>Ports</span>
+                    <span style={{ color: "#EDF2F7", fontFamily: "monospace" }}>
+                      {app.hostPort ?? "?"}:{app.containerPort ?? "?"}
+                      <span style={{ color: "#4A5B6F", fontFamily: "inherit", fontSize: 11 }}> (extern:intern)</span>
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Zeitstempel + Version */}
           <div style={{ background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12, padding: 16, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>

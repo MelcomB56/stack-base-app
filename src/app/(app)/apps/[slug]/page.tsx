@@ -75,6 +75,7 @@ async function getApp(slug: string) {
       dependents: {
         include: { app: { select: { id: true, name: true, slug: true, status: true } } },
       },
+      deploymentTarget: { select: { name: true, type: true, host: true, provider: true, region: true } },
     },
   });
 }
@@ -212,8 +213,12 @@ export default async function AppDetailPage({ params }: { params: Promise<{ slug
           <OverviewTab
             app={{
               ...app,
-              criticality: app.criticality ?? null,
-              vendor: app.vendor ?? null,
+              criticality:      app.criticality ?? null,
+              vendor:           app.vendor ?? null,
+              deploymentTarget: app.deploymentTarget ?? null,
+              runtimeType:      app.runtimeType ?? null,
+              hostPort:         app.hostPort ?? null,
+              containerPort:    app.containerPort ?? null,
             }}
             healthChecks={healthData.map((h) => ({ ...h, checkedAt: h.checkedAt.toISOString() }))}
             monitorConfigs={app.monitorConfigs}
