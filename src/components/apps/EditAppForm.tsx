@@ -39,6 +39,9 @@ type AppData = {
   hostPort:           number | null;
   containerPort:      number | null;
   hostingNotes:       string | null;
+  testCoveragePercent:   number | null;
+  lastDeploymentSuccess: boolean | null;
+  securityRating:        number | null;
   categoryIds:        string[];
   tagIds:             string[];
   stackIds:           string[];
@@ -454,6 +457,32 @@ export function EditAppForm({ app, options }: { app: AppData; options: Options }
                 style={{ width: "100%", background: "#0B1220", border: "1px solid #1E3050", borderRadius: 8, padding: "8px 10px", color: "#EDF2F7", fontSize: 12, fontFamily: "monospace", resize: "vertical", outline: "none", boxSizing: "border-box" }}
               />
             </Field>
+            {/* Qualitätsfelder für Health Score */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+              <Field label="Testabdeckung (%)">
+                <DSInput
+                  name="testCoveragePercent"
+                  type="number" min="0" max="100"
+                  defaultValue={app.testCoveragePercent?.toString() ?? ""}
+                  placeholder="z.B. 75"
+                />
+              </Field>
+              <Field label="Sicherheitsrating (0–100)">
+                <DSInput
+                  name="securityRating"
+                  type="number" min="0" max="100"
+                  defaultValue={app.securityRating?.toString() ?? ""}
+                  placeholder="z.B. 85"
+                />
+              </Field>
+              <Field label="Letztes Deployment">
+                <DSSelect name="lastDeploymentSuccess" defaultValue={app.lastDeploymentSuccess === null ? "" : app.lastDeploymentSuccess ? "true" : "false"}>
+                  <option value="">— nicht angegeben —</option>
+                  <option value="true">Erfolgreich</option>
+                  <option value="false">Fehlgeschlagen</option>
+                </DSSelect>
+              </Field>
+            </div>
             <p style={{ fontSize: 11, color: "#4A5B6F", margin: 0 }}>
               Targets verwalten unter <a href="/targets" style={{ color: "#2563E8", textDecoration: "none" }}>Verwaltung → Targets</a>
             </p>

@@ -36,7 +36,10 @@ export const createAppSchema = z.object({
   runtimeType:        z.enum(["DOCKER","DOCKER_COMPOSE","KUBERNETES","SYSTEMD","PM2","BARE_PROCESS","STATIC","SERVERLESS","PAAS","IIS","OTHER"]).optional().nullable(),
   hostPort:           z.coerce.number().int().min(1).max(65535).optional().nullable(),
   containerPort:      z.coerce.number().int().min(1).max(65535).optional().nullable(),
-  hostingNotes:       z.string().max(2000).optional().nullable(),
+  hostingNotes:          z.string().max(2000).optional().nullable(),
+  testCoveragePercent:   z.coerce.number().int().min(0).max(100).optional().nullable(),
+  securityRating:        z.coerce.number().int().min(0).max(100).optional().nullable(),
+  lastDeploymentSuccess: z.enum(["true","false",""]).transform((v) => v === "true" ? true : v === "false" ? false : null).optional().nullable(),
 });
 
 export const updateAppSchema = createAppSchema.partial();

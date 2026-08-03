@@ -19,6 +19,7 @@ import { ActivitiesTab } from "@/components/apps/detail/ActivitiesTab";
 import { ScreenshotsTab } from "@/components/apps/detail/ScreenshotsTab";
 import { NotificationsTab } from "@/components/apps/detail/NotificationsTab";
 import { getSmtpConfig } from "@/lib/email";
+import { calculateHealthScore } from "@/lib/healthScore";
 import { EnvironmentsTab } from "@/components/apps/detail/EnvironmentsTab";
 import { CostsTab } from "@/components/apps/detail/CostsTab";
 import { CertTab } from "@/components/apps/detail/CertTab";
@@ -77,6 +78,7 @@ async function getApp(slug: string) {
         include: { app: { select: { id: true, name: true, slug: true, status: true } } },
       },
       deploymentTarget: { select: { name: true, type: true, host: true, provider: true, region: true } },
+      wikiSections: { select: { id: true } },
     },
   });
 }
@@ -127,6 +129,19 @@ export default async function AppDetailPage({ params }: { params: Promise<{ slug
   const currentRelease = app.releases.find((r) => r.isCurrent);
   const accentColor = STATUS_ACCENT[app.status] ?? "#6B7280";
   const openIncidents = app.incidents.filter((i) => i.status !== "RESOLVED");
+
+  const healthScore = calculateHealthScore({
+    wikiSections:           app.wikiSections,
+    docPages:               app.docPages,
+    testCoveragePercent:    app.testCoveragePercent ?? null,
+    changelogEntries:       app.changelogEntries,
+    lastDeploymentSuccess:  app.lastDeploymentSuccess ?? null,
+    monitorConfigs:         app.monitorConfigs,
+    healthChecks:           healthData,
+    securityRating:         app.securityRating ?? null,
+    status:                 app.status,
+    incidents:              app.incidents,
+  });
 
   // Letzter Healthcheck-Status
   const lastHealth = healthData[0];
@@ -225,6 +240,7 @@ export default async function AppDetailPage({ params }: { params: Promise<{ slug
             }}
             healthChecks={healthData.map((h) => ({ ...h, checkedAt: h.checkedAt.toISOString() }))}
             monitorConfigs={app.monitorConfigs}
+            healthScore={healthScore}
           />
         </TabsContent>
 

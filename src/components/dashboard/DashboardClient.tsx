@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ExternalLink, ShieldAlert, Activity } from "lucide-react";
 import { AppLogo } from "@/components/apps/AppLogo";
+import { AnnouncementsWidget } from "@/components/announcements/AnnouncementsWidget";
 import {
   AreaChart, Area, ResponsiveContainer, Tooltip,
   PieChart, Pie, Cell,
@@ -388,6 +389,9 @@ export function DashboardClient({ stats, apps, openIncidents, recentActivity }: 
           icon={<Activity size={14} />}
         />
       </div>
+
+      {/* Ankündigungen */}
+      <AnnouncementsWidget />
 
       {/* Main Grid: 3 columns */}
       <div style={{ display: "grid", gridTemplateColumns: "220px 1fr 1fr", gap: 12, alignItems: "start" }}>

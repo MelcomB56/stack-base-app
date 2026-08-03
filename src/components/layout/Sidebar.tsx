@@ -93,6 +93,7 @@ const NAV_ADMIN = [
   { href: "/technologies",     label: "Technologien",  icon: Icons.technologies },
   { href: "/tags",             label: "Tags",          icon: Icons_tag },
   { href: "/targets",          label: "Targets",       icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg> },
+  { href: "/announcements",    label: "Ankündigungen", icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg> },
   { href: "/settings",         label: "Einstellungen", icon: Icons.settings },
 ] as const;
 

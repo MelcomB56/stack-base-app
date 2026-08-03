@@ -3,6 +3,8 @@
 import { Globe, Cpu, Layers, Tag, Server, Database, User, Mail, GitBranch, ExternalLink, Activity } from "lucide-react";
 import Link from "next/link";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import type { HealthScoreResult } from "@/lib/healthScore";
+import { HealthScoreWidget } from "@/components/apps/detail/HealthScoreWidget";
 
 type HealthCheck = {
   id: string;
@@ -40,6 +42,7 @@ type AppOverviewProps = {
   };
   healthChecks: HealthCheck[];
   monitorConfigs: { enabled: boolean; checkUrl: string | null }[];
+  healthScore: HealthScoreResult;
 };
 
 const CRITICALITY_COLORS: Record<string, string> = {
@@ -108,7 +111,7 @@ function MiniChart({ checks }: { checks: HealthCheck[] }) {
   );
 }
 
-export function OverviewTab({ app, healthChecks, monitorConfigs }: AppOverviewProps) {
+export function OverviewTab({ app, healthChecks, monitorConfigs, healthScore }: AppOverviewProps) {
   const monitorActive = monitorConfigs.some((c) => c.enabled && c.checkUrl);
   const currentRelease = app.releases.find((r) => r.isCurrent);
 
@@ -281,6 +284,9 @@ export function OverviewTab({ app, healthChecks, monitorConfigs }: AppOverviewPr
           )}
         </div>
       </div>
+
+      {/* Health Score — volle Breite */}
+      <HealthScoreWidget score={healthScore} />
     </div>
   );
 }
