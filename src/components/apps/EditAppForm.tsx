@@ -6,6 +6,7 @@ import {
   ArrowLeft, Loader2, Save, Trash2, Tag, Layers, Cpu, FolderOpen,
   Upload, X, Info, Globe, Server, Puzzle, LayoutGrid,
 } from "lucide-react";
+import { SecurityWizard } from "@/components/apps/SecurityWizard";
 import Link from "next/link";
 
 // ─── Typen ──────────────────────────────────────────────────────────────────
@@ -149,6 +150,9 @@ export function EditAppForm({ app, options }: { app: AppData; options: Options }
   const [loading,   setLoading]   = useState(false);
   const [deleting,  setDeleting]  = useState(false);
   const [error,     setError]     = useState<string | null>(null);
+
+  // Security-Rating (controlled für Wizard-Integration)
+  const [securityRating, setSecurityRating] = useState<string>(app.securityRating?.toString() ?? "");
 
   // Logo-State (controlled wegen Vorschau + Upload)
   const [logoUrl,      setLogoUrl]      = useState<string>(app.logoUrl ?? "");
@@ -468,12 +472,17 @@ export function EditAppForm({ app, options }: { app: AppData; options: Options }
                 />
               </Field>
               <Field label="Sicherheitsrating (0–100)">
-                <DSInput
-                  name="securityRating"
-                  type="number" min="0" max="100"
-                  defaultValue={app.securityRating?.toString() ?? ""}
-                  placeholder="z.B. 85"
-                />
+                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                  <input
+                    name="securityRating"
+                    type="number" min="0" max="100"
+                    value={securityRating}
+                    onChange={(e) => setSecurityRating(e.target.value)}
+                    placeholder="z.B. 85"
+                    style={{ background: "#0B1220", border: "1px solid #1E3050", borderRadius: 6, padding: "7px 10px", fontSize: 13, color: "#EDF2F7", outline: "none", width: "100%", boxSizing: "border-box" as const }}
+                  />
+                  <SecurityWizard onComplete={(score) => setSecurityRating(score.toString())} />
+                </div>
               </Field>
               <Field label="Letztes Deployment">
                 <DSSelect name="lastDeploymentSuccess" defaultValue={app.lastDeploymentSuccess === null ? "" : app.lastDeploymentSuccess ? "true" : "false"}>
