@@ -161,6 +161,9 @@ export function OverviewTab({ app, healthChecks, monitorConfigs, healthScore }: 
               )}
             </div>
           )}
+
+          {/* Health Score */}
+          <HealthScoreWidget score={healthScore} />
         </div>
 
         {/* Rechts: Metadaten */}
@@ -285,8 +288,6 @@ export function OverviewTab({ app, healthChecks, monitorConfigs, healthScore }: 
         </div>
       </div>
 
-      {/* Health Score — volle Breite */}
-      <HealthScoreWidget score={healthScore} />
     </div>
   );
 }
