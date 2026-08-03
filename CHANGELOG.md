@@ -3,6 +3,24 @@
 Alle wesentlichen Änderungen an Stack-Base werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/).
 
+## [0.7.0-dev] — 2026-08-03
+
+### Added
+
+- **Modul 39 – Product Health Score**: 8-Kriterien-Algorithmus (Docs, API, Tests, Changelog, Deployment, Monitoring, Security, Status) ergibt Score 0–100 mit Note A–D; SVG-Ring-Gauge in App-Übersicht
+- **Modul 15 – Ankündigungen**: Admin-Verwaltungsseite `/announcements`, API (`GET/POST/PATCH/DELETE`), Dashboard-Widget (erscheint wenn Ankündigungen vorhanden), Sidebar-Eintrag
+- Neue App-Felder: `testCoveragePercent`, `lastDeploymentSuccess`, `securityRating` (Prisma-Migration, Bearbeitungsformular, Health Score)
+- Sidebar: Ankündigungen-Navigation
+- Deployment-Targets: Detail-Seite mit App-Liste, Kostendiagramm, Status-Badges; Status-Toggle (AKTIV/WARTUNG/OFFLINE) mit Warnfarben auf AppCards
+- Login-Seite: nur ein Stack-Base-Logo (logo.png, 48px)
+- SMTP: liest Konfiguration aus DB (nicht mehr aus Env-Var); Test-Mail-Button; Fehler-Logging
+
+### Fixed
+
+- `monitorConfigs.url` → `monitorConfigs.checkUrl` in Health-Score-Kalkulation
+- `.next`-Cache-Problem nach Prisma-Feldänderungen (checkUrl vs url)
+- SMTP-Banner zeigte „nicht konfiguriert" obwohl Einstellungen in DB vorhanden
+
 ## [0.6.0-dev] — 2026-08-01
 
 ### Added
