@@ -49,8 +49,8 @@ async function send(to: string, subject: string, html: string) {
     if (!transport) return;
     const cfg = await getSmtpConfig();
     await transport.sendMail({ from: cfg!.from, to, subject, html });
-  } catch {
-    // E-Mail-Fehler sollen nie den auslösenden Request blockieren
+  } catch (err) {
+    console.error("[email] Fehler beim Versand an", to, "–", err instanceof Error ? err.message : err);
   }
 }
 

@@ -55,7 +55,7 @@ export function SmtpSettingsForm({ initial }: { initial: Partial<SmtpSettings> }
     }
   }
 
-  async function test() {
+  async function test(sendMail = false) {
     setTesting(true);
     setTestMsg(null);
     // Erst speichern, dann testen
@@ -65,7 +65,11 @@ export function SmtpSettingsForm({ initial }: { initial: Partial<SmtpSettings> }
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-      const res = await fetch("/api/system/smtp", { method: "POST" });
+      const res = await fetch("/api/system/smtp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(sendMail ? { sendTest: true, to: form.smtp_user } : {}),
+      });
       const data = await res.json();
       setTestMsg({ ok: data.ok, text: data.message ?? data.error ?? "Unbekannt" });
     } catch (e) {
@@ -167,7 +171,7 @@ export function SmtpSettingsForm({ initial }: { initial: Partial<SmtpSettings> }
           {saving ? "Speichern..." : "Speichern"}
         </button>
         <button
-          onClick={test}
+          onClick={() => test(false)}
           disabled={testing || !form.smtp_host}
           style={{
             display: "flex", alignItems: "center", gap: 6,
@@ -178,6 +182,20 @@ export function SmtpSettingsForm({ initial }: { initial: Partial<SmtpSettings> }
         >
           {testing ? <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} /> : <Mail size={12} />}
           Verbindung testen
+        </button>
+        <button
+          onClick={() => test(true)}
+          disabled={testing || !form.smtp_host || !form.smtp_user}
+          title={`Test-Mail an ${form.smtp_user || "smtp_user"} senden`}
+          style={{
+            display: "flex", alignItems: "center", gap: 6,
+            padding: "7px 16px", borderRadius: 6, fontSize: 12, fontWeight: 500,
+            background: "transparent", border: "1px solid #1E3050", color: "#7A8BA6",
+            cursor: (testing || !form.smtp_host || !form.smtp_user) ? "not-allowed" : "pointer",
+          }}
+        >
+          {testing ? <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} /> : <Mail size={12} />}
+          Test-Mail senden
         </button>
       </div>
       <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
