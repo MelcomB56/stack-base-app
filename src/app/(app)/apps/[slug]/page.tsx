@@ -18,6 +18,7 @@ import { DocsTab } from "@/components/apps/detail/DocsTab";
 import { ActivitiesTab } from "@/components/apps/detail/ActivitiesTab";
 import { ScreenshotsTab } from "@/components/apps/detail/ScreenshotsTab";
 import { NotificationsTab } from "@/components/apps/detail/NotificationsTab";
+import { getSmtpConfig } from "@/lib/email";
 import { EnvironmentsTab } from "@/components/apps/detail/EnvironmentsTab";
 import { CostsTab } from "@/components/apps/detail/CostsTab";
 import { CertTab } from "@/components/apps/detail/CertTab";
@@ -97,7 +98,7 @@ export default async function AppDetailPage({ params }: { params: Promise<{ slug
 
   const userId = session?.user?.id;
 
-  const [isFavorited, healthData, allApps, activityResult] = await Promise.all([
+  const [isFavorited, healthData, allApps, activityResult, smtpConfig] = await Promise.all([
     userId
       ? db.userFavorite.findUnique({ where: { userId_appId: { userId, appId: app.id } } }).then(Boolean)
       : Promise.resolve(false),
@@ -117,6 +118,7 @@ export default async function AppDetailPage({ params }: { params: Promise<{ slug
       take: 31,
       include: { user: { select: { name: true } } },
     }),
+    getSmtpConfig(),
   ]);
 
   const activityLogs = activityResult.slice(0, 30).map((l) => ({ ...l, createdAt: l.createdAt.toISOString(), metadata: l.metadata as Record<string, unknown> | null }));
@@ -312,7 +314,7 @@ export default async function AppDetailPage({ params }: { params: Promise<{ slug
           <NotificationsTab
             appSlug={app.slug}
             initial={app.notificationSettings}
-            emailConfigured={!!process.env.SMTP_HOST}
+            emailConfigured={!!smtpConfig}
           />
         </TabsContent>
 
