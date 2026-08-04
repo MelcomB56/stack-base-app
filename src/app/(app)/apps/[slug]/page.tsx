@@ -79,6 +79,7 @@ async function getApp(slug: string) {
       },
       deploymentTarget: { select: { name: true, type: true, host: true, provider: true, region: true } },
       wikiSections: { select: { id: true } },
+      _count: { select: { releases: true } },
     },
   });
 }
@@ -218,7 +219,7 @@ export default async function AppDetailPage({ params }: { params: Promise<{ slug
         costs:          app.costs.length              || undefined,
         dependencies:   (app.dependencies.length + app.dependents.length) || undefined,
         openIncidents:  openIncidents.length          || undefined,
-        releases:       app.releases.length           || undefined,
+        releases:       app._count.releases             || undefined,
         changelog:      app.changelogEntries.length   || undefined,
         activities:     activityLogs.length           || undefined,
         docs:           app.docPages.length           || undefined,

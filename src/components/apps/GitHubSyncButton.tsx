@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { GitBranch, Loader2, CheckCircle, AlertCircle, X } from "lucide-react";
 
 type SyncResult = {
@@ -21,6 +22,7 @@ interface GitHubSyncButtonProps {
 }
 
 export function GitHubSyncButton({ appSlug, menuItem, onSync }: GitHubSyncButtonProps) {
+  const router = useRouter();
   const [state, setState] = useState<"idle" | "syncing" | "success" | "error">("idle");
   const [result, setResult] = useState<SyncResult | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -40,7 +42,7 @@ export function GitHubSyncButton({ appSlug, menuItem, onSync }: GitHubSyncButton
       }
       setResult(data);
       setState("success");
-      setTimeout(() => { setState("idle"); onSync?.(); }, 3000);
+      setTimeout(() => { setState("idle"); onSync?.(); router.refresh(); }, 3000);
     } catch {
       setErrorMsg("Netzwerkfehler");
       setState("error");

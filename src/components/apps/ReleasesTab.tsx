@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Plus, Calendar, Pencil, Trash2, X, Check, Loader2, AlertCircle } from "lucide-react";
 
 export type ReleaseItem = {
@@ -249,6 +249,8 @@ export function ReleasesTab({ appSlug, initial }: { appSlug: string; initial: Re
     const res = await fetch(`/api/apps/${appSlug}/releases`);
     if (res.ok) setReleases(await res.json());
   }, [appSlug]);
+
+  useEffect(() => { refresh(); }, [refresh]);
 
   function openCreate() { setEditTarget(null); setModalOpen(true); }
   function openEdit(r: ReleaseItem) { setEditTarget(r); setModalOpen(true); }
