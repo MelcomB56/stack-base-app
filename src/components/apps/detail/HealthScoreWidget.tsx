@@ -73,7 +73,7 @@ export function HealthScoreWidget({ score }: { score: HealthScoreResult }) {
                 : <XCircle    size={14} style={{ color: "#EF4444", flexShrink: 0, marginTop: 1 }} />}
               <div style={{ flex: 1 }}>
                 <span style={{ fontSize: 12, color: c.passed ? "#EDF2F7" : "#7A8BA6" }}>{c.label}</span>
-                {!c.passed && c.hint && (
+                {c.hint && (!c.passed || c.alwaysShowHint) && (
                   <p style={{ fontSize: 11, color: "#4A5B6F", margin: "1px 0 0" }}>{c.hint}</p>
                 )}
               </div>

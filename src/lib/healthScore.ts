@@ -6,7 +6,8 @@ export interface HealthScoreCriteria {
   weight: number;    // 0–1
   passed: boolean;
   points: number;    // tatsächlich erzielte Punkte (0 oder weight*100)
-  hint?: string;     // Hinweis wenn nicht erfüllt
+  hint?: string;
+  alwaysShowHint?: boolean;
 }
 
 export interface HealthScoreResult {
@@ -76,7 +77,7 @@ export function calculateHealthScore(app: AppForScore): HealthScoreResult {
     { key: "changelog",  label: "Changelog aktuell",        weight: 0.10, passed: changelogOk,  points: changelogOk  ? 10 : 0, hint: "Letzter Eintrag ist älter als 90 Tage" },
     { key: "deploy",     label: "Letztes Deployment OK",    weight: 0.10, passed: deployOk,     points: deployOk     ? 10 : 0, hint: "Deployment-Status in den App-Details setzen" },
     { key: "monitoring", label: "Monitoring aktiv (≥95 %)", weight: 0.10, passed: monitoringOk, points: monitoringOk ? 10 : 0, hint: "Healthcheck-URL konfigurieren und Uptime verbessern" },
-    { key: "security",   label: "Sicherheitsbewertung",     weight: 0.20, passed: securityOk,   points: securityPoints, hint: app.securityRating !== null ? `Wizard-Score ${securityRatingVal}/100 → ${securityPoints} Pkt. (grüner Haken ab ≥70)` : "Sicherheitsbewertung mit dem Wizard durchführen" },
+    { key: "security",   label: "Sicherheitsbewertung",     weight: 0.20, passed: securityOk,   points: securityPoints, alwaysShowHint: app.securityRating !== null, hint: app.securityRating !== null ? `Wizard-Score ${securityRatingVal}/100 → ${securityPoints} Pkt. (grüner Haken ab ≥70)` : "Sicherheitsbewertung mit dem Wizard durchführen" },
     { key: "status",     label: "Wartungsstatus in Ordnung",weight: 0.15, passed: maintenanceOk,points: maintenanceOk? 15 : 0, hint: notArchived ? "Kritischen Incident schließen" : "App ist archiviert" },
   ];
 
