@@ -59,8 +59,10 @@ export function calculateHealthScore(app: AppForScore): HealthScoreResult {
   }
   const monitoringOk = hasMonitor && uptimeOk;
 
-  // 7. Sicherheitsbewertung (20%) — securityRating gesetzt und >= 70
-  const securityOk = app.securityRating !== null && app.securityRating >= 70;
+  // 7. Sicherheitsbewertung (20%) — proportional: securityRating/100 * 20 Punkte
+  const securityRatingVal = app.securityRating ?? 0;
+  const securityPoints    = app.securityRating !== null ? Math.round((securityRatingVal / 100) * 20) : 0;
+  const securityOk        = app.securityRating !== null && securityRatingVal >= 70;
 
   // 8. Wartungsstatus aktuell (15%) — nicht archiviert + kein offener kritischer Incident
   const notArchived = app.status !== "ARCHIVED";
@@ -74,7 +76,7 @@ export function calculateHealthScore(app: AppForScore): HealthScoreResult {
     { key: "changelog",  label: "Changelog aktuell",        weight: 0.10, passed: changelogOk,  points: changelogOk  ? 10 : 0, hint: "Letzter Eintrag ist älter als 90 Tage" },
     { key: "deploy",     label: "Letztes Deployment OK",    weight: 0.10, passed: deployOk,     points: deployOk     ? 10 : 0, hint: "Deployment-Status in den App-Details setzen" },
     { key: "monitoring", label: "Monitoring aktiv (≥95 %)", weight: 0.10, passed: monitoringOk, points: monitoringOk ? 10 : 0, hint: "Healthcheck-URL konfigurieren und Uptime verbessern" },
-    { key: "security",   label: "Sicherheitsbewertung",     weight: 0.20, passed: securityOk,   points: securityOk   ? 20 : 0, hint: "Sicherheitsrating (≥70) in den App-Details eintragen" },
+    { key: "security",   label: "Sicherheitsbewertung",     weight: 0.20, passed: securityOk,   points: securityPoints, hint: app.securityRating !== null ? `Wizard-Score ${securityRatingVal}/100 → ${securityPoints} Pkt. (grüner Haken ab ≥70)` : "Sicherheitsbewertung mit dem Wizard durchführen" },
     { key: "status",     label: "Wartungsstatus in Ordnung",weight: 0.15, passed: maintenanceOk,points: maintenanceOk? 15 : 0, hint: notArchived ? "Kritischen Incident schließen" : "App ist archiviert" },
   ];
 
