@@ -266,7 +266,7 @@ export function PlatformDocsPage({ initial }: Props) {
 
               {preview ? (
                 <div style={{ background: "#0B1220", border: "1px solid #1E3050", borderRadius: 6, padding: "16px 20px", minHeight: 300 }}>
-                  <div className="doc-content" dangerouslySetInnerHTML={{ __html: renderMarkdown(form.content) }} />
+                  <div className="doc-content" dangerouslySetInnerHTML={{ __html: String(marked.parse(form.content, { async: false })) }} />
                 </div>
               ) : (
                 <div>

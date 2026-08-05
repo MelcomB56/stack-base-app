@@ -247,7 +247,7 @@ SB_API_KEY=mein-token ./stackbase-agent`} />
           <AgentStatusBadge status={agentStatus} latency={agentLatency} />
         </div>
         <button
-          onClick={refresh}
+          onClick={() => refresh()}
           disabled={refreshing}
           style={{
             display: "flex", alignItems: "center", gap: 6,

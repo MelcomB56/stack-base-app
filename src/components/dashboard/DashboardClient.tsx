@@ -123,7 +123,7 @@ function KpiCard({
               fill={`url(#${sparkId})`} dot={false} isAnimationActive={false} />
             <Tooltip
               contentStyle={{ background: "#0B1220", border: "1px solid #1E3050", borderRadius: 6, fontSize: 11, color: "#EDF2F7" }}
-              formatter={(v: unknown) => [v, label]}
+              formatter={(v) => typeof v === "number" ? [v.toLocaleString(), label] : ["—", label]}
               labelFormatter={() => ""}
             />
           </AreaChart>
@@ -170,7 +170,7 @@ function StatusPanel({ stats }: { stats: Stats }) {
             {!empty && (
               <Tooltip
                 contentStyle={{ background: "#0B1220", border: "1px solid #1E3050", borderRadius: 6, fontSize: 11, color: "#EDF2F7" }}
-                formatter={(v: unknown, name: unknown) => [v, name]}
+                formatter={(v, name) => typeof v === "number" ? [String(v), String(name ?? "")] : ["—", String(name ?? "")]}
               />
             )}
           </PieChart>
