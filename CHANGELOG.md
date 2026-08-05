@@ -3,6 +3,12 @@
 Alle wesentlichen Änderungen an Stack-Base werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/).
 
+## [0.7.1] — 2026-08-05
+
+### Fixed
+
+- **App-Bearbeitungsformular:** „Invalid input"-Fehler beim Speichern behoben — `logoUrl: null` (kein Logo gesetzt) wurde von `z.union([z.literal(""), z.string().url()]).optional()` abgelehnt; Schema auf `.nullable()` erweitert
+
 ## [0.7.0-dev] — 2026-08-03
 
 ### Added
