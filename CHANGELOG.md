@@ -3,6 +3,13 @@
 Alle wesentlichen Änderungen an Stack-Base werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/).
 
+## [0.7.2] — 2026-08-05
+
+### Fixed
+
+- **Logo-Upload:** Hochgeladene Bilder wurden als interne Docker-URL (`http://minio:9000/...`) gespeichert und waren im Browser nicht aufrufbar. `storage.ts` nutzt jetzt `MINIO_PUBLIC_URL` für die zurückgegebene URL, `MINIO_ENDPOINT` bleibt für interne Verbindungen
+- **Infrastruktur:** MinIO-Container in `traefik-public`-Netz verschoben, Traefik-Route `media.stack-base.de` → MinIO angelegt, DNS-A-Record gesetzt
+
 ## [0.7.1] — 2026-08-05
 
 ### Fixed

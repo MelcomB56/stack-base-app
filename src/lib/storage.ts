@@ -59,8 +59,10 @@ export async function uploadFile(
 ): Promise<string> {
   await ensureBucket();
   await minio.putObject(BUCKET, objectName, buffer, buffer.length, { "Content-Type": contentType });
-  const endpoint = process.env.MINIO_ENDPOINT ?? "http://localhost:9000";
-  return `${endpoint}/${BUCKET}/${objectName}`;
+  // MINIO_PUBLIC_URL = öffentlich erreichbare URL (z.B. https://media.stack-base.de)
+  // MINIO_ENDPOINT   = interne Docker-Adresse (nur für den App-Container)
+  const publicBase = (process.env.MINIO_PUBLIC_URL ?? process.env.MINIO_ENDPOINT ?? "http://localhost:9000").replace(/\/$/, "");
+  return `${publicBase}/${BUCKET}/${objectName}`;
 }
 
 export async function deleteFile(objectName: string) {
@@ -72,8 +74,11 @@ export async function deleteFile(objectName: string) {
 }
 
 export function objectNameFromUrl(url: string): string {
-  const endpoint = process.env.MINIO_ENDPOINT ?? "http://localhost:9000";
-  return url.replace(`${endpoint}/${BUCKET}/`, "");
+  const publicBase = (process.env.MINIO_PUBLIC_URL ?? process.env.MINIO_ENDPOINT ?? "http://localhost:9000").replace(/\/$/, "");
+  const internalBase = (process.env.MINIO_ENDPOINT ?? "http://localhost:9000").replace(/\/$/, "");
+  return url
+    .replace(`${publicBase}/${BUCKET}/`, "")
+    .replace(`${internalBase}/${BUCKET}/`, "");
 }
 
 export { BUCKET };
