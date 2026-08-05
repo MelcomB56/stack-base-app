@@ -11,6 +11,7 @@ type SyncResult = {
   tagsFound: number;
   readmeVersionsFound: number;
   readmeImported: number;
+  changelogBackfilled: number;
   isPrivate: boolean;
   repo: string;
 };
@@ -66,6 +67,8 @@ export function GitHubSyncButton({ appSlug, menuItem, onSync }: GitHubSyncButton
       : state === "success" && result
       ? (result.imported > 0
           ? `${result.imported} Release${result.imported > 1 ? "s" : ""} importiert${result.readmeImported > 0 ? " (README)" : ""}`
+          : result.changelogBackfilled > 0
+          ? `${result.changelogBackfilled} Changelog-Eintrag${result.changelogBackfilled !== 1 ? "e" : ""} nacherfasst`
           : "Bereits aktuell")
       : state === "error" && errorMsg
       ? errorMsg

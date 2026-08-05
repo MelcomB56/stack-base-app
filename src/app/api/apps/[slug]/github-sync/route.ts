@@ -149,7 +149,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
         name: true,
         repoUrl: true,
         githubToken: true,
-        releases: { select: { version: true } },
+        releases: {
+          select: {
+            id: true,
+            version: true,
+            description: true,
+            releasedAt: true,
+            _count: { select: { changelogEntries: true } },
+          },
+        },
         tags: { include: { tag: true } },
       },
     });
@@ -190,6 +198,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
     const existingVersions = new Set(
       app.releases.flatMap((r) => [r.version, `v${r.version}`, r.version.replace(/^v/, "")]),
     );
+
+    // Lookup-Map für Changelog-Backfill (version → Release-Datensatz)
+    const releaseMap = new Map(app.releases.map((r) => [r.version, r]));
 
     let importedCount = 0;
     let skippedCount = 0;
@@ -283,26 +294,30 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
       importedCount++;
     }
 
-    // ─── 4. Fallback: README-Changelog ─────────────────────────────────────
-    // Nur wenn weder Releases noch Tags gefunden wurden
+    // ─── 4. README-Changelog ────────────────────────────────────────────────
+    // Immer versuchen: neue Releases importieren + Changelog für vorhandene
+    // Releases ohne Einträge nacherfassen (z. B. aus Git-Tags importierte).
     let readmeVersionsFound = 0;
     let readmeImported = 0;
+    let changelogBackfilled = 0;
 
-    if (ghReleases.filter((r) => !r.draft).length === 0 && ghTags.length === 0) {
-      try {
-        const readmeData = await githubFetch(
-          `/repos/${owner}/${repo}/readme`,
-          token,
-        ) as { content: string; encoding: string };
+    try {
+      const readmeData = await githubFetch(
+        `/repos/${owner}/${repo}/readme`,
+        token,
+      ) as { content: string; encoding: string };
 
-        if (readmeData.encoding === "base64") {
-          const readmeText = Buffer.from(readmeData.content, "base64").toString("utf-8");
+      if (readmeData.encoding === "base64") {
+        const readmeText = Buffer.from(readmeData.content, "base64").toString("utf-8");
+        const readmeVersions = parseReadmeVersions(readmeText);
+        readmeVersionsFound = readmeVersions.length;
 
-          const readmeVersions = parseReadmeVersions(readmeText);
-          readmeVersionsFound = readmeVersions.length;
+        for (const rv of readmeVersions) {
+          const version = rv.version.replace(/^v/, "");
+          const existing = releaseMap.get(version);
 
-          for (const rv of readmeVersions) {
-            const version = rv.version.replace(/^v/, "");
+          if (!existing) {
+            // Version noch nicht in DB → neuen Release anlegen
             if (existingVersions.has(version)) { skippedCount++; continue; }
 
             const releasedAt = rv.date ?? new Date();
@@ -337,11 +352,35 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
             existingVersions.add(version);
             importedCount++;
             readmeImported++;
+          } else if (existing._count.changelogEntries === 0 && rv.body && rv.body.trim()) {
+            // Release vorhanden, aber kein Changelog-Eintrag → nacherfassen
+            const isPrerelease = /[-](alpha|beta|rc|dev|pre)/i.test(version);
+
+            await db.changelogEntry.create({
+              data: {
+                appId: app.id,
+                releaseId: existing.id,
+                type: isPrerelease ? ("CHANGED" as const) : ("ADDED" as const),
+                description: rv.body.slice(0, 5000),
+                entryDate: existing.releasedAt,
+                createdById: session.user!.id!,
+              },
+            });
+
+            // Release-Beschreibung setzen wenn noch leer
+            if (!existing.description) {
+              await db.release.update({
+                where: { id: existing.id },
+                data: { description: rv.body.slice(0, 2000) },
+              });
+            }
+
+            changelogBackfilled++;
           }
         }
-      } catch {
-        // README nicht vorhanden oder nicht parsebar — kein Fehler
       }
+    } catch {
+      // README nicht vorhanden oder nicht parsebar — kein Fehler
     }
 
     // ─── 5. Neuesten Release als "current" markieren ───────────────────────
@@ -373,6 +412,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
       tagsFound: ghTags.length,
       readmeVersionsFound,
       readmeImported,
+      changelogBackfilled,
       isPrivate,
       repo: `${owner}/${repo}`,
     });
