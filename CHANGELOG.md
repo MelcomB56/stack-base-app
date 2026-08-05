@@ -3,6 +3,13 @@
 Alle wesentlichen Änderungen an Stack-Base werden hier dokumentiert.
 Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/).
 
+## [0.7.3] — 2026-08-05
+
+### Fixed
+
+- **Monitoring-Worker:** Worker-Prozess wurde in Produktion nie gestartet — `Dockerfile` startete nur `node server.js` (Next.js). Neuer `worker-runner`-Stage im Dockerfile + separater `worker`-Service in `docker-compose.prod.yml`; Worker läuft jetzt als eigenständiger Container
+- **Docker-Build:** `.dockerignore` hinzugefügt (schließt `node_modules`, `.next`, `.env*` aus dem Build-Context aus)
+
 ## [0.7.2] — 2026-08-05
 
 ### Fixed
