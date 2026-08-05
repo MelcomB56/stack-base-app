@@ -35,11 +35,12 @@ export async function GET() {
       )
     );
 
-    const jobs = jobNames.map((name, i) => ({
-      name,
-      label: JOB_LABELS[name],
-      ...(latestJobs[i] ?? { startedAt: null, finishedAt: null, status: "never", itemCount: null, error: null }),
-    }));
+    const jobs = jobNames.map((name, i) => {
+      // latestJobs[i] enthält auch `name` — explizit excludieren um TS-Fehler zu vermeiden
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { name: _n, ...rest } = latestJobs[i] ?? { startedAt: null, finishedAt: null, status: "never" as const, itemCount: null, error: null };
+      return { name, label: JOB_LABELS[name], ...rest };
+    });
 
     return Response.json({
       status,
