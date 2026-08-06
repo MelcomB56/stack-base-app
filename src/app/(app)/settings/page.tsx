@@ -1,9 +1,10 @@
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { Settings, Bell, Mail, Cpu } from "lucide-react";
+import { Settings, Bell, Mail, Cpu, Shield } from "lucide-react";
 import { WorkerStatusCard } from "@/components/settings/WorkerStatusCard";
 import { SmtpSettingsForm } from "@/components/settings/SmtpSettingsForm";
 import { ProfileLink } from "@/components/settings/ProfileLink";
+import { SsoSettingsForm } from "@/components/settings/SsoSettingsForm";
 
 // ─── Layout-Helfer ────────────────────────────────────────────────────────────
 
@@ -110,6 +111,18 @@ export default async function SettingsPage() {
           <WorkerStatusCard />
 
         </div>
+      </div>
+
+      {/* ── Sektion: SSO / Authentik ────────────────────────────────────────── */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <SectionHeader
+          icon={<Shield size={13} />}
+          label="SSO / Authentik"
+          description="Single Sign-On mit Authentik als Identity Provider"
+        />
+        <Card>
+          <SsoSettingsForm />
+        </Card>
       </div>
 
       {/* ── Sektion: Benachrichtigungen ─────────────────────────────────────── */}

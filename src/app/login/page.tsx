@@ -1,33 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Loader2, Eye, EyeOff, AlertCircle } from "lucide-react";
-
-// ─── Provider-Icons ────────────────────────────────────────────────────────
-
-function MicrosoftIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-      <rect x="0"  y="0"  width="8.5" height="8.5" fill="#F25022" />
-      <rect x="9.5" y="0"  width="8.5" height="8.5" fill="#7FBA00" />
-      <rect x="0"  y="9.5" width="8.5" height="8.5" fill="#00A4EF" />
-      <rect x="9.5" y="9.5" width="8.5" height="8.5" fill="#FFB900" />
-    </svg>
-  );
-}
-
-function GoogleIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57C21.36 18.45 22.56 15.63 22.56 12.25z" fill="#4285F4"/>
-      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
-      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-    </svg>
-  );
-}
 
 function AuthentikIcon() {
   return (
@@ -42,10 +18,23 @@ function AuthentikIcon() {
 
 export default function LoginPage() {
   const router = useRouter();
-  const [loading, setLoading]   = useState(false);
-  const [error, setError]       = useState<string | null>(null);
-  const [showPw, setShowPw]     = useState(false);
-  const [remember, setRemember] = useState(true);
+  const [loading, setLoading]           = useState(false);
+  const [error, setError]               = useState<string | null>(null);
+  const [showPw, setShowPw]             = useState(false);
+  const [remember, setRemember]         = useState(true);
+  const [ssoEnabled, setSsoEnabled]     = useState(false);
+  const [ssoLabel, setSsoLabel]         = useState("Mit Authentik anmelden");
+  const [ssoLoading, setSsoLoading]     = useState(false);
+
+  useEffect(() => {
+    fetch("/api/auth/sso-status")
+      .then((r) => r.json())
+      .then((d) => {
+        setSsoEnabled(!!d.authentikEnabled);
+        if (d.authentikLabel) setSsoLabel(d.authentikLabel);
+      })
+      .catch(() => {});
+  }, []);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -239,45 +228,46 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {/* Divider */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "22px 0 18px" }}>
-          <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.07)" }} />
-          <span style={{ fontSize: 11, color: "#4A5A70", letterSpacing: ".08em" }}>oder weiter mit</span>
-          <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.07)" }} />
-        </div>
-
-        {/* Social-Provider-Buttons */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
-          {[
-            { icon: <MicrosoftIcon />, label: "Microsoft",  provider: "azure-ad" },
-            { icon: <GoogleIcon />,    label: "Google",     provider: "google" },
-            { icon: <AuthentikIcon />, label: "Authentik",  provider: "authentik" },
-          ].map(({ icon, label, provider }) => (
+        {/* SSO-Button — nur wenn konfiguriert */}
+        {ssoEnabled && (
+          <>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "22px 0 18px" }}>
+              <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.07)" }} />
+              <span style={{ fontSize: 11, color: "#4A5A70", letterSpacing: ".08em" }}>oder weiter mit</span>
+              <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.07)" }} />
+            </div>
             <button
-              key={provider}
               type="button"
-              title={`Anmelden mit ${label}`}
-              onClick={() => signIn(provider, { callbackUrl: "/dashboard" })}
+              onClick={async () => {
+                setSsoLoading(true);
+                await signIn("authentik", { callbackUrl: "/dashboard" });
+              }}
+              disabled={ssoLoading}
               style={{
-                width: 48, height: 48, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center",
-                background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
-                cursor: "pointer", transition: "background 150ms, border-color 150ms",
+                width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+                padding: "11px 16px", borderRadius: 9,
+                background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)",
+                cursor: ssoLoading ? "not-allowed" : "pointer",
+                opacity: ssoLoading ? 0.7 : 1,
+                color: "#EDF2F7", fontSize: 14, fontWeight: 500,
+                transition: "background 150ms, border-color 150ms",
               }}
               onMouseEnter={(e) => {
-                const b = e.currentTarget as HTMLButtonElement;
-                b.style.background = "rgba(255,255,255,0.09)";
-                b.style.borderColor = "rgba(255,255,255,0.16)";
+                if (!ssoLoading) {
+                  (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.08)";
+                  (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.2)";
+                }
               }}
               onMouseLeave={(e) => {
-                const b = e.currentTarget as HTMLButtonElement;
-                b.style.background = "rgba(255,255,255,0.04)";
-                b.style.borderColor = "rgba(255,255,255,0.08)";
+                (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.04)";
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.1)";
               }}
             >
-              {icon}
+              {ssoLoading ? <Loader2 size={16} className="animate-spin" /> : <AuthentikIcon />}
+              {ssoLabel}
             </button>
-          ))}
-        </div>
+          </>
+        )}
 
         {/* Footer */}
         <p style={{ fontSize: 12, color: "#4A5A70", textAlign: "center", margin: "20px 0 0" }}>
