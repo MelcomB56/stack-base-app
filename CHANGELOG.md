@@ -5,6 +5,18 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [0.7.5] – 2026-08-06
+
+### Geändert
+- **Topbar:** Avatar-Bild aus Session anzeigen (bisher immer nur Initialen) + Klick führt zur Profilseite
+- **auth.ts:** Avatar-URL (avatarUrl) wird bei Sign-in aus DB in JWT geladen (`token.picture`) + `trigger === "update"` Unterstützung für sofortige Session-Aktualisierung nach Upload
+- **Sidebar:** Versionsnummer 0.7.5
+
+### Behoben
+- Avatar nach Upload erscheint nun sofort in Sidebar und Topbar (vorher wurde das Token nicht korrekt befüllt)
+
+---
+
 ## [0.7.4] – 2026-08-06
 
 ### Geändert

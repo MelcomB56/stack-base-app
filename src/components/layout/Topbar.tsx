@@ -84,14 +84,20 @@ export function Topbar() {
       </button>
 
       {/* Avatar */}
-      <div style={{
-        width: 32, height: 32, borderRadius: "50%",
-        background: "rgba(37,99,232,0.15)", border: "1px solid rgba(37,99,232,0.3)",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: 10, fontWeight: 700, color: "#2563E8", cursor: "pointer",
-      }}>
-        {initials}
-      </div>
+      <a href="/profile" style={{ textDecoration: "none" }}>
+        <div style={{
+          width: 32, height: 32, borderRadius: "50%",
+          background: "rgba(37,99,232,0.15)", border: "1px solid rgba(37,99,232,0.3)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: 10, fontWeight: 700, color: "#2563E8", cursor: "pointer",
+          overflow: "hidden",
+        }}>
+          {session?.user?.image
+            ? <img src={session.user.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            : initials
+          }
+        </div>
+      </a>
     </header>
   );
 }
