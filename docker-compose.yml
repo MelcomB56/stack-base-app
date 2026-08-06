@@ -8,10 +8,15 @@ services:
     environment:
       DATABASE_URL: postgresql://stackbase:stackbase@db:5432/stackbase
       REDIS_URL: redis://redis:6379
+    env_file:
+      - .env.production
     volumes:
       - .:/app
       - /app/node_modules
       - /app/.next
+    networks:
+      - default
+      - traefik-public
     depends_on:
       db:
         condition: service_healthy
@@ -49,6 +54,8 @@ services:
     environment:
       DATABASE_URL: postgresql://stackbase:stackbase@db:5432/stackbase
       REDIS_URL: redis://redis:6379
+    env_file:
+      - .env.production
     volumes:
       - .:/app
       - /app/node_modules
@@ -70,8 +77,16 @@ services:
       MINIO_ROOT_PASSWORD: stackbase123
     volumes:
       - minio_data:/data
+    networks:
+      - default
+      - traefik-public
 
 volumes:
   postgres_data:
   redis_data:
   minio_data:
+
+networks:
+  default:
+  traefik-public:
+    external: true
