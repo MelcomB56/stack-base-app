@@ -5,32 +5,61 @@ import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { authConfig } from "@/auth.config";
 
-// SSO-Konfig einmalig beim Start aus DB laden (top-level await, läuft serverseitig)
-const ssoRows = await db.systemSetting
-  .findMany({
-    where: {
-      key: { in: ["authentik_enabled", "authentik_client_id", "authentik_client_secret", "authentik_issuer", "authentik_default_role"] },
-    },
-  })
-  .catch(() => []);
+// ─── Live-SSO-Konfiguration ────────────────────────────────────────────────
+// Wird beim Modulstart und alle 60 s aus der DB gelesen.
+// Kein Neustart nötig — Änderungen greifen innerhalb einer Minute.
 
-const ssoMap = Object.fromEntries(ssoRows.map((r) => [r.key, r.value]));
+const live = {
+  enabled:      false,
+  clientId:     process.env.AUTHENTIK_CLIENT_ID     ?? "",
+  clientSecret: process.env.AUTHENTIK_CLIENT_SECRET ?? "",
+  issuer:       process.env.AUTHENTIK_ISSUER        ?? "https://localhost",
+  defaultRole:  "GUEST",
+};
 
-const ssoActive =
-  ssoMap.authentik_enabled === "true" &&
-  !!ssoMap.authentik_client_id &&
-  !!ssoMap.authentik_client_secret &&
-  !!ssoMap.authentik_issuer;
+async function refreshSSO() {
+  try {
+    const rows = await db.systemSetting.findMany({
+      where: {
+        key: {
+          in: [
+            "authentik_enabled", "authentik_client_id",
+            "authentik_client_secret", "authentik_issuer",
+            "authentik_default_role",
+          ],
+        },
+      },
+    });
+    const m = Object.fromEntries(rows.map((r) => [r.key, r.value]));
+    live.enabled =
+      m.authentik_enabled === "true" &&
+      !!m.authentik_client_id &&
+      !!m.authentik_client_secret &&
+      !!m.authentik_issuer;
+    if (m.authentik_client_id)     live.clientId     = m.authentik_client_id;
+    if (m.authentik_client_secret) live.clientSecret = m.authentik_client_secret;
+    if (m.authentik_issuer)        live.issuer       = m.authentik_issuer;
+    if (m.authentik_default_role)  live.defaultRole  = m.authentik_default_role;
+  } catch {
+    // DB noch nicht bereit — vorherige Werte behalten
+  }
+}
 
-// Env-Vars als Fallback wenn DB-Konfig nicht vorhanden
-const authentikProviders =
-  ssoActive
-    ? [Authentik({ clientId: ssoMap.authentik_client_id, clientSecret: ssoMap.authentik_client_secret, issuer: ssoMap.authentik_issuer })]
-    : process.env.AUTHENTIK_CLIENT_ID
-    ? [Authentik({ clientId: process.env.AUTHENTIK_CLIENT_ID!, clientSecret: process.env.AUTHENTIK_CLIENT_SECRET!, issuer: process.env.AUTHENTIK_ISSUER })]
-    : [];
+void refreshSSO();
+const _timer = setInterval(refreshSSO, 60_000);
+// In Node.js: Timer soll den Prozess nicht am Leben halten
+if (typeof _timer === "object" && typeof (_timer as NodeJS.Timeout).unref === "function") {
+  (_timer as NodeJS.Timeout).unref();
+}
 
-const defaultSsoRole = (ssoMap.authentik_default_role as string | undefined) ?? "GUEST";
+// Authentik-Provider immer registrieren, Werte kommen per Getter live aus `live`
+// → next-auth liest clientId/clientSecret/issuer bei jedem Request neu
+const _authentikProvider = Authentik({ clientId: "_init_", clientSecret: "_init_", issuer: "https://localhost" });
+Object.defineProperty(_authentikProvider, "clientId",     { get: () => live.clientId,     enumerable: true, configurable: true });
+Object.defineProperty(_authentikProvider, "clientSecret", { get: () => live.clientSecret, enumerable: true, configurable: true });
+Object.defineProperty(_authentikProvider, "issuer",       { get: () => live.issuer,       enumerable: true, configurable: true });
+
+// ─── NextAuth ──────────────────────────────────────────────────────────────
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -38,8 +67,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     Credentials({
       name: "E-Mail & Passwort",
       credentials: {
-        email:    { label: "E-Mail",    type: "email" },
-        password: { label: "Passwort",  type: "password" },
+        email:    { label: "E-Mail",   type: "email" },
+        password: { label: "Passwort", type: "password" },
       },
       async authorize(credentials) {
         const email    = credentials?.email    as string | undefined;
@@ -53,16 +82,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!valid) return null;
 
         await db.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
-
         return { id: user.id, email: user.email, name: user.name, role: user.role };
       },
     }),
-    ...authentikProviders,
+    _authentikProvider,
   ],
   session: { strategy: "jwt" },
   callbacks: {
+    async signIn({ account }) {
+      // SSO-Login blockieren wenn in DB deaktiviert
+      if (account?.provider === "authentik" && !live.enabled) return false;
+      return true;
+    },
+
     async jwt({ token, user, account, profile, trigger, session: updateData }) {
-      // ── Authentik SSO-Login ───────────────────────────────────────────────
+      // ── Authentik-Login ───────────────────────────────────────────────────
       if (account?.provider === "authentik" && profile) {
         const email = (profile.email as string | undefined) ?? "";
         if (email) {
@@ -72,10 +106,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               data: {
                 email,
                 name:
-                  (profile.name as string | undefined) ??
+                  (profile.name              as string | undefined) ??
                   (profile.preferred_username as string | undefined) ??
                   email.split("@")[0],
-                role: defaultSsoRole as never, // Prisma-Enum-Cast
+                role: live.defaultRole as never,
                 lastLoginAt: new Date(),
               },
             });
@@ -94,7 +128,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user && account?.provider === "credentials") {
         token.id   = user.id;
         token.role = (user as { role?: string }).role ?? "GUEST";
-        const dbUser = await db.user.findUnique({ where: { id: user.id as string }, select: { avatarUrl: true } });
+        const dbUser = await db.user.findUnique({
+          where: { id: user.id as string },
+          select: { avatarUrl: true },
+        });
         token.picture = dbUser?.avatarUrl ?? null;
       }
 

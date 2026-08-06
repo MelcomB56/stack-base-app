@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import {
-  Shield, Eye, EyeOff, Check, X, Loader2, AlertCircle,
+  Eye, EyeOff, Check, X, Loader2,
   ExternalLink, RefreshCw, Info,
 } from "lucide-react";
 
@@ -48,7 +48,6 @@ export function SsoSettingsForm() {
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [testResult, setTestResult] = useState<{ ok: boolean; text: string } | null>(null);
   const [dirty, setDirty] = useState(false);
-  const [needsRestart, setNeedsRestart] = useState(false);
   const secretRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -95,9 +94,8 @@ export function SsoSettingsForm() {
         body: JSON.stringify(body),
       });
       if (res.ok) {
-        setMsg({ ok: true, text: "Gespeichert." });
+        setMsg({ ok: true, text: "Gespeichert — Änderungen werden innerhalb von 60 Sekunden aktiv." });
         setDirty(false);
-        setNeedsRestart(true);
       } else {
         const d = await res.json().catch(() => ({}));
         setMsg({ ok: false, text: d.error ?? "Fehler beim Speichern" });
@@ -321,20 +319,6 @@ export function SsoSettingsForm() {
           </code>
         </p>
       </div>
-
-      {/* Neustart-Banner */}
-      {needsRestart && (
-        <div style={{
-          display: "flex", alignItems: "center", gap: 10,
-          padding: "10px 14px", borderRadius: 8,
-          background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.25)",
-        }}>
-          <AlertCircle size={13} style={{ color: "#F59E0B", flexShrink: 0 }} />
-          <p style={{ margin: 0, fontSize: 12, color: "#FCD34D" }}>
-            Einstellungen gespeichert — <strong>Neustart des Containers erforderlich</strong>, damit Änderungen aktiv werden.
-          </p>
-        </div>
-      )}
 
       {/* Aktionen */}
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
