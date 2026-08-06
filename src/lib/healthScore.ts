@@ -34,8 +34,8 @@ export function calculateHealthScore(app: AppForScore): HealthScoreResult {
   const now = Date.now();
   const days90 = 90 * 24 * 60 * 60 * 1000;
 
-  // 1. Dokumentation vorhanden (10%) — mind. 3 Wiki-Seiten
-  const docsOk = app.wikiSections.length >= 3;
+  // 1. Dokumentation vorhanden (10%) — mind. 3 Doc-Pages oder Wiki-Seiten
+  const docsOk = (app.docPages.length + app.wikiSections.length) >= 3;
 
   // 2. API dokumentiert (10%) — DocPage mit type "api" oder Wiki-Seite mit "api" im Titel
   const apiOk = app.docPages.some((p) => p.type?.toLowerCase() === "api" || (p.content ?? "").length > 100);
@@ -71,7 +71,7 @@ export function calculateHealthScore(app: AppForScore): HealthScoreResult {
   const maintenanceOk = notArchived && noCritical;
 
   const criteria: HealthScoreCriteria[] = [
-    { key: "docs",       label: "Dokumentation vorhanden", weight: 0.10, passed: docsOk,       points: docsOk       ? 10 : 0, hint: "Mind. 3 Wiki-Seiten anlegen" },
+    { key: "docs",       label: "Dokumentation vorhanden", weight: 0.10, passed: docsOk,       points: docsOk       ? 10 : 0, hint: "Mind. 3 Dokumentationsseiten oder Wiki-Seiten anlegen" },
     { key: "api",        label: "API dokumentiert",         weight: 0.10, passed: apiOk,        points: apiOk        ? 10 : 0, hint: "API-Dokumentationsseite anlegen" },
     { key: "tests",      label: "Tests vorhanden",          weight: 0.15, passed: testsOk,      points: testsOk      ? 15 : 0, hint: "Testabdeckung in den App-Details eintragen" },
     { key: "changelog",  label: "Changelog aktuell",        weight: 0.10, passed: changelogOk,  points: changelogOk  ? 10 : 0, hint: "Letzter Eintrag ist älter als 90 Tage" },
