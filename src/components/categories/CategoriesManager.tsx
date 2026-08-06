@@ -1,7 +1,33 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Tag, Plus, Pencil, Trash2, X, Check, Loader2, AlertCircle } from "lucide-react";
+import {
+  Tag, Plus, Pencil, Trash2, X, Check, Loader2, AlertCircle,
+  Home, Server, Code2, Brain, Users, Activity, Network, Zap, BookOpen,
+  Shield, Globe, Database, Cloud, Lock, Settings, Monitor, Package,
+  Layers, Star, Heart, Bell, Mail, FileText, Folder, BarChart2,
+  Cpu, Wifi, HardDrive, Terminal, Bug, Rocket, Coffee, Box,
+  Briefcase, Building, ShoppingCart, Truck, UserCheck, Search,
+  ServerCrash, Wrench, Plug, Eye, Smartphone, Tablet, Layout, Map,
+  type LucideIcon,
+} from "lucide-react";
+
+const ICON_MAP: Record<string, LucideIcon> = {
+  Home, Server, Code2, Brain, Users, Activity, Network, Zap, BookOpen,
+  Shield, Globe, Database, Cloud, Lock, Settings, Monitor, Package,
+  Layers, Star, Heart, Bell, Mail, FileText, Folder, BarChart2,
+  Cpu, Wifi, HardDrive, Terminal, Bug, Rocket, Coffee, Box,
+  Briefcase, Building, ShoppingCart, Truck, UserCheck, Search,
+  ServerCrash, Wrench, Plug, Eye, Smartphone, Tablet, Layout, Map, Tag,
+};
+
+function CategoryIcon({ icon, fallback, color }: { icon: string | null; fallback: string; color: string }) {
+  if (!icon) return <span>{fallback}</span>;
+  const LucideComp = ICON_MAP[icon];
+  if (LucideComp) return <LucideComp size={20} color={color} />;
+  // Emoji oder Freitext
+  return <span style={{ fontSize: 18, overflow: "hidden", maxWidth: 32, display: "block", textAlign: "center" }}>{icon.slice(0, 2)}</span>;
+}
 
 type Category = {
   id: string;
@@ -470,8 +496,9 @@ export function CategoriesManager({ initial }: { initial: Category[] }) {
                     display: "flex", alignItems: "center", justifyContent: "center",
                     flexShrink: 0, fontSize: 18, fontWeight: 700,
                     background: `${cat.color}22`, color: cat.color,
+                    overflow: "hidden",
                   }}>
-                    {cat.icon || cat.name.charAt(0).toUpperCase()}
+                    <CategoryIcon icon={cat.icon} fallback={cat.name.charAt(0).toUpperCase()} color={cat.color} />
                   </div>
 
                   {/* Info */}
