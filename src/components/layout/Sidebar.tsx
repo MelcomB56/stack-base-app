@@ -269,23 +269,32 @@ export function Sidebar() {
         {session?.user && (
           <Link
             href="/profile"
-            title={collapsed ? session.user.name ?? "Profil" : undefined}
+            title={collapsed ? "Mein Profil" : undefined}
             style={{
               display: "flex", alignItems: "center",
               gap: collapsed ? 0 : 10,
-              padding: collapsed ? "8px 10px" : "8px 12px",
+              padding: collapsed ? "7px 10px" : "8px 10px",
+              margin: "0 0 4px",
               borderRadius: 8, textDecoration: "none",
               justifyContent: collapsed ? "center" : "flex-start",
-              transition: "background 150ms",
+              border: "1px solid #1E3050",
+              background: "#0D1829",
+              transition: "border-color 150ms, background 150ms",
             }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "#1A2640"; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.borderColor = "rgba(37,99,232,0.4)";
+              (e.currentTarget as HTMLElement).style.background = "#1A2640";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.borderColor = "#1E3050";
+              (e.currentTarget as HTMLElement).style.background = "#0D1829";
+            }}
           >
             <div style={{
-              width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
+              width: 30, height: 30, borderRadius: "50%", flexShrink: 0,
               background: "rgba(37,99,232,0.15)", border: "1px solid rgba(37,99,232,0.3)",
               display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 10, fontWeight: 700, color: "#2563E8",
+              fontSize: 11, fontWeight: 700, color: "#2563E8",
               overflow: "hidden",
             }}>
               {session.user.image
@@ -294,14 +303,17 @@ export function Sidebar() {
               }
             </div>
             {!collapsed && (
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontSize: 12, fontWeight: 600, color: "#EDF2F7", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", margin: 0 }}>
-                  {session.user.name}
-                </p>
-                <p style={{ fontSize: 10, color: "#7A8BA6", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", margin: 0 }}>
-                  {session.user.email}
-                </p>
-              </div>
+              <>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: 12, fontWeight: 600, color: "#EDF2F7", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", margin: 0 }}>
+                    {session.user.name}
+                  </p>
+                  <p style={{ fontSize: 10, color: "#7A8BA6", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", margin: 0 }}>
+                    {session.user.email}
+                  </p>
+                </div>
+                <ChevronRight size={12} style={{ color: "#4A5B6F", flexShrink: 0 }} />
+              </>
             )}
           </Link>
         )}

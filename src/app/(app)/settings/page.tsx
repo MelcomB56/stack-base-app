@@ -1,10 +1,9 @@
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { Settings, User, Shield, Bell, Mail, Cpu } from "lucide-react";
-import { PasswordChangeForm } from "@/components/settings/PasswordChangeForm";
-import { ProfileForm } from "@/components/settings/ProfileForm";
+import { Settings, Bell, Mail, Cpu } from "lucide-react";
 import { WorkerStatusCard } from "@/components/settings/WorkerStatusCard";
 import { SmtpSettingsForm } from "@/components/settings/SmtpSettingsForm";
+import { ProfileLink } from "@/components/settings/ProfileLink";
 
 // ─── Layout-Helfer ────────────────────────────────────────────────────────────
 
@@ -56,29 +55,23 @@ export default async function SettingsPage() {
   const session = await auth();
   const userId = session?.user?.id;
 
-  const [user, smtpRows] = await Promise.all([
-    userId
-      ? db.user.findUnique({
-          where: { id: userId },
-          select: { id: true, name: true, email: true, role: true, createdAt: true, lastLoginAt: true },
-        })
-      : null,
-    db.systemSetting.findMany({
-      where: { key: { in: ["smtp_host", "smtp_port", "smtp_user", "smtp_pass", "smtp_from", "smtp_secure"] } },
-    }),
-  ]);
+  const smtpRows = await db.systemSetting.findMany({
+    where: { key: { in: ["smtp_host", "smtp_port", "smtp_user", "smtp_pass", "smtp_from", "smtp_secure"] } },
+  });
 
   const smtp = Object.fromEntries(smtpRows.map((r) => [r.key, r.value]));
   if (smtp["smtp_pass"]) smtp["smtp_pass"] = "••••••••";
 
+  const user = userId
+    ? await db.user.findUnique({
+        where: { id: userId },
+        select: { name: true, email: true, avatarUrl: true },
+      })
+    : null;
+
   const initials = user?.name
     ? user.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
     : "??";
-
-  function fmt(d: Date | null | undefined) {
-    if (!d) return "—";
-    return new Intl.DateTimeFormat("de-DE", { dateStyle: "medium", timeStyle: "short" }).format(d);
-  }
 
   return (
     <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 32, maxWidth: 1100 }}>
@@ -89,55 +82,11 @@ export default async function SettingsPage() {
           <Settings size={18} style={{ color: "#2563E8" }} />
           Einstellungen
         </h1>
-        <p style={{ fontSize: 13, color: "#7A8BA6", marginTop: 4, margin: "4px 0 0" }}>Profil, Sicherheit und Systemkonfiguration</p>
+        <p style={{ fontSize: 13, color: "#7A8BA6", marginTop: 4, margin: "4px 0 0" }}>Systemkonfiguration und Integrationen</p>
       </div>
 
-      {/* ── Sektion: Konto ──────────────────────────────────────────────────── */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-        <SectionHeader icon={<User size={13} />} label="Konto" description="Persönliche Daten und Zugangssicherheit" />
-
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, alignItems: "start" }}>
-
-          {/* Profil-Karte */}
-          <Card>
-            <CardLabel icon={<User size={11} />}>Profil</CardLabel>
-
-            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-              <div style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(37,99,232,0.15)", border: "2px solid rgba(37,99,232,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <span style={{ fontSize: 16, fontWeight: 700, color: "#2563E8" }}>{initials}</span>
-              </div>
-              <div>
-                <p style={{ fontSize: 14, fontWeight: 600, color: "#EDF2F7", margin: 0 }}>{user?.name ?? "—"}</p>
-                <p style={{ fontSize: 12, color: "#7A8BA6", margin: "2px 0 0" }}>{user?.email ?? "—"}</p>
-              </div>
-            </div>
-
-            <div style={{ borderTop: "1px solid #1E3050", paddingTop: 14, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-              {[
-                { label: "Rolle",          value: user?.role ?? "—" },
-                { label: "Mitglied seit",  value: fmt(user?.createdAt) },
-                { label: "Letzter Login",  value: fmt(user?.lastLoginAt) },
-              ].map(({ label, value }) => (
-                <div key={label}>
-                  <p style={{ fontSize: 10, color: "#7A8BA6", margin: "0 0 3px", textTransform: "uppercase", letterSpacing: ".08em" }}>{label}</p>
-                  <p style={{ fontSize: 12, fontWeight: 600, color: "#EDF2F7", margin: 0 }}>{value}</p>
-                </div>
-              ))}
-            </div>
-
-            <div style={{ borderTop: "1px solid #1E3050", paddingTop: 14 }}>
-              <ProfileForm initialName={user?.name ?? ""} initialEmail={user?.email ?? ""} />
-            </div>
-          </Card>
-
-          {/* Sicherheit-Karte */}
-          <Card>
-            <CardLabel icon={<Shield size={11} />}>Sicherheit</CardLabel>
-            <PasswordChangeForm />
-          </Card>
-
-        </div>
-      </div>
+      {/* ── Profil-Hinweis ──────────────────────────────────────────────────── */}
+      <ProfileLink name={user?.name ?? "—"} email={user?.email ?? "—"} avatarUrl={user?.avatarUrl ?? null} initials={initials} />
 
       {/* ── Sektion: System ─────────────────────────────────────────────────── */}
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
