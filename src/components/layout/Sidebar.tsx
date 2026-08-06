@@ -86,6 +86,21 @@ const Icons_graph = (
   </svg>
 );
 
+const Icons_users = (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+    <circle cx="9" cy="7" r="4"/>
+    <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+  </svg>
+);
+
+const Icons_shield = (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+    <path d="M9 12l2 2 4-4"/>
+  </svg>
+);
+
 const NAV_ADMIN = [
   { href: "/dependency-graph", label: "Dep. Graph",    icon: Icons_graph },
   { href: "/categories",       label: "Kategorien",    icon: Icons.categories },
@@ -95,6 +110,11 @@ const NAV_ADMIN = [
   { href: "/targets",          label: "Targets",       icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg> },
   { href: "/announcements",    label: "Ankündigungen", icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg> },
   { href: "/settings",         label: "Einstellungen", icon: Icons.settings },
+] as const;
+
+const NAV_ADMIN_RESTRICTED = [
+  { href: "/admin/users", label: "Nutzer", icon: Icons_users },
+  { href: "/admin/roles", label: "Rollen", icon: Icons_shield },
 ] as const;
 
 function LogoFull() {
@@ -129,6 +149,9 @@ export function Sidebar() {
   const initials = session?.user?.name
     ? session.user.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
     : "??";
+
+  const userRole = (session?.user as { role?: string } | undefined)?.role ?? "GUEST";
+  const isAdminUser = userRole === "ADMIN" || userRole === "SUPER_ADMIN";
 
   return (
     <aside
@@ -216,7 +239,7 @@ export function Sidebar() {
           </p>
         )}
 
-        {NAV_ADMIN.map((item) => {
+        {[...NAV_ADMIN, ...(isAdminUser ? NAV_ADMIN_RESTRICTED : [])].map((item) => {
           const active = pathname.startsWith(item.href);
           return (
             <Link

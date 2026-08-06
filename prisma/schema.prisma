@@ -190,8 +190,40 @@ model User {
   screenshots     Screenshot[]       @relation("ScreenshotUploader")
   statusHistory   AppStatusHistory[] @relation("StatusChanger")
   activityLogs    ActivityLog[]      @relation("ActivityUser")
+  roleAssignments RoleAssignment[]
 
   @@map("users")
+}
+
+// ─────────────────────────────────────────────
+// Modul 4b — Custom Roles & RBAC
+// ─────────────────────────────────────────────
+
+model CustomRole {
+  id          String   @id @default(uuid())
+  name        String   @unique @db.VarChar(100)
+  slug        String   @unique @db.VarChar(100)
+  description String?  @db.VarChar(255)
+  permissions String[]
+  isSystem    Boolean  @default(false) @map("is_system")
+  color       String   @default("#2563E8") @db.VarChar(7)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  assignments RoleAssignment[]
+
+  @@map("custom_roles")
+}
+
+model RoleAssignment {
+  userId String @map("user_id")
+  roleId String @map("role_id")
+
+  user User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role CustomRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@map("role_assignments")
 }
 
 // ─────────────────────────────────────────────
