@@ -329,13 +329,13 @@ export function Sidebar() {
           {collapsed ? <ChevronRight size={14} /> : (
             <>
               <ChevronLeft size={14} />
-              <span>Minimieren</span>
+              <span>Menü einkappen</span>
             </>
           )}
         </button>
 
         {!collapsed && (
-          <p style={{ padding: "4px 12px 2px", fontSize: 10, color: "#7A8BA6", margin: 0 }}>v0.6.0-dev</p>
+          <p style={{ padding: "4px 12px 2px", fontSize: 10, color: "#7A8BA6", margin: 0 }}>v0.7.3</p>
         )}
       </div>
     </aside>
