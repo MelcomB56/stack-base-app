@@ -491,6 +491,216 @@ export const DEPENDENCY_GUIDE = doc(`
 </div>
 `);
 
+// ─── Doc 7: SSO mit Authentik einrichten ─────────────────────────────────────
+
+export const SSO_GUIDE = doc(`
+<div class="header">
+  <div class="badge">Stack-Base · Authentifizierung</div>
+  <h1>SSO mit Authentik einrichten</h1>
+  <p class="subtitle">Single Sign-On über Authentik konfigurieren — von der Authentik-App bis zum ersten Login</p>
+</div>
+
+<div class="section">
+  <h2>Voraussetzungen</h2>
+  <div class="info">
+    <strong>Auf Authentik-Seite:</strong> Admin-Zugang zu einer laufenden Authentik-Instanz.<br>
+    <strong>Auf Stack-Base-Seite:</strong> Rolle <strong>ADMIN</strong> oder <strong>SUPER_ADMIN</strong> — nur diese können SSO-Einstellungen ändern.<br>
+    <strong>Netzwerk:</strong> Stack-Base muss die Authentik-Instanz direkt erreichen können (für OIDC Discovery und Token-Exchange).
+  </div>
+</div>
+
+<div class="section">
+  <h2>Schritt 1 — Authentik: OAuth2-Provider erstellen</h2>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body">
+      <p class="step-title">Authentik Admin-Interface öffnen</p>
+      <p class="step-desc">Im Authentik-Admin-UI zu <strong>Applications → Providers</strong> navigieren, dann oben rechts <strong>Create</strong> klicken.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body">
+      <p class="step-title">Provider-Typ wählen</p>
+      <p class="step-desc"><strong>OAuth2/OpenID Provider</strong> auswählen und auf <strong>Next</strong> klicken.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body">
+      <p class="step-title">Provider konfigurieren</p>
+      <p class="step-desc">Die Pflichtfelder ausfüllen:</p>
+      <table class="field-table">
+        <tr><th>Feld</th><th>Wert</th></tr>
+        <tr><td>Name</td><td>z.B. <ic>stack-base</ic></td></tr>
+        <tr><td>Authorization flow</td><td>Vorhandenen Explicit-Consent-Flow auswählen, z.B. <ic>default-provider-authorization-explicit-consent</ic></td></tr>
+        <tr><td>Client type</td><td><strong>Confidential</strong> (wichtig — ermöglicht Client Secret)</td></tr>
+        <tr><td>Client ID</td><td>Automatisch generiert — kann übernommen oder geändert werden</td></tr>
+        <tr><td>Client Secret</td><td>Automatisch generiert — sicher kopieren, wird nur einmal angezeigt</td></tr>
+        <tr><td>Redirect URIs</td><td>Callback-URL von Stack-Base (siehe unten)</td></tr>
+      </table>
+      <div class="warn"><strong>Redirect URI:</strong> Genau diese URL eintragen — kein Trailing Slash, exakte Schreibweise:
+        <br><ic>https://&lt;deine-domain&gt;/api/auth/callback/authentik</ic>
+        <br>Die korrekte URL für diese Instanz findest du unter <strong>Einstellungen → SSO</strong> im Feld <em>Callback-URL</em>.
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-body">
+      <p class="step-title">Scopes prüfen</p>
+      <p class="step-desc">Im Abschnitt <strong>Advanced protocol settings</strong> sicherstellen dass die Scopes
+        <ic>openid</ic>, <ic>email</ic> und <ic>profile</ic> aktiviert sind.
+        Stack-Base benötigt <strong>email</strong> (Benutzer-Identifikation) und <strong>profile</strong> (Name).</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">5</div>
+    <div class="step-body">
+      <p class="step-title">Provider speichern</p>
+      <p class="step-desc">Auf <strong>Finish</strong> klicken. <strong>Client ID</strong> und <strong>Client Secret</strong> jetzt kopieren und sicher aufbewahren.</p>
+      <div class="note"><strong>Issuer URL</strong> merken — sie folgt dem Muster:<br>
+        <ic>https://&lt;authentik-domain&gt;/application/o/&lt;provider-slug&gt;/</ic><br>
+        Den genauen Wert findest du in Authentik unter dem Provider → <em>OpenID Configuration URL</em> (den Pfad bis <ic>/o/name/</ic> nehmen).
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>Schritt 2 — Authentik: Application anlegen</h2>
+
+  <div class="step">
+    <div class="step-num">6</div>
+    <div class="step-body">
+      <p class="step-title">Neue Application erstellen</p>
+      <p class="step-desc">In Authentik zu <strong>Applications → Applications → Create</strong> gehen.</p>
+      <table class="field-table">
+        <tr><th>Feld</th><th>Wert</th></tr>
+        <tr><td>Name</td><td><ic>Stack-Base</ic> (Anzeigename)</td></tr>
+        <tr><td>Slug</td><td><ic>stack-base</ic> (URL-Kennung)</td></tr>
+        <tr><td>Provider</td><td>Den gerade erstellten Provider auswählen</td></tr>
+      </table>
+      <p class="step-desc">Auf <strong>Create</strong> klicken. Die Application verknüpft den Provider mit dem Authentik-Anmeldeportal.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">7</div>
+    <div class="step-body">
+      <p class="step-title">Zugriff für Nutzer und Gruppen einrichten</p>
+      <p class="step-desc">In der erstellten Application unter dem Reiter <strong>Policy / Group / User Bindings</strong>
+        Gruppen oder einzelne Nutzer hinzufügen, die sich über SSO anmelden dürfen.
+        Ohne Binding haben alle Authentik-Nutzer Zugriff.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>Schritt 3 — Stack-Base: SSO konfigurieren</h2>
+
+  <div class="step">
+    <div class="step-num">8</div>
+    <div class="step-body">
+      <p class="step-title">Einstellungen → SSO öffnen</p>
+      <p class="step-desc">In Stack-Base: linkes Menü → <strong>Einstellungen</strong> → Abschnitt <strong>SSO / Authentik</strong>.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">9</div>
+    <div class="step-body">
+      <p class="step-title">Felder ausfüllen</p>
+      <table class="field-table">
+        <tr><th>Feld</th><th>Wert aus Authentik</th></tr>
+        <tr><td>Issuer URL</td><td><ic>https://&lt;authentik-domain&gt;/application/o/&lt;slug&gt;/</ic> — mit Trailing Slash</td></tr>
+        <tr><td>Client ID</td><td>Aus Schritt 3 kopierter Wert</td></tr>
+        <tr><td>Client Secret</td><td>Aus Schritt 3 kopierter Wert</td></tr>
+        <tr><td>Button-Beschriftung</td><td>Text des SSO-Buttons auf der Anmeldeseite, z.B. <ic>Mit Authentik anmelden</ic></td></tr>
+        <tr><td>Standard-Rolle</td><td>Rolle die neue Nutzer beim ersten SSO-Login erhalten — empfohlen: <strong>Gast</strong></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">10</div>
+    <div class="step-body">
+      <p class="step-title">Verbindung testen</p>
+      <p class="step-desc">Unter dem Issuer-URL-Feld auf <strong>Verbindung testen</strong> klicken.
+        Stack-Base ruft das OIDC Discovery-Dokument ab und meldet ob die Authentik-Instanz erreichbar ist.
+        Erst wenn der Test erfolgreich ist weitermachen.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">11</div>
+    <div class="step-body">
+      <p class="step-title">SSO aktivieren und speichern</p>
+      <p class="step-desc">Den Toggle <strong>SSO aktiviert</strong> einschalten, dann auf <strong>Speichern</strong> klicken.
+        Änderungen werden innerhalb von 60 Sekunden aktiv — kein Neustart erforderlich.</p>
+      <div class="note"><strong>Ergebnis:</strong> Auf der Anmeldeseite (<ic>/login</ic>) erscheint jetzt der Authentik-Button unterhalb des normalen Anmeldeformulars.</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>Schritt 4 — Ersten SSO-Login testen</h2>
+
+  <div class="step">
+    <div class="step-num">12</div>
+    <div class="step-body">
+      <p class="step-title">Anmeldeseite aufrufen</p>
+      <p class="step-desc">Die Stack-Base-Anmeldeseite im Browser öffnen. Der <strong>Authentik-Button</strong> sollte sichtbar sein.
+        Auf den Button klicken — Authentik öffnet sich zur Anmeldung.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">13</div>
+    <div class="step-body">
+      <p class="step-title">Mit Authentik-Konto anmelden</p>
+      <p class="step-desc">Nach erfolgreicher Authentik-Anmeldung leitet Authentik zurück zu Stack-Base.
+        Stack-Base legt beim ersten Login automatisch einen Datenbanknutzer mit der konfigurierten Standard-Rolle an.</p>
+      <div class="note"><strong>Rollen anpassen:</strong> Die Rolle eines SSO-Nutzers kann danach wie bei jedem anderen Nutzer
+        unter <strong>Verwaltung → Nutzer → Rolle bearbeiten</strong> geändert werden.</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>Troubleshooting</h2>
+  <div class="trouble-item">
+    <p class="trouble-q">Verbindungstest schlägt fehl — "ECONNREFUSED" oder Timeout</p>
+    <p class="trouble-a">Stack-Base kann die Authentik-Instanz nicht erreichen. Netzwerkverbindung prüfen — beide Instanzen müssen sich gegenseitig erreichen können. Kein VPN oder Firewall-Block zwischen den Servern?</p>
+  </div>
+  <div class="trouble-item">
+    <p class="trouble-q">Verbindungstest schlägt fehl — "Ungültiges OIDC-Discovery-Dokument"</p>
+    <p class="trouble-a">Die Issuer URL ist falsch. Sie muss exakt mit dem Trailing Slash enden: <code>https://auth.example.com/application/o/stack-base/</code>. Den Wert in Authentik unter dem Provider → OpenID Configuration URL ablesen.</p>
+  </div>
+  <div class="trouble-item">
+    <p class="trouble-q">Redirect-Fehler nach Authentik-Anmeldung ("redirect_uri mismatch")</p>
+    <p class="trouble-a">Die Callback-URL in Authentik stimmt nicht mit der tatsächlichen Stack-Base-URL überein. In Authentik → Provider → Redirect URIs den Wert aus dem SSO-Einstellungs-Formular exakt eintragen — inklusive Protokoll und ohne Trailing Slash.</p>
+  </div>
+  <div class="trouble-item">
+    <p class="trouble-q">SSO-Button erscheint nicht auf der Anmeldeseite</p>
+    <p class="trouble-a">SSO ist noch nicht aktiv. Entweder wurde der Toggle nicht eingeschaltet, oder die Konfiguration wurde noch nicht gespeichert. Die 60-Sekunden-Frist nach dem Speichern abwarten und dann die Seite neu laden.</p>
+  </div>
+  <div class="trouble-item">
+    <p class="trouble-q">Nutzer landet nach SSO-Login auf Fehlerseite</p>
+    <p class="trouble-a">Meist fehlt die E-Mail im Authentik-Profil. Stack-Base identifiziert Nutzer anhand der E-Mail-Adresse — diese muss im Authentik-Account hinterlegt und im Token vorhanden sein (Scope <code>email</code> muss aktiviert sein).</p>
+  </div>
+  <div class="trouble-item">
+    <p class="trouble-q">Vorhandener Nutzer kann sich nach SSO-Aktivierung nicht mehr per Passwort anmelden</p>
+    <p class="trouble-a">SSO und Passwort-Login koexistieren. Das normale Anmeldeformular bleibt immer verfügbar — beide Methoden funktionieren parallel.</p>
+  </div>
+</div>
+`);
+
 // ─── All docs to seed ─────────────────────────────────────────────────────────
 
 export const PLATFORM_DOCS = [
@@ -501,4 +711,5 @@ export const PLATFORM_DOCS = [
   { title: "GitHub-Integration einrichten",      slug: "github-integration",                content: GITHUB_GUIDE,      sortOrder: 50 },
   { title: "Dependency Graph",                   slug: "dependency-graph",                  content: DEPENDENCY_GUIDE,  sortOrder: 60 },
   { title: "Stack-Base Agent einrichten",        slug: "stackbase-agent-einrichten",        content: AGENT_GUIDE,       sortOrder: 70 },
+  { title: "SSO mit Authentik einrichten",       slug: "sso-authentik-einrichten",          content: SSO_GUIDE,         sortOrder: 80 },
 ];
