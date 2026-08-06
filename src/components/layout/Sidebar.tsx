@@ -266,25 +266,44 @@ export function Sidebar() {
 
       {/* Footer */}
       <div style={{ borderTop: "1px solid #1E3050", padding: 8 }}>
-        {session?.user && !collapsed && (
-          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 8 }}>
+        {session?.user && (
+          <Link
+            href="/profile"
+            title={collapsed ? session.user.name ?? "Profil" : undefined}
+            style={{
+              display: "flex", alignItems: "center",
+              gap: collapsed ? 0 : 10,
+              padding: collapsed ? "8px 10px" : "8px 12px",
+              borderRadius: 8, textDecoration: "none",
+              justifyContent: collapsed ? "center" : "flex-start",
+              transition: "background 150ms",
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "#1A2640"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+          >
             <div style={{
-              width: 28, height: 28, borderRadius: "50%",
+              width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
               background: "rgba(37,99,232,0.15)", border: "1px solid rgba(37,99,232,0.3)",
               display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 10, fontWeight: 700, color: "#2563E8", flexShrink: 0,
+              fontSize: 10, fontWeight: 700, color: "#2563E8",
+              overflow: "hidden",
             }}>
-              {initials}
+              {session.user.image
+                ? <img src={session.user.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                : initials
+              }
             </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontSize: 12, fontWeight: 600, color: "#EDF2F7", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", margin: 0 }}>
-                {session.user.name}
-              </p>
-              <p style={{ fontSize: 10, color: "#7A8BA6", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", margin: 0 }}>
-                {session.user.email}
-              </p>
-            </div>
-          </div>
+            {!collapsed && (
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontSize: 12, fontWeight: 600, color: "#EDF2F7", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", margin: 0 }}>
+                  {session.user.name}
+                </p>
+                <p style={{ fontSize: 10, color: "#7A8BA6", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", margin: 0 }}>
+                  {session.user.email}
+                </p>
+              </div>
+            )}
+          </Link>
         )}
 
         <button

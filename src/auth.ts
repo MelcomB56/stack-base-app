@@ -45,10 +45,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   session: { strategy: "jwt" },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session: updateData }) {
       if (user) {
         token.id = user.id;
         token.role = (user as { role?: string }).role ?? "GUEST";
+        // Avatar beim Login aus DB laden
+        const dbUser = await db.user.findUnique({ where: { id: user.id as string }, select: { avatarUrl: true } });
+        token.picture = dbUser?.avatarUrl ?? null;
+      }
+      // Session-Update: Avatar-URL aktualisieren ohne Re-Login
+      if (trigger === "update" && updateData?.image !== undefined) {
+        token.picture = updateData.image;
       }
       return token;
     },
@@ -56,6 +63,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (session.user) {
         session.user.id = token.id as string;
         (session.user as { role?: string }).role = token.role as string;
+        session.user.image = (token.picture as string | null) ?? null;
       }
       return session;
     },
