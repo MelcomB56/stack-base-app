@@ -125,7 +125,7 @@ export default function LoginPage() {
           Melde dich an, um fortzufahren.
         </p>
 
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <form onSubmit={handleSubmit} method="post" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {/* E-Mail */}
           <div>
             <label htmlFor="email" style={labelStyle}>E-Mail Adresse</label>
