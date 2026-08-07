@@ -10,7 +10,9 @@ import { authConfig } from "@/auth.config";
 // Kein Neustart nötig — Änderungen greifen innerhalb einer Minute.
 
 const live = {
-  enabled:      false,
+  // Direkt aus Env-Vars initialisiert — refreshSSO() überschreibt dann mit DB-Wert.
+  // So ist live.enabled korrekt auch beim allerersten Request (lazy module load).
+  enabled:      !!(process.env.AUTHENTIK_CLIENT_ID && process.env.AUTHENTIK_CLIENT_SECRET && process.env.AUTHENTIK_ISSUER),
   clientId:     process.env.AUTHENTIK_CLIENT_ID     ?? "",
   clientSecret: process.env.AUTHENTIK_CLIENT_SECRET ?? "",
   issuer:       process.env.AUTHENTIK_ISSUER        ?? "https://localhost",
