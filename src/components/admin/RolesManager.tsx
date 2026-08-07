@@ -331,6 +331,117 @@ function PermissionMatrix({ role, permissionGroups, actionOrder, actionLabels, o
   );
 }
 
+// ─── System Role Info Card ────────────────────────────────────────────────────
+
+const SYSTEM_ROLES: { name: string; label: string; access: string; tier: "full" | "admin" | "custom"; }[] = [
+  { name: "SUPER_ADMIN", label: "Super-Admin",  access: "Vollzugriff + Systemeinstellungen",       tier: "full"   },
+  { name: "ADMIN",       label: "Admin",         access: "Vollzugriff auf alle Bereiche",            tier: "admin"  },
+  { name: "DEVELOPER",   label: "Entwickler",    access: "Nur über zugewiesene Custom Roles",        tier: "custom" },
+  { name: "TESTER",      label: "Tester",        access: "Nur über zugewiesene Custom Roles",        tier: "custom" },
+  { name: "CUSTOMER",    label: "Kunde",         access: "Nur über zugewiesene Custom Roles",        tier: "custom" },
+  { name: "GUEST",       label: "Gast",          access: "Nur über zugewiesene Custom Roles",        tier: "custom" },
+];
+
+const TIER_COLORS: Record<string, { bg: string; border: string; text: string; dot: string }> = {
+  full:   { bg: "rgba(124,58,237,0.08)", border: "rgba(124,58,237,0.25)", text: "#A78BFA", dot: "#7C3AED" },
+  admin:  { bg: "rgba(37,99,232,0.08)",  border: "rgba(37,99,232,0.25)",  text: "#60A5FA", dot: "#2563E8" },
+  custom: { bg: "rgba(255,255,255,0.03)",border: "#1E3050",               text: "#6B7E99", dot: "#334155" },
+};
+
+function SystemRolesInfo() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div style={{ background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12, overflow: "hidden", marginBottom: 16 }}>
+      {/* Header — immer sichtbar */}
+      <button
+        onClick={() => setOpen((o) => !o)}
+        style={{
+          width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "13px 18px", background: "none", border: "none", cursor: "pointer", textAlign: "left",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ width: 28, height: 28, borderRadius: 7, background: "rgba(37,99,232,0.12)", border: "1px solid rgba(37,99,232,0.25)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563E8" strokeWidth="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              <path d="M9 12l2 2 4-4"/>
+            </svg>
+          </div>
+          <div>
+            <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "#EDF2F7" }}>System-Rollen &amp; Custom Roles — Zwei-Schichten-Modell</p>
+            <p style={{ margin: "1px 0 0", fontSize: 11, color: "#4A5B6F" }}>
+              Jeder Nutzer trägt eine System-Rolle und kann zusätzlich Custom Roles erhalten
+            </p>
+          </div>
+        </div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4A5B6F" strokeWidth="2"
+          style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform 200ms", flexShrink: 0 }}>
+          <path d="M6 9l6 6 6-6"/>
+        </svg>
+      </button>
+
+      {/* Body — aufklappbar */}
+      {open && (
+        <div style={{ padding: "0 18px 18px", borderTop: "1px solid #1E3050" }}>
+          {/* Erklärung */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, padding: "14px 0 16px" }}>
+            <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid #1A2A3D", borderRadius: 9, padding: "12px 14px" }}>
+              <p style={{ margin: "0 0 5px", fontSize: 11, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "#4A5B6F" }}>Schicht 1 — System-Rolle</p>
+              <p style={{ margin: 0, fontSize: 12, color: "#7A8BA6", lineHeight: 1.6 }}>
+                Pflichtfeld pro Nutzer. <strong style={{ color: "#A0B4C8" }}>SUPER_ADMIN und ADMIN</strong> erhalten automatisch Vollzugriff — Custom Roles werden nicht ausgewertet. Alle anderen Rollen haben ohne Custom Roles <strong style={{ color: "#A0B4C8" }}>keinerlei Rechte</strong>.
+              </p>
+            </div>
+            <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid #1A2A3D", borderRadius: 9, padding: "12px 14px" }}>
+              <p style={{ margin: "0 0 5px", fontSize: 11, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "#4A5B6F" }}>Schicht 2 — Custom Roles</p>
+              <p style={{ margin: 0, fontSize: 12, color: "#7A8BA6", lineHeight: 1.6 }}>
+                Optionale, frei konfigurierbare Rollen mit granularen Einzelrechten (z. B. <em>Apps anzeigen</em>, <em>Incidents melden</em>). Ein Nutzer kann mehrere Custom Roles haben — Rechte werden addiert.
+              </p>
+            </div>
+          </div>
+
+          {/* System-Rollen Tabelle */}
+          <p style={{ margin: "0 0 10px", fontSize: 11, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "#4A5B6F" }}>System-Rollen im Überblick</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            {SYSTEM_ROLES.map((sr) => {
+              const c = TIER_COLORS[sr.tier];
+              return (
+                <div key={sr.name} style={{
+                  display: "flex", alignItems: "center", gap: 12,
+                  padding: "9px 13px", borderRadius: 8,
+                  background: c.bg, border: `1px solid ${c.border}`,
+                }}>
+                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: c.dot, flexShrink: 0 }} />
+                  <code style={{ fontSize: 11, fontWeight: 700, color: c.text, letterSpacing: ".05em", minWidth: 110, flexShrink: 0 }}>
+                    {sr.name}
+                  </code>
+                  <span style={{ fontSize: 11, color: "#7A8BA6", flex: 1 }}>
+                    {sr.label}
+                  </span>
+                  <span style={{ fontSize: 11, color: sr.tier === "custom" ? "#4A5B6F" : c.text }}>
+                    {sr.access}
+                  </span>
+                  {sr.tier !== "custom" && (
+                    <span style={{
+                      fontSize: 10, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase",
+                      padding: "2px 7px", borderRadius: 4, background: c.border, color: c.text,
+                    }}>
+                      Bypass
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <p style={{ margin: "12px 0 0", fontSize: 11, color: "#4A5B6F", lineHeight: 1.6 }}>
+            <strong style={{ color: "#6B7E99" }}>Bypass:</strong> SUPER_ADMIN und ADMIN überspringen die Permission-Prüfung — <code style={{ fontSize: 10, background: "#0B1220", padding: "1px 5px", borderRadius: 3, color: "#A78BFA" }}>canDo()</code> gibt immer <code style={{ fontSize: 10, background: "#0B1220", padding: "1px 5px", borderRadius: 3, color: "#34D399" }}>true</code> zurück, unabhängig von Custom Roles.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export function RolesManager({ initialRoles, permissionGroups, actionOrder, actionLabels }: Props) {
@@ -366,6 +477,7 @@ export function RolesManager({ initialRoles, permissionGroups, actionOrder, acti
 
   return (
     <>
+      <SystemRolesInfo />
       <div style={{ display: "grid", gridTemplateColumns: "260px 1fr", gap: 16, alignItems: "start" }}>
 
         {/* Left — Role list */}
