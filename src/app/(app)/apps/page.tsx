@@ -4,6 +4,7 @@ import { AppStatus } from "@/generated/prisma/client";
 import { Plus, Search } from "lucide-react";
 import Link from "next/link";
 import { requirePermission } from "@/lib/page-guard";
+import { canDo } from "@/lib/rbac";
 
 interface SearchParams {
   q?: string;
@@ -69,7 +70,8 @@ const STATUS_OPTIONS = [
 ];
 
 export default async function AppsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  await requirePermission("apps.read");
+  const session = await requirePermission("apps.read");
+  const canCreate = await canDo(session, "apps.create");
   const params = await searchParams;
   const { apps, total, page, limit, categories, healthMap } = await getApps(params);
   const pages = Math.ceil(total / limit);
@@ -86,14 +88,14 @@ export default async function AppsPage({ searchParams }: { searchParams: Promise
             {total} App{total !== 1 ? "s" : ""} gesamt
           </p>
         </div>
-        <Link href="/apps/new" style={{ textDecoration: "none" }}>
-          <button
-            style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", background: "#2563E8", color: "#fff", borderRadius: 8, fontSize: 13, fontWeight: 500, border: "none", cursor: "pointer" }}
-          >
-            <Plus size={14} />
-            Neue App
-          </button>
-        </Link>
+        {canCreate && (
+          <Link href="/apps/new" style={{ textDecoration: "none" }}>
+            <button style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", background: "#2563E8", color: "#fff", borderRadius: 8, fontSize: 13, fontWeight: 500, border: "none", cursor: "pointer" }}>
+              <Plus size={14} />
+              Neue App
+            </button>
+          </Link>
+        )}
       </div>
 
       {/* Filterleiste */}
@@ -143,12 +145,14 @@ export default async function AppsPage({ searchParams }: { searchParams: Promise
       {apps.length === 0 ? (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "80px 0", textAlign: "center" }}>
           <p style={{ fontSize: 13, color: "#7A8BA6" }}>Keine Apps gefunden.</p>
-          <Link href="/apps/new" style={{ textDecoration: "none", marginTop: 12 }}>
-            <button style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", background: "#1A2640", color: "#EDF2F7", borderRadius: 8, fontSize: 13, border: "1px solid #1E3050", cursor: "pointer" }}>
-              <Plus size={13} />
-              Erste App anlegen
-            </button>
-          </Link>
+          {canCreate && (
+            <Link href="/apps/new" style={{ textDecoration: "none", marginTop: 12 }}>
+              <button style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", background: "#1A2640", color: "#EDF2F7", borderRadius: 8, fontSize: 13, border: "1px solid #1E3050", cursor: "pointer" }}>
+                <Plus size={13} />
+                Erste App anlegen
+              </button>
+            </Link>
+          )}
         </div>
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14 }}>

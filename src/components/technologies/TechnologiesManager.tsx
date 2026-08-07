@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useCan } from "@/lib/permissions-context";
 import { Cpu, Globe, Plus, Pencil, Trash2, X, Check, Loader2, AlertCircle } from "lucide-react";
 
 type Technology = {
@@ -179,6 +180,10 @@ function DeleteDialog({ tech, onClose, onConfirm }: { tech: Technology; onClose:
 // ─── Haupt-Komponente ───────────────────────────────────────────────────────
 
 export function TechnologiesManager({ initial }: { initial: Technology[] }) {
+  const canCreate = useCan("technologies.create");
+  const canEdit   = useCan("technologies.update");
+  const canDelete = useCan("technologies.delete");
+
   const [technologies, setTechnologies] = useState<Technology[]>(initial);
   const [modalOpen, setModalOpen]       = useState(false);
   const [editTarget, setEditTarget]     = useState<Technology | null>(null);
@@ -231,19 +236,23 @@ export function TechnologiesManager({ initial }: { initial: Technology[] }) {
               {technologies.length} Technologie{technologies.length !== 1 ? "n" : ""} im Einsatz
             </p>
           </div>
-          <button onClick={openCreate} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", background: "#2563E8", color: "#fff", borderRadius: 8, fontSize: 13, fontWeight: 500, border: "none", cursor: "pointer" }}>
-            <Plus size={14} />
-            Neue Technologie
-          </button>
+          {canCreate && (
+            <button onClick={openCreate} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", background: "#2563E8", color: "#fff", borderRadius: 8, fontSize: 13, fontWeight: 500, border: "none", cursor: "pointer" }}>
+              <Plus size={14} />
+              Neue Technologie
+            </button>
+          )}
         </div>
 
         {/* Leer-Zustand */}
         {technologies.length === 0 ? (
           <div style={{ background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12, padding: 40, textAlign: "center" }}>
             <p style={{ fontSize: 13, color: "#7A8BA6", marginBottom: 14 }}>Noch keine Technologien angelegt.</p>
-            <button onClick={openCreate} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", background: "#1A2640", color: "#EDF2F7", borderRadius: 8, fontSize: 13, border: "1px solid #1E3050", cursor: "pointer" }}>
-              <Plus size={13} />Erste Technologie anlegen
-            </button>
+            {canCreate && (
+              <button onClick={openCreate} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", background: "#1A2640", color: "#EDF2F7", borderRadius: 8, fontSize: 13, border: "1px solid #1E3050", cursor: "pointer" }}>
+                <Plus size={13} />Erste Technologie anlegen
+              </button>
+            )}
           </div>
         ) : (
           Object.entries(grouped).map(([cat, items]) => (
@@ -268,20 +277,26 @@ export function TechnologiesManager({ initial }: { initial: Technology[] }) {
                       <p style={{ fontSize: 12, fontWeight: 500, color: "#EDF2F7", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{tech.name}</p>
                       <p style={{ fontSize: 10, color: "#7A8BA6", margin: "1px 0 0", fontVariantNumeric: "tabular-nums" }}>{tech._count.apps} Apps</p>
                     </div>
-                    <div style={{ display: "flex", gap: 3, flexShrink: 0 }}>
-                      <button onClick={() => openEdit(tech)} title="Bearbeiten"
-                        style={{ width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center", background: "#1A2640", border: "1px solid #1E3050", borderRadius: 5, cursor: "pointer", color: "#7A8BA6" }}
-                        onMouseEnter={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.color = "#EDF2F7"; b.style.borderColor = "#2563E8"; }}
-                        onMouseLeave={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.color = "#7A8BA6"; b.style.borderColor = "#1E3050"; }}>
-                        <Pencil size={10} />
-                      </button>
-                      <button onClick={() => setDeleteTarget(tech)} title="Löschen"
-                        style={{ width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center", background: "#1A2640", border: "1px solid #1E3050", borderRadius: 5, cursor: "pointer", color: "#7A8BA6" }}
-                        onMouseEnter={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.color = "#EF4444"; b.style.borderColor = "rgba(239,68,68,0.4)"; }}
-                        onMouseLeave={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.color = "#7A8BA6"; b.style.borderColor = "#1E3050"; }}>
-                        <Trash2 size={10} />
-                      </button>
-                    </div>
+                    {(canEdit || canDelete) && (
+                      <div style={{ display: "flex", gap: 3, flexShrink: 0 }}>
+                        {canEdit && (
+                          <button onClick={() => openEdit(tech)} title="Bearbeiten"
+                            style={{ width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center", background: "#1A2640", border: "1px solid #1E3050", borderRadius: 5, cursor: "pointer", color: "#7A8BA6" }}
+                            onMouseEnter={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.color = "#EDF2F7"; b.style.borderColor = "#2563E8"; }}
+                            onMouseLeave={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.color = "#7A8BA6"; b.style.borderColor = "#1E3050"; }}>
+                            <Pencil size={10} />
+                          </button>
+                        )}
+                        {canDelete && (
+                          <button onClick={() => setDeleteTarget(tech)} title="Löschen"
+                            style={{ width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center", background: "#1A2640", border: "1px solid #1E3050", borderRadius: 5, cursor: "pointer", color: "#7A8BA6" }}
+                            onMouseEnter={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.color = "#EF4444"; b.style.borderColor = "rgba(239,68,68,0.4)"; }}
+                            onMouseLeave={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.color = "#7A8BA6"; b.style.borderColor = "#1E3050"; }}>
+                            <Trash2 size={10} />
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

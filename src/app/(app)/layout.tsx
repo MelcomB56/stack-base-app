@@ -1,5 +1,6 @@
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Topbar } from "@/components/layout/Topbar";
+import { PermissionsProvider } from "@/lib/permissions-context";
 import { auth } from "@/auth";
 import { getUserPermissions } from "@/lib/rbac";
 
@@ -21,14 +22,16 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
-      <Sidebar allowedPerms={allowedPerms} />
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "hidden" }}>
-        <Topbar />
-        <main style={{ flex: 1, overflowY: "auto", position: "relative" }}>
-          {children}
-        </main>
+    <PermissionsProvider allowedPerms={allowedPerms}>
+      <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
+        <Sidebar allowedPerms={allowedPerms} />
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "hidden" }}>
+          <Topbar />
+          <main style={{ flex: 1, overflowY: "auto", position: "relative" }}>
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </PermissionsProvider>
   );
 }

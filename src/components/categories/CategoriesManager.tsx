@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useCan } from "@/lib/permissions-context";
 import {
   Tag, Plus, Pencil, Trash2, X, Check, Loader2, AlertCircle,
   Home, Server, Code2, Brain, Users, Activity, Network, Zap, BookOpen,
@@ -382,6 +383,10 @@ function DeleteDialog({ category, onClose, onConfirm }: DeleteDialogProps) {
 // ─── Haupt-Komponente ───────────────────────────────────────────────────────
 
 export function CategoriesManager({ initial }: { initial: Category[] }) {
+  const canCreate = useCan("categories.create");
+  const canEdit   = useCan("categories.update");
+  const canDelete = useCan("categories.delete");
+
   const [categories, setCategories] = useState<Category[]>(initial);
   const [modalOpen, setModalOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Category | null>(null);
@@ -442,13 +447,15 @@ export function CategoriesManager({ initial }: { initial: Category[] }) {
               {categories.length} Kategorie{categories.length !== 1 ? "n" : ""} verfügbar
             </p>
           </div>
-          <button
-            onClick={openCreate}
-            style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", background: "#2563E8", color: "#fff", borderRadius: 8, fontSize: 13, fontWeight: 500, border: "none", cursor: "pointer" }}
-          >
-            <Plus size={14} />
-            Neue Kategorie
-          </button>
+          {canCreate && (
+            <button
+              onClick={openCreate}
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", background: "#2563E8", color: "#fff", borderRadius: 8, fontSize: 13, fontWeight: 500, border: "none", cursor: "pointer" }}
+            >
+              <Plus size={14} />
+              Neue Kategorie
+            </button>
+          )}
         </div>
 
         {/* Grid */}
@@ -457,13 +464,15 @@ export function CategoriesManager({ initial }: { initial: Category[] }) {
             <p style={{ fontSize: 13, color: "#7A8BA6", marginBottom: 14 }}>
               Noch keine Kategorien angelegt.
             </p>
-            <button
-              onClick={openCreate}
-              style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", background: "#1A2640", color: "#EDF2F7", borderRadius: 8, fontSize: 13, border: "1px solid #1E3050", cursor: "pointer" }}
-            >
-              <Plus size={13} />
-              Erste Kategorie anlegen
-            </button>
+            {canCreate && (
+              <button
+                onClick={openCreate}
+                style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", background: "#1A2640", color: "#EDF2F7", borderRadius: 8, fontSize: 13, border: "1px solid #1E3050", cursor: "pointer" }}
+              >
+                <Plus size={13} />
+                Erste Kategorie anlegen
+              </button>
+            )}
           </div>
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 12 }}>
@@ -517,24 +526,28 @@ export function CategoriesManager({ initial }: { initial: Category[] }) {
                       {cat._count.apps} App{cat._count.apps !== 1 ? "s" : ""}
                     </span>
                     <div style={{ display: "flex", gap: 4 }}>
-                      <button
-                        onClick={() => openEdit(cat)}
-                        title="Bearbeiten"
-                        style={{ width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", background: "#1A2640", border: "1px solid #1E3050", borderRadius: 7, cursor: "pointer", color: "#7A8BA6", transition: "color 150ms, border-color 150ms" }}
-                        onMouseEnter={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.color = "#EDF2F7"; b.style.borderColor = "#2563E8"; }}
-                        onMouseLeave={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.color = "#7A8BA6"; b.style.borderColor = "#1E3050"; }}
-                      >
-                        <Pencil size={12} />
-                      </button>
-                      <button
-                        onClick={() => setDeleteTarget(cat)}
-                        title="Löschen"
-                        style={{ width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", background: "#1A2640", border: "1px solid #1E3050", borderRadius: 7, cursor: "pointer", color: "#7A8BA6", transition: "color 150ms, border-color 150ms" }}
-                        onMouseEnter={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.color = "#EF4444"; b.style.borderColor = "rgba(239,68,68,0.4)"; }}
-                        onMouseLeave={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.color = "#7A8BA6"; b.style.borderColor = "#1E3050"; }}
-                      >
-                        <Trash2 size={12} />
-                      </button>
+                      {canEdit && (
+                        <button
+                          onClick={() => openEdit(cat)}
+                          title="Bearbeiten"
+                          style={{ width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", background: "#1A2640", border: "1px solid #1E3050", borderRadius: 7, cursor: "pointer", color: "#7A8BA6", transition: "color 150ms, border-color 150ms" }}
+                          onMouseEnter={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.color = "#EDF2F7"; b.style.borderColor = "#2563E8"; }}
+                          onMouseLeave={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.color = "#7A8BA6"; b.style.borderColor = "#1E3050"; }}
+                        >
+                          <Pencil size={12} />
+                        </button>
+                      )}
+                      {canDelete && (
+                        <button
+                          onClick={() => setDeleteTarget(cat)}
+                          title="Löschen"
+                          style={{ width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", background: "#1A2640", border: "1px solid #1E3050", borderRadius: 7, cursor: "pointer", color: "#7A8BA6", transition: "color 150ms, border-color 150ms" }}
+                          onMouseEnter={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.color = "#EF4444"; b.style.borderColor = "rgba(239,68,68,0.4)"; }}
+                          onMouseLeave={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.color = "#7A8BA6"; b.style.borderColor = "#1E3050"; }}
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>

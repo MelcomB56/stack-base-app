@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useCan } from "@/lib/permissions-context";
 import {
   Megaphone, Pin, PinOff, Trash2, Plus, X, Check, Info,
   MoreHorizontal, Shield, Code2, Bell, Wrench, Rocket,
@@ -46,6 +47,10 @@ const inputStyle: React.CSSProperties = {
 };
 
 export function AnnouncementsClient({ initial }: { initial: Announcement[] }) {
+  const canCreate = useCan("announcements.create");
+  const canUpdate = useCan("announcements.update");
+  const canDelete = useCan("announcements.delete");
+
   const [items, setItems]       = useState<Announcement[]>(initial);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving]     = useState(false);
@@ -111,21 +116,23 @@ export function AnnouncementsClient({ initial }: { initial: Announcement[] }) {
             fontSize: 11, fontWeight: 700, padding: "0 6px",
           }}>{items.length}</span>
         </div>
-        <button
-          onClick={() => { setShowForm(!showForm); setError(null); }}
-          style={{
-            display: "flex", alignItems: "center", gap: 7,
-            padding: "9px 18px", background: "#2563E8", border: "none",
-            borderRadius: 8, fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer",
-          }}
-        >
-          {showForm ? <X size={14} /> : <Plus size={14} />}
-          {showForm ? "Abbrechen" : "Neue Ankündigung"}
-        </button>
+        {canCreate && (
+          <button
+            onClick={() => { setShowForm(!showForm); setError(null); }}
+            style={{
+              display: "flex", alignItems: "center", gap: 7,
+              padding: "9px 18px", background: "#2563E8", border: "none",
+              borderRadius: 8, fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer",
+            }}
+          >
+            {showForm ? <X size={14} /> : <Plus size={14} />}
+            {showForm ? "Abbrechen" : "Neue Ankündigung"}
+          </button>
+        )}
       </div>
 
       {/* Formular */}
-      {showForm && (
+      {canCreate && showForm && (
         <div style={{ background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12, padding: 22, display: "flex", flexDirection: "column", gap: 14 }}>
           <p style={{ fontSize: 13, fontWeight: 600, color: "#EDF2F7", margin: 0 }}>Neue Ankündigung erstellen</p>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
@@ -227,40 +234,46 @@ export function AnnouncementsClient({ initial }: { initial: Announcement[] }) {
               </div>
 
               {/* Actions */}
-              <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0, position: "relative" }}>
-                <button
-                  onClick={(e) => { e.stopPropagation(); togglePin(a.id, a.pinned); }}
-                  title={a.pinned ? "Nicht mehr anheften" : "Anheften"}
-                  style={{ background: "none", border: "none", cursor: "pointer", color: a.pinned ? "#2563E8" : "#4A5B6F", padding: 6, display: "flex", borderRadius: 6 }}
-                >
-                  {a.pinned ? <PinOff size={15} /> : <Pin size={15} />}
-                </button>
-                <div style={{ position: "relative" }}>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setMenuOpen(menuOpen === a.id ? null : a.id); }}
-                    style={{ background: "none", border: "none", cursor: "pointer", color: "#4A5B6F", padding: 6, display: "flex", borderRadius: 6 }}
-                  >
-                    <MoreHorizontal size={15} />
-                  </button>
-                  {menuOpen === a.id && (
-                    <div
-                      onClick={(e) => e.stopPropagation()}
-                      style={{
-                        position: "absolute", right: 0, top: "calc(100% + 4px)", zIndex: 50,
-                        background: "#0D1829", border: "1px solid #1E3050", borderRadius: 8,
-                        padding: 4, minWidth: 130, boxShadow: "0 8px 24px #00000060",
-                      }}
+              {(canUpdate || canDelete) && (
+                <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0, position: "relative" }}>
+                  {canUpdate && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); togglePin(a.id, a.pinned); }}
+                      title={a.pinned ? "Nicht mehr anheften" : "Anheften"}
+                      style={{ background: "none", border: "none", cursor: "pointer", color: a.pinned ? "#2563E8" : "#4A5B6F", padding: 6, display: "flex", borderRadius: 6 }}
                     >
+                      {a.pinned ? <PinOff size={15} /> : <Pin size={15} />}
+                    </button>
+                  )}
+                  {canDelete && (
+                    <div style={{ position: "relative" }}>
                       <button
-                        onClick={() => remove(a.id)}
-                        style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "7px 10px", background: "none", border: "none", color: "#F87171", fontSize: 12, cursor: "pointer", borderRadius: 6, textAlign: "left" }}
+                        onClick={(e) => { e.stopPropagation(); setMenuOpen(menuOpen === a.id ? null : a.id); }}
+                        style={{ background: "none", border: "none", cursor: "pointer", color: "#4A5B6F", padding: 6, display: "flex", borderRadius: 6 }}
                       >
-                        <Trash2 size={13} /> Löschen
+                        <MoreHorizontal size={15} />
                       </button>
+                      {menuOpen === a.id && (
+                        <div
+                          onClick={(e) => e.stopPropagation()}
+                          style={{
+                            position: "absolute", right: 0, top: "calc(100% + 4px)", zIndex: 50,
+                            background: "#0D1829", border: "1px solid #1E3050", borderRadius: 8,
+                            padding: 4, minWidth: 130, boxShadow: "0 8px 24px #00000060",
+                          }}
+                        >
+                          <button
+                            onClick={() => remove(a.id)}
+                            style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "7px 10px", background: "none", border: "none", color: "#F87171", fontSize: 12, cursor: "pointer", borderRadius: 6, textAlign: "left" }}
+                          >
+                            <Trash2 size={13} /> Löschen
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
-              </div>
+              )}
             </div>
           );
         })}

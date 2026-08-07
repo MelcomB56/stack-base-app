@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useCan } from "@/lib/permissions-context";
 import { Server, Cloud, Container, Layers, Globe, Plus, Pencil, Trash2, X, Loader2, Check, AlertTriangle, WifiOff, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
@@ -131,6 +132,10 @@ function TargetForm({
 }
 
 export function TargetsClient({ initial }: { initial: Target[] }) {
+  const canCreate = useCan("targets.create");
+  const canEdit   = useCan("targets.update");
+  const canDelete = useCan("targets.delete");
+
   const [targets, setTargets]   = useState<Target[]>(initial);
   const [creating, setCreating] = useState(false);
   const [editing,  setEditing]  = useState<string | null>(null);
@@ -180,16 +185,18 @@ export function TargetsClient({ initial }: { initial: Target[] }) {
       )}
 
       {/* Neue anlegen */}
-      <div style={{ background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12, padding: 18 }}>
-        {creating ? (
-          <TargetForm initial={EMPTY} onSave={handleCreate} onCancel={() => setCreating(false)} loading={loading} />
-        ) : (
-          <button onClick={() => setCreating(true)}
-            style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 16px", background: "#2563E8", border: "none", borderRadius: 8, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-            <Plus size={14} /> Neues Target anlegen
-          </button>
-        )}
-      </div>
+      {canCreate && (
+        <div style={{ background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12, padding: 18 }}>
+          {creating ? (
+            <TargetForm initial={EMPTY} onSave={handleCreate} onCancel={() => setCreating(false)} loading={loading} />
+          ) : (
+            <button onClick={() => setCreating(true)}
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 16px", background: "#2563E8", border: "none", borderRadius: 8, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+              <Plus size={14} /> Neues Target anlegen
+            </button>
+          )}
+        </div>
+      )}
 
       {targets.length === 0 && !creating && (
         <p style={{ color: "#4A5B6F", fontSize: 13, textAlign: "center", padding: 32 }}>
@@ -239,23 +246,29 @@ export function TargetsClient({ initial }: { initial: Target[] }) {
 
               {/* Aktionen */}
               <div style={{ display: "flex", gap: 6, flexShrink: 0, alignItems: "center" }}>
-                <button onClick={() => handleStatusToggle(t.id, t.status)} title="Status wechseln"
-                  style={{ padding: "5px 10px", background: "transparent", border: "1px solid #1E3050", borderRadius: 8, color: (STATUS_META[t.status] ?? STATUS_META.ACTIVE).color, fontSize: 11, cursor: "pointer", whiteSpace: "nowrap" }}>
-                  {t.status === "ACTIVE" ? "→ Wartung" : t.status === "MAINTENANCE" ? "→ Offline" : "→ Aktiv"}
-                </button>
-                <button onClick={() => setEditing(t.id)}
-                  style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 10px", background: "transparent", border: "1px solid #1E3050", borderRadius: 8, color: "#7A8BA6", fontSize: 12, cursor: "pointer" }}>
-                  <Pencil size={12} /> Bearbeiten
-                </button>
+                {canEdit && (
+                  <button onClick={() => handleStatusToggle(t.id, t.status)} title="Status wechseln"
+                    style={{ padding: "5px 10px", background: "transparent", border: "1px solid #1E3050", borderRadius: 8, color: (STATUS_META[t.status] ?? STATUS_META.ACTIVE).color, fontSize: 11, cursor: "pointer", whiteSpace: "nowrap" }}>
+                    {t.status === "ACTIVE" ? "→ Wartung" : t.status === "MAINTENANCE" ? "→ Offline" : "→ Aktiv"}
+                  </button>
+                )}
+                {canEdit && (
+                  <button onClick={() => setEditing(t.id)}
+                    style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 10px", background: "transparent", border: "1px solid #1E3050", borderRadius: 8, color: "#7A8BA6", fontSize: 12, cursor: "pointer" }}>
+                    <Pencil size={12} /> Bearbeiten
+                  </button>
+                )}
                 <Link href={`/targets/${t.id}`} style={{ textDecoration: "none" }}>
                   <button style={{ display: "flex", alignItems: "center", gap: 4, padding: "6px 10px", background: "transparent", border: "1px solid #1E3050", borderRadius: 8, color: "#7A8BA6", fontSize: 12, cursor: "pointer" }}>
                     Details <ChevronRight size={12} />
                   </button>
                 </Link>
-                <button onClick={() => handleDelete(t.id, t.name)}
-                  style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, background: "transparent", border: "1px solid #1E3050", borderRadius: 8, color: "#EF4444", cursor: "pointer" }}>
-                  <Trash2 size={13} />
-                </button>
+                {canDelete && (
+                  <button onClick={() => handleDelete(t.id, t.name)}
+                    style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, background: "transparent", border: "1px solid #1E3050", borderRadius: 8, color: "#EF4444", cursor: "pointer" }}>
+                    <Trash2 size={13} />
+                  </button>
+                )}
               </div>
             </div>
           )}

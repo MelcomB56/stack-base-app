@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useCan } from "@/lib/permissions-context";
 import { Tag, Plus, Pencil, Trash2, X, Check, Loader2, AlertCircle } from "lucide-react";
 
 type TagItem = {
@@ -169,6 +170,10 @@ function DeleteDialog({ tag, onClose, onConfirm }: { tag: TagItem; onClose: () =
 // ─── Haupt-Komponente ───────────────────────────────────────────────────────
 
 export function TagsManager({ initial }: { initial: TagItem[] }) {
+  const canCreate = useCan("tags.create");
+  const canEdit   = useCan("tags.update");
+  const canDelete = useCan("tags.delete");
+
   const [tags, setTags]           = useState<TagItem[]>(initial);
   const [modalOpen, setModalOpen] = useState(false);
   const [editTarget, setEditTarget]   = useState<TagItem | null>(null);
@@ -213,17 +218,21 @@ export function TagsManager({ initial }: { initial: TagItem[] }) {
               {tags.length} Tag{tags.length !== 1 ? "s" : ""} angelegt
             </p>
           </div>
-          <button onClick={openCreate} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", background: "#2563E8", color: "#fff", borderRadius: 8, fontSize: 13, fontWeight: 500, border: "none", cursor: "pointer" }}>
-            <Plus size={14} />Neuer Tag
-          </button>
+          {canCreate && (
+            <button onClick={openCreate} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", background: "#2563E8", color: "#fff", borderRadius: 8, fontSize: 13, fontWeight: 500, border: "none", cursor: "pointer" }}>
+              <Plus size={14} />Neuer Tag
+            </button>
+          )}
         </div>
 
         {tags.length === 0 ? (
           <div style={{ background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12, padding: 40, textAlign: "center" }}>
             <p style={{ fontSize: 13, color: "#7A8BA6", marginBottom: 14 }}>Noch keine Tags angelegt.</p>
-            <button onClick={openCreate} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", background: "#1A2640", color: "#EDF2F7", borderRadius: 8, fontSize: 13, border: "1px solid #1E3050", cursor: "pointer" }}>
-              <Plus size={13} />Ersten Tag anlegen
-            </button>
+            {canCreate && (
+              <button onClick={openCreate} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", background: "#1A2640", color: "#EDF2F7", borderRadius: 8, fontSize: 13, border: "1px solid #1E3050", cursor: "pointer" }}>
+                <Plus size={13} />Ersten Tag anlegen
+              </button>
+            )}
           </div>
         ) : (
           <div style={{ background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12, padding: 18, display: "flex", flexWrap: "wrap", gap: 8 }}>
@@ -236,18 +245,22 @@ export function TagsManager({ initial }: { initial: TagItem[] }) {
                 <span style={{ fontSize: 12, fontWeight: 500, color: tag.color }}>{tag.name}</span>
                 <span style={{ fontSize: 10, color: "#7A8BA6", paddingLeft: 2 }}>{tag._count.apps}</span>
                 <div style={{ display: "flex", gap: 2, marginLeft: 2 }}>
-                  <button onClick={() => openEdit(tag)} title="Bearbeiten"
-                    style={{ width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,255,255,0.06)", border: "none", borderRadius: 4, cursor: "pointer", color: "#7A8BA6" }}
-                    onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#EDF2F7"; }}
-                    onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#7A8BA6"; }}>
-                    <Pencil size={9} />
-                  </button>
-                  <button onClick={() => setDeleteTarget(tag)} title="Löschen"
-                    style={{ width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,255,255,0.06)", border: "none", borderRadius: 4, cursor: "pointer", color: "#7A8BA6" }}
-                    onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#EF4444"; }}
-                    onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#7A8BA6"; }}>
-                    <X size={9} />
-                  </button>
+                  {canEdit && (
+                    <button onClick={() => openEdit(tag)} title="Bearbeiten"
+                      style={{ width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,255,255,0.06)", border: "none", borderRadius: 4, cursor: "pointer", color: "#7A8BA6" }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#EDF2F7"; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#7A8BA6"; }}>
+                      <Pencil size={9} />
+                    </button>
+                  )}
+                  {canDelete && (
+                    <button onClick={() => setDeleteTarget(tag)} title="Löschen"
+                      style={{ width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,255,255,0.06)", border: "none", borderRadius: 4, cursor: "pointer", color: "#7A8BA6" }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#EF4444"; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#7A8BA6"; }}>
+                      <X size={9} />
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

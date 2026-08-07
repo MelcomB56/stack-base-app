@@ -5,6 +5,7 @@ import { ExternalLink, GitBranch, Edit, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { FavoriteButton } from "./FavoriteButton";
 import { GitHubSyncButton } from "./GitHubSyncButton";
+import { useCan } from "@/lib/permissions-context";
 
 interface Props {
   appId: string;
@@ -25,6 +26,7 @@ const ITEM: React.CSSProperties = {
 export function AppDetailActions({ appId, appSlug, urlProd, repoUrl, isFavorited }: Props) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const canEdit = useCan("apps.update");
 
   useEffect(() => {
     function onOutsideClick(e: MouseEvent) {
@@ -101,18 +103,21 @@ export function AppDetailActions({ appId, appSlug, urlProd, repoUrl, isFavorited
               </div>
             )}
 
-            <div style={{ height: 1, background: "#1E3050", margin: "2px 0" }} />
-
-            <Link
-              href={`/apps/${appSlug}/edit`}
-              onClick={() => setOpen(false)}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "#1A2640")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
-              style={ITEM}
-            >
-              <Edit size={12} style={{ color: "#7A8BA6", flexShrink: 0 }} />
-              Bearbeiten
-            </Link>
+            {canEdit && (
+              <>
+                <div style={{ height: 1, background: "#1E3050", margin: "2px 0" }} />
+                <Link
+                  href={`/apps/${appSlug}/edit`}
+                  onClick={() => setOpen(false)}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "#1A2640")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+                  style={ITEM}
+                >
+                  <Edit size={12} style={{ color: "#7A8BA6", flexShrink: 0 }} />
+                  Bearbeiten
+                </Link>
+              </>
+            )}
           </div>
         )}
       </div>

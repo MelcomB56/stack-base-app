@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import { useCan } from "@/lib/permissions-context";
 import { Layers, Cpu, Plus, Pencil, Trash2, X, Check, Loader2, AlertCircle, Search } from "lucide-react";
 
 type Technology = {
@@ -259,6 +260,10 @@ function DeleteDialog({ stack, onClose, onConfirm }: { stack: Stack; onClose: ()
 // ─── Haupt-Komponente ───────────────────────────────────────────────────────
 
 export function StacksManager({ initial }: { initial: Stack[] }) {
+  const canCreate = useCan("stacks.create");
+  const canEdit   = useCan("stacks.update");
+  const canDelete = useCan("stacks.delete");
+
   const [stacks, setStacks]           = useState<Stack[]>(initial);
   const [modalOpen, setModalOpen]     = useState(false);
   const [editTarget, setEditTarget]   = useState<Stack | null>(null);
@@ -305,19 +310,23 @@ export function StacksManager({ initial }: { initial: Stack[] }) {
               {stacks.length} Tech-Stack{stacks.length !== 1 ? "s" : ""} definiert
             </p>
           </div>
-          <button onClick={openCreate} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", background: "#2563E8", color: "#fff", borderRadius: 8, fontSize: 13, fontWeight: 500, border: "none", cursor: "pointer" }}>
-            <Plus size={14} />
-            Neuer Stack
-          </button>
+          {canCreate && (
+            <button onClick={openCreate} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", background: "#2563E8", color: "#fff", borderRadius: 8, fontSize: 13, fontWeight: 500, border: "none", cursor: "pointer" }}>
+              <Plus size={14} />
+              Neuer Stack
+            </button>
+          )}
         </div>
 
         {/* Leer-Zustand */}
         {stacks.length === 0 ? (
           <div style={{ background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12, padding: 40, textAlign: "center" }}>
             <p style={{ fontSize: 13, color: "#7A8BA6", marginBottom: 14 }}>Noch keine Stacks angelegt.</p>
-            <button onClick={openCreate} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", background: "#1A2640", color: "#EDF2F7", borderRadius: 8, fontSize: 13, border: "1px solid #1E3050", cursor: "pointer" }}>
-              <Plus size={13} />Ersten Stack anlegen
-            </button>
+            {canCreate && (
+              <button onClick={openCreate} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", background: "#1A2640", color: "#EDF2F7", borderRadius: 8, fontSize: 13, border: "1px solid #1E3050", cursor: "pointer" }}>
+                <Plus size={13} />Ersten Stack anlegen
+              </button>
+            )}
           </div>
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 12 }}>
@@ -344,18 +353,22 @@ export function StacksManager({ initial }: { initial: Stack[] }) {
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
                     <span style={{ fontSize: 11, color: "#7A8BA6", paddingRight: 6, whiteSpace: "nowrap" }}>{stack._count.apps} Apps</span>
-                    <button onClick={() => openEdit(stack)} title="Bearbeiten"
-                      style={{ width: 26, height: 26, display: "flex", alignItems: "center", justifyContent: "center", background: "#1A2640", border: "1px solid #1E3050", borderRadius: 5, cursor: "pointer", color: "#7A8BA6" }}
-                      onMouseEnter={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.color = "#EDF2F7"; b.style.borderColor = "#2563E8"; }}
-                      onMouseLeave={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.color = "#7A8BA6"; b.style.borderColor = "#1E3050"; }}>
-                      <Pencil size={11} />
-                    </button>
-                    <button onClick={() => setDeleteTarget(stack)} title="Löschen"
-                      style={{ width: 26, height: 26, display: "flex", alignItems: "center", justifyContent: "center", background: "#1A2640", border: "1px solid #1E3050", borderRadius: 5, cursor: "pointer", color: "#7A8BA6" }}
-                      onMouseEnter={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.color = "#EF4444"; b.style.borderColor = "rgba(239,68,68,0.4)"; }}
-                      onMouseLeave={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.color = "#7A8BA6"; b.style.borderColor = "#1E3050"; }}>
-                      <Trash2 size={11} />
-                    </button>
+                    {canEdit && (
+                      <button onClick={() => openEdit(stack)} title="Bearbeiten"
+                        style={{ width: 26, height: 26, display: "flex", alignItems: "center", justifyContent: "center", background: "#1A2640", border: "1px solid #1E3050", borderRadius: 5, cursor: "pointer", color: "#7A8BA6" }}
+                        onMouseEnter={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.color = "#EDF2F7"; b.style.borderColor = "#2563E8"; }}
+                        onMouseLeave={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.color = "#7A8BA6"; b.style.borderColor = "#1E3050"; }}>
+                        <Pencil size={11} />
+                      </button>
+                    )}
+                    {canDelete && (
+                      <button onClick={() => setDeleteTarget(stack)} title="Löschen"
+                        style={{ width: 26, height: 26, display: "flex", alignItems: "center", justifyContent: "center", background: "#1A2640", border: "1px solid #1E3050", borderRadius: 5, cursor: "pointer", color: "#7A8BA6" }}
+                        onMouseEnter={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.color = "#EF4444"; b.style.borderColor = "rgba(239,68,68,0.4)"; }}
+                        onMouseLeave={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.color = "#7A8BA6"; b.style.borderColor = "#1E3050"; }}>
+                        <Trash2 size={11} />
+                      </button>
+                    )}
                   </div>
                 </div>
 
