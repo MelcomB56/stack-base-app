@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { apiError } from "@/lib/server-utils";
 import { auth } from "@/auth";
+import { guard } from "@/lib/rbac";
 import { HealthStatus } from "@/generated/prisma/client";
 
 const CONSECUTIVE_FAILURES = 2;
@@ -48,7 +49,8 @@ async function checkUrl(
 // POST — sofortiger Check für alle Configs einer App (oder ?id= für einzelne Config)
 export async function POST(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const session = await auth();
-  if (!session) return apiError("Nicht authentifiziert", 401);
+  const err = await guard(session, "app_monitoring.update");
+  if (err) return err;
 
   const { slug } = await params;
   const url = new URL(req.url);

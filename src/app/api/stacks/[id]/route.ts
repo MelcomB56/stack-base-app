@@ -2,10 +2,15 @@ import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { apiError, slugify } from "@/lib/server-utils";
 import { updateStackSchema } from "@/lib/validations/stack";
+import { auth } from "@/auth";
+import { guard } from "@/lib/rbac";
 
 type Params = { params: Promise<{ id: string }> };
 
 export async function PATCH(req: NextRequest, { params }: Params) {
+  const session = await auth();
+  const err = await guard(session, "stacks.update");
+  if (err) return err;
   const { id } = await params;
   const stack = await db.stack.findUnique({ where: { id } });
   if (!stack) return apiError("Stack nicht gefunden", 404);
@@ -42,6 +47,9 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 }
 
 export async function DELETE(_req: NextRequest, { params }: Params) {
+  const session = await auth();
+  const errD = await guard(session, "stacks.delete");
+  if (errD) return errD;
   const { id } = await params;
   const count = await db.appStack.count({ where: { stackId: id } });
   if (count > 0)

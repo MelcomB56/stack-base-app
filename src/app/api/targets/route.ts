@@ -2,6 +2,7 @@ import "server-only";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
+import { guard } from "@/lib/rbac";
 import { z } from "zod";
 
 const schema = z.object({
@@ -15,6 +16,9 @@ const schema = z.object({
 });
 
 export async function GET() {
+  const session = await auth();
+  const err = await guard(session, "targets.read");
+  if (err) return err;
   const targets = await db.deploymentTarget.findMany({
     orderBy: { name: "asc" },
     include: { _count: { select: { apps: true } } },
@@ -24,7 +28,8 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   const session = await auth();
-  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const errP = await guard(session, "targets.create");
+  if (errP) return errP;
 
   const body = await req.json().catch(() => null);
   const parsed = schema.safeParse(body);

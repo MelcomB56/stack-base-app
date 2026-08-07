@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { apiError } from "@/lib/server-utils";
 import { auth } from "@/auth";
+import { guard } from "@/lib/rbac";
 import { z } from "zod";
 
 const createSchema = z.object({
@@ -14,6 +15,9 @@ const createSchema = z.object({
 });
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
+  const session = await auth();
+  const err = await guard(session, "app_dependencies.read");
+  if (err) return err;
   const { slug } = await params;
   const app = await db.app.findUnique({ where: { slug, deletedAt: null }, select: { id: true } });
   if (!app) return apiError("App nicht gefunden", 404);
@@ -34,7 +38,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ slu
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const session = await auth();
-  if (!session) return apiError("Nicht authentifiziert", 401);
+  const errP = await guard(session, "app_dependencies.create");
+  if (errP) return errP;
 
   const { slug } = await params;
   const app = await db.app.findUnique({ where: { slug, deletedAt: null }, select: { id: true } });
@@ -56,7 +61,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const session = await auth();
-  if (!session) return apiError("Nicht authentifiziert", 401);
+  const errD = await guard(session, "app_dependencies.delete");
+  if (errD) return errD;
 
   const { slug } = await params;
   const url = new URL(req.url);

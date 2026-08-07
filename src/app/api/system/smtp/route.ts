@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { apiError } from "@/lib/server-utils";
+import { guard } from "@/lib/rbac";
 import { getSmtpConfig } from "@/lib/email";
 import nodemailer from "nodemailer";
 
 export async function POST(req: NextRequest) {
   const session = await auth();
-  if (!session) return apiError("Unauthorized", 401);
+  const err = await guard(session, "settings.update");
+  if (err) return err;
 
   const cfg = await getSmtpConfig();
   if (!cfg) return NextResponse.json({ ok: false, error: "SMTP nicht konfiguriert" }, { status: 400 });

@@ -1,5 +1,6 @@
 import "server-only";
 import { cache } from "react";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { type Session } from "next-auth";
 
@@ -42,4 +43,22 @@ export function isAdmin(session: Session | null): boolean {
 
 export function isSuperAdmin(session: Session | null): boolean {
   return (session?.user as { role?: string } | undefined)?.role === "SUPER_ADMIN";
+}
+
+/**
+ * Route-Guard: gibt 401/403 NextResponse zurück wenn nicht erlaubt, sonst null.
+ * Verwendung: const err = await guard(session, "apps.read"); if (err) return err;
+ */
+export async function guard(
+  session: Session | null,
+  permission: string,
+): Promise<NextResponse | null> {
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Nicht authentifiziert" }, { status: 401 });
+  }
+  const allowed = await canDo(session, permission);
+  if (!allowed) {
+    return NextResponse.json({ error: "Keine Berechtigung" }, { status: 403 });
+  }
+  return null;
 }

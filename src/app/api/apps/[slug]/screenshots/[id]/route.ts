@@ -2,6 +2,7 @@ import "server-only";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
+import { guard } from "@/lib/rbac";
 import { deleteFile, objectNameFromUrl } from "@/lib/storage";
 import { logActivity } from "@/lib/activity";
 import { z } from "zod";
@@ -36,7 +37,8 @@ export async function DELETE(
   { params }: { params: Promise<{ slug: string; id: string }> }
 ) {
   const session = await auth();
-  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const errD = await guard(session, "app_screenshots.delete");
+  if (errD) return errD;
 
   const { slug, id } = await params;
   const app = await db.app.findUnique({ where: { slug, deletedAt: null }, select: { id: true } });
@@ -47,7 +49,7 @@ export async function DELETE(
 
   await db.screenshot.delete({ where: { id } });
   await deleteFile(objectNameFromUrl(existing.fileUrl));
-  await logActivity({ appId: app.id, userId: session.user.id, action: "screenshot.deleted", entityType: "screenshot", entityId: id, metadata: { title: existing.title } });
+  await logActivity({ appId: app.id, userId: session!.user!.id, action: "screenshot.deleted", entityType: "screenshot", entityId: id, metadata: { title: existing.title } });
 
   return NextResponse.json({ ok: true });
 }

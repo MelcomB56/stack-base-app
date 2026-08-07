@@ -4,6 +4,7 @@ import { apiError } from "@/lib/server-utils";
 import { updateReleaseSchema } from "@/lib/validations/release";
 import { logActivity } from "@/lib/activity";
 import { auth } from "@/auth";
+import { guard } from "@/lib/rbac";
 
 type Params = { params: Promise<{ slug: string; id: string }> };
 
@@ -19,6 +20,8 @@ async function getReleaseForApp(slug: string, id: string) {
 
 export async function PATCH(req: NextRequest, { params }: Params) {
   const session = await auth();
+  const err = await guard(session, "app_releases.update");
+  if (err) return err;
   const { slug, id } = await params;
   const { app, release, error } = await getReleaseForApp(slug, id);
   if (error) return error;
@@ -54,6 +57,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
 export async function DELETE(req: NextRequest, { params }: Params) {
   const session = await auth();
+  const errD = await guard(session, "app_releases.delete");
+  if (errD) return errD;
   const { slug, id } = await params;
   const { app, release, error } = await getReleaseForApp(slug, id);
   if (error) return error;

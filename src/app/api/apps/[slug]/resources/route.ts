@@ -1,11 +1,16 @@
 import "server-only";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { auth } from "@/auth";
+import { guard } from "@/lib/rbac";
 import { checkResourceForApp } from "@/worker/resourcemonitor";
 
 type Params = { params: Promise<{ slug: string }> };
 
 export async function GET(_req: Request, { params }: Params) {
+  const session = await auth();
+  const err = await guard(session, "apps.read");
+  if (err) return err;
   const { slug } = await params;
   const app = await db.app.findFirst({
     where: { slug, deletedAt: null },
@@ -44,6 +49,9 @@ export async function GET(_req: Request, { params }: Params) {
 }
 
 export async function POST(_req: Request, { params }: Params) {
+  const session = await auth();
+  const errP = await guard(session, "apps.read");
+  if (errP) return errP;
   const { slug } = await params;
   const app = await db.app.findFirst({
     where: { slug, deletedAt: null },

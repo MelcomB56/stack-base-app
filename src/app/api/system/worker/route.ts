@@ -4,6 +4,7 @@ import { join } from "path";
 import { db } from "@/lib/db";
 import { apiError } from "@/lib/server-utils";
 import { auth } from "@/auth";
+import { guard } from "@/lib/rbac";
 
 const OFFLINE_THRESHOLD_MS = 90_000;
 
@@ -16,7 +17,8 @@ const JOB_LABELS: Record<string, string> = {
 export async function GET() {
   try {
     const session = await auth();
-    if (!session) return apiError("Nicht authentifiziert", 401);
+    const err = await guard(session, "settings.read");
+    if (err) return err;
 
     const hb = await db.workerHeartbeat.findUnique({ where: { id: "singleton" } });
 
@@ -59,7 +61,8 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
-    if (!session) return apiError("Nicht authentifiziert", 401);
+    const errP = await guard(session, "settings.update");
+    if (errP) return errP;
 
     const body = await req.json() as { action: "start" | "stop" | "trigger"; job?: string };
     const { action } = body;

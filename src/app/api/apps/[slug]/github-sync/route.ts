@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { apiError } from "@/lib/server-utils";
 import { auth } from "@/auth";
+import { guard } from "@/lib/rbac";
 
 function parseGithubRepo(url: string): { owner: string; repo: string } | null {
   try {
@@ -138,7 +139,8 @@ function parseReadmeVersions(content: string): ReadmeVersion[] {
 export async function POST(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   try {
     const session = await auth();
-    if (!session) return apiError("Nicht authentifiziert", 401);
+    const err = await guard(session, "apps.update");
+    if (err) return err;
 
     const { slug } = await params;
 
@@ -232,7 +234,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
           description: gh.body ? gh.body.slice(0, 2000) : (gh.name || null),
           releasedAt,
           isCurrent: false,
-          createdById: session.user!.id!,
+          createdById: session!.user!.id!,
         },
       });
 
@@ -244,7 +246,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
             type: gh.prerelease ? ("CHANGED" as const) : ("ADDED" as const),
             description: `**${gh.name || `v${version}`}**\n\n${gh.body}`.slice(0, 5000),
             entryDate: releasedAt,
-            createdById: session.user!.id!,
+            createdById: session!.user!.id!,
           },
         });
       }
@@ -286,7 +288,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
           description: null,
           releasedAt,
           isCurrent: false,
-          createdById: session.user!.id!,
+          createdById: session!.user!.id!,
         },
       });
 
@@ -332,7 +334,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
                 description: rv.body ? rv.body.slice(0, 2000) : null,
                 releasedAt,
                 isCurrent: false,
-                createdById: session.user!.id!,
+                createdById: session!.user!.id!,
               },
             });
 
@@ -344,7 +346,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
                   type: isPrerelease ? ("CHANGED" as const) : ("ADDED" as const),
                   description: rv.body.slice(0, 5000),
                   entryDate: releasedAt,
-                  createdById: session.user!.id!,
+                  createdById: session!.user!.id!,
                 },
               });
             }
@@ -363,7 +365,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
                 type: isPrerelease ? ("CHANGED" as const) : ("ADDED" as const),
                 description: rv.body.slice(0, 5000),
                 entryDate: existing.releasedAt,
-                createdById: session.user!.id!,
+                createdById: session!.user!.id!,
               },
             });
 

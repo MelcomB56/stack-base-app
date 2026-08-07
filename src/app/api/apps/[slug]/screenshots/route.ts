@@ -2,6 +2,7 @@ import "server-only";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
+import { guard } from "@/lib/rbac";
 import { uploadFile } from "@/lib/storage";
 import { logActivity } from "@/lib/activity";
 import { randomUUID } from "crypto";
@@ -13,6 +14,9 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+  const session = await auth();
+  const err = await guard(session, "app_screenshots.read");
+  if (err) return err;
   const { slug } = await params;
   const app = await db.app.findUnique({ where: { slug, deletedAt: null }, select: { id: true } });
   if (!app) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -30,7 +34,8 @@ export async function POST(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const session = await auth();
-  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const errP = await guard(session, "app_screenshots.create");
+  if (errP) return errP;
 
   const { slug } = await params;
   const app = await db.app.findUnique({ where: { slug, deletedAt: null }, select: { id: true } });
@@ -71,11 +76,11 @@ export async function POST(
       fileUrl,
       fileSize: file.size,
       sortOrder,
-      uploadedById: session.user.id,
+      uploadedById: session!.user!.id as string,
     },
   });
 
-  await logActivity({ appId: app.id, userId: session.user.id, action: "screenshot.uploaded", entityType: "screenshot", entityId: screenshot.id, metadata: { title: title ?? file.name } });
+  await logActivity({ appId: app.id, userId: session!.user!.id, action: "screenshot.uploaded", entityType: "screenshot", entityId: screenshot.id, metadata: { title: title ?? file.name } });
 
   return NextResponse.json(screenshot, { status: 201 });
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { guard } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import { apiError } from "@/lib/server-utils";
 import { z } from "zod/v4";
@@ -18,7 +19,8 @@ export async function PATCH(
   { params }: { params: Promise<{ slug: string; id: string }> }
 ) {
   const session = await auth();
-  if (!session) return apiError("Unauthorized", 401);
+  const err = await guard(session, "app_environments.update");
+  if (err) return err;
   const { id } = await params;
 
   const body = await req.json();
@@ -45,7 +47,8 @@ export async function DELETE(
   { params }: { params: Promise<{ slug: string; id: string }> }
 ) {
   const session = await auth();
-  if (!session) return apiError("Unauthorized", 401);
+  const errD = await guard(session, "app_environments.delete");
+  if (errD) return errD;
   const { id } = await params;
   await db.appEnvironment.delete({ where: { id } });
   return new NextResponse(null, { status: 204 });

@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { apiError } from "@/lib/server-utils";
+import { guard } from "@/lib/rbac";
 
 const SSO_KEYS = [
   "authentik_enabled",
@@ -13,17 +14,10 @@ const SSO_KEYS = [
 
 type SsoKey = (typeof SSO_KEYS)[number];
 
-async function requireAdmin() {
-  const session = await auth();
-  const role = (session?.user as { role?: string } | undefined)?.role;
-  if (!session?.user || (role !== "ADMIN" && role !== "SUPER_ADMIN")) {
-    return null;
-  }
-  return session;
-}
-
 export async function GET() {
-  if (!(await requireAdmin())) return apiError("Nicht autorisiert", 403);
+  const session = await auth();
+  const err = await guard(session, "settings.read");
+  if (err) return err;
 
   const rows = await db.systemSetting.findMany({ where: { key: { in: [...SSO_KEYS] } } });
   const map: Record<string, string> = Object.fromEntries(rows.map((r) => [r.key, r.value]));
@@ -35,7 +29,9 @@ export async function GET() {
 }
 
 export async function PATCH(req: Request) {
-  if (!(await requireAdmin())) return apiError("Nicht autorisiert", 403);
+  const session = await auth();
+  const errP = await guard(session, "settings.update");
+  if (errP) return errP;
 
   const body = await req.json().catch(() => null);
   if (!body || typeof body !== "object") return apiError("Ungültige Anfrage");

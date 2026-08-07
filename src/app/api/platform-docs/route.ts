@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { guard } from "@/lib/rbac";
 import { db } from "@/lib/db";
 
 export async function GET() {
   const session = await auth();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const err = await guard(session, "platform_docs.read");
+  if (err) return err;
 
   const docs = await db.docPage.findMany({
     where: { appId: null },
@@ -17,7 +19,8 @@ export async function GET() {
 
 export async function POST(req: Request) {
   const session = await auth();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const errP = await guard(session, "platform_docs.create");
+  if (errP) return errP;
 
   const body = await req.json();
   const { title, content, type, isPublic } = body;
@@ -34,7 +37,7 @@ export async function POST(req: Request) {
       type: type ?? "MANUAL",
       isPublic: isPublic ?? false,
       sortOrder: 0,
-      createdById: session.user!.id!,
+      createdById: session!.user!.id!,
     },
     include: { createdBy: { select: { name: true } } },
   });

@@ -2,6 +2,7 @@ import "server-only";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
+import { guard } from "@/lib/rbac";
 import { uploadFile, deleteFile, objectNameFromUrl } from "@/lib/storage";
 import { randomUUID } from "crypto";
 
@@ -13,7 +14,8 @@ export async function POST(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const session = await auth();
-  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const err = await guard(session, "apps.update");
+  if (err) return err;
 
   const { slug } = await params;
   const app = await db.app.findUnique({ where: { slug, deletedAt: null }, select: { id: true, logoUrl: true } });
@@ -59,7 +61,8 @@ export async function DELETE(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const session = await auth();
-  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const errD = await guard(session, "apps.update");
+  if (errD) return errD;
 
   const { slug } = await params;
   const app = await db.app.findUnique({ where: { slug, deletedAt: null }, select: { id: true, logoUrl: true } });

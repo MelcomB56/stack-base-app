@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { guard } from "@/lib/rbac";
 import { db } from "@/lib/db";
 import { apiError } from "@/lib/server-utils";
 import { z } from "zod/v4";
@@ -15,7 +16,8 @@ const CreateSchema = z.object({
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const session = await auth();
-  if (!session) return apiError("Unauthorized", 401);
+  const err = await guard(session, "app_environments.read");
+  if (err) return err;
   const { slug } = await params;
   const app = await db.app.findUnique({ where: { slug }, select: { id: true } });
   if (!app) return apiError("App nicht gefunden", 404);
@@ -28,7 +30,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const session = await auth();
-  if (!session) return apiError("Unauthorized", 401);
+  const errP = await guard(session, "app_environments.create");
+  if (errP) return errP;
   const { slug } = await params;
   const app = await db.app.findUnique({ where: { slug }, select: { id: true } });
   if (!app) return apiError("App nicht gefunden", 404);

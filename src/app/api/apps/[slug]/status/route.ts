@@ -4,14 +4,16 @@ import { apiError } from "@/lib/server-utils";
 import { changeStatusSchema } from "@/lib/validations/app";
 import { auth } from "@/auth";
 import { sendStatusChangeEmail } from "@/lib/email";
+import { guard } from "@/lib/rbac";
 
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const session = await auth();
-  const userId = session?.user?.id;
-  if (!userId) return apiError("Nicht authentifiziert", 401);
+  const err = await guard(session, "apps.update");
+  if (err) return err;
+  const userId = session!.user!.id as string;
 
   const { slug } = await params;
   const app = await db.app.findFirst({ where: { slug, deletedAt: null } });
@@ -64,7 +66,7 @@ export async function PATCH(
   const recipients = await db.notificationSetting.findMany({
     where: { appId: app.id, onStatusChange: true },
   });
-  const changedByName = session.user?.name ?? session.user?.email ?? userId;
+  const changedByName = session!.user?.name ?? session!.user?.email ?? userId;
   for (const r of recipients) {
     sendStatusChangeEmail({
       to: r.email,

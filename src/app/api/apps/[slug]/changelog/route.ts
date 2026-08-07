@@ -3,11 +3,15 @@ import { db } from "@/lib/db";
 import { apiError } from "@/lib/server-utils";
 import { createChangelogEntrySchema } from "@/lib/validations/changelog";
 import { auth } from "@/auth";
+import { guard } from "@/lib/rbac";
 import { logActivity } from "@/lib/activity";
 
 type Params = { params: Promise<{ slug: string }> };
 
 export async function GET(req: NextRequest, { params }: Params) {
+  const session = await auth();
+  const err = await guard(session, "app_changelog.read");
+  if (err) return err;
   const { slug } = await params;
   const app = await db.app.findUnique({ where: { slug, deletedAt: null } });
   if (!app) return apiError("App nicht gefunden", 404);
@@ -34,8 +38,9 @@ export async function GET(req: NextRequest, { params }: Params) {
 
 export async function POST(req: NextRequest, { params }: Params) {
   const session = await auth();
-  const userId = session?.user?.id;
-  if (!userId) return apiError("Nicht authentifiziert", 401);
+  const errP = await guard(session, "app_changelog.create");
+  if (errP) return errP;
+  const userId = session!.user!.id as string;
 
   const { slug } = await params;
   const app = await db.app.findUnique({ where: { slug, deletedAt: null } });

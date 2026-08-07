@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 import { apiError } from "@/lib/server-utils";
 import { updateChangelogEntrySchema } from "@/lib/validations/changelog";
 import { logActivity } from "@/lib/activity";
+import { auth } from "@/auth";
+import { guard } from "@/lib/rbac";
 
 type Params = { params: Promise<{ slug: string; id: string }> };
 
@@ -17,6 +19,9 @@ async function getEntryForApp(slug: string, id: string) {
 }
 
 export async function PATCH(req: NextRequest, { params }: Params) {
+  const session = await auth();
+  const err = await guard(session, "app_changelog.update");
+  if (err) return err;
   const { slug, id } = await params;
   const { app, entry, error } = await getEntryForApp(slug, id);
   if (error) return error;
@@ -48,6 +53,9 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 }
 
 export async function DELETE(_req: NextRequest, { params }: Params) {
+  const session = await auth();
+  const errD = await guard(session, "app_changelog.delete");
+  if (errD) return errD;
   const { slug, id } = await params;
   const { app, entry, error } = await getEntryForApp(slug, id);
   if (error) return error;

@@ -3,12 +3,16 @@ import { db } from "@/lib/db";
 import { apiError } from "@/lib/server-utils";
 import { createReleaseSchema } from "@/lib/validations/release";
 import { auth } from "@/auth";
+import { guard } from "@/lib/rbac";
 import { logActivity } from "@/lib/activity";
 import { sendReleaseEmail } from "@/lib/email";
 
 type Params = { params: Promise<{ slug: string }> };
 
 export async function GET(_req: NextRequest, { params }: Params) {
+  const session = await auth();
+  const err = await guard(session, "app_releases.read");
+  if (err) return err;
   const { slug } = await params;
   const app = await db.app.findUnique({ where: { slug, deletedAt: null } });
   if (!app) return apiError("App nicht gefunden", 404);
@@ -27,8 +31,9 @@ export async function GET(_req: NextRequest, { params }: Params) {
 
 export async function POST(req: NextRequest, { params }: Params) {
   const session = await auth();
-  const userId = session?.user?.id;
-  if (!userId) return apiError("Nicht authentifiziert", 401);
+  const errP = await guard(session, "app_releases.create");
+  if (errP) return errP;
+  const userId = session!.user!.id as string;
 
   const { slug } = await params;
   const app = await db.app.findUnique({ where: { slug, deletedAt: null } });

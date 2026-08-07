@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { apiError, uniqueAppSlug } from "@/lib/server-utils";
 import { createAppSchema } from "@/lib/validations/app";
 import { auth } from "@/auth";
+import { guard } from "@/lib/rbac";
 
 const APP_INCLUDE = {
   categories: { include: { category: true } },
@@ -13,6 +14,9 @@ const APP_INCLUDE = {
 } as const;
 
 export async function GET(req: NextRequest) {
+  const session = await auth();
+  const err = await guard(session, "apps.read");
+  if (err) return err;
   const { searchParams } = req.nextUrl;
   const page = Math.max(1, parseInt(searchParams.get("page") ?? "1"));
   const limit = Math.min(100, parseInt(searchParams.get("limit") ?? "24"));
@@ -50,8 +54,9 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const session = await auth();
-  const userId = session?.user?.id;
-  if (!userId) return apiError("Nicht authentifiziert", 401);
+  const err = await guard(session, "apps.create");
+  if (err) return err;
+  const userId = session!.user!.id as string;
 
   const body = await req.json().catch(() => null);
   if (!body) return apiError("Ungültiger Request-Body");

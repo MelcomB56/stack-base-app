@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
+import { guard } from "@/lib/rbac";
 import { apiError } from "@/lib/server-utils";
 import { z } from "zod";
 
@@ -12,6 +13,9 @@ const createSchema = z.object({
 });
 
 export async function GET() {
+  const session = await auth();
+  const err = await guard(session, "announcements.read");
+  if (err) return err;
   const announcements = await db.announcement.findMany({
     orderBy: [{ pinned: "desc" }, { createdAt: "desc" }],
     take: 50,
@@ -21,7 +25,8 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   const session = await auth();
-  if (!session?.user?.id) return apiError("Nicht authentifiziert", 401);
+  const errP = await guard(session, "announcements.create");
+  if (errP) return errP;
 
   const body = await req.json().catch(() => null);
   if (!body) return apiError("Ungültiger Body");

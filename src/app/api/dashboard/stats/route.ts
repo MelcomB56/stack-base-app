@@ -1,7 +1,12 @@
 import { db } from "@/lib/db";
 import { AppStatus } from "@/generated/prisma/client";
+import { auth } from "@/auth";
+import { guard } from "@/lib/rbac";
 
 export async function GET() {
+  const session = await auth();
+  const err = await guard(session, "apps.read");
+  if (err) return err;
   const [total, byStatus, recentActivities, maintenance] = await Promise.all([
     db.app.count({ where: { deletedAt: null } }),
     db.app.groupBy({

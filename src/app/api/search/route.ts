@@ -1,7 +1,12 @@
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
+import { auth } from "@/auth";
+import { guard } from "@/lib/rbac";
 
 export async function GET(req: NextRequest) {
+  const session = await auth();
+  const err = await guard(session, "apps.read");
+  if (err) return err;
   const { searchParams } = req.nextUrl;
   const q = searchParams.get("q")?.trim() ?? "";
   const type = searchParams.get("type"); // apps | categories | tags | technologies

@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { apiError } from "@/lib/server-utils";
 import { auth } from "@/auth";
+import { guard } from "@/lib/rbac";
 import { logActivity } from "@/lib/activity";
 import { sendIncidentEmail } from "@/lib/email";
 import { z } from "zod";
@@ -20,6 +21,9 @@ const updateSchema = z.object({
 });
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
+  const session = await auth();
+  const err = await guard(session, "app_incidents.read");
+  if (err) return err;
   const { slug } = await params;
   const app = await db.app.findUnique({ where: { slug, deletedAt: null }, select: { id: true } });
   if (!app) return apiError("App nicht gefunden", 404);
@@ -34,7 +38,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ slu
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const session = await auth();
-  if (!session) return apiError("Nicht authentifiziert", 401);
+  const errP = await guard(session, "app_incidents.create");
+  if (errP) return errP;
 
   const { slug } = await params;
   const app = await db.app.findUnique({ where: { slug, deletedAt: null }, select: { id: true } });
@@ -49,13 +54,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
   const incident = await db.incident.create({
     data: { appId: app.id, ...parsed.data, autoCreated: false },
   });
-  await logActivity({ appId: app.id, userId: session.user?.id, action: "incident.created", entityType: "incident", entityId: incident.id, metadata: { title: incident.title, severity: incident.severity } });
+  await logActivity({ appId: app.id, userId: session!.user?.id, action: "incident.created", entityType: "incident", entityId: incident.id, metadata: { title: incident.title, severity: incident.severity } });
 
   // E-Mail-Benachrichtigungen (fire & forget)
   const appFull = await db.app.findUnique({ where: { id: app.id }, select: { name: true, slug: true } });
   if (appFull) {
     const recipients = await db.notificationSetting.findMany({ where: { appId: app.id, onIncident: true } });
-    const reporter = session.user?.name ?? session.user?.email ?? "Unbekannt";
+    const reporter = session!.user?.name ?? session!.user?.email ?? "Unbekannt";
     for (const r of recipients) {
       sendIncidentEmail({ to: r.email, appName: appFull.name, appSlug: appFull.slug, title: incident.title, severity: incident.severity, reportedBy: reporter });
     }
@@ -66,7 +71,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const session = await auth();
-  if (!session) return apiError("Nicht authentifiziert", 401);
+  const errPa = await guard(session, "app_incidents.update");
+  if (errPa) return errPa;
 
   const { slug } = await params;
   const url = new URL(req.url);
@@ -92,6 +98,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ sl
     data,
   });
   const action = parsed.data.status === "RESOLVED" ? "incident.resolved" : "incident.updated";
-  await logActivity({ appId: app.id, userId: session.user?.id, action, entityType: "incident", entityId: incidentId, metadata: { title: updated.title, status: updated.status } });
+  await logActivity({ appId: app.id, userId: session!.user?.id, action, entityType: "incident", entityId: incidentId, metadata: { title: updated.title, status: updated.status } });
   return Response.json(updated);
 }

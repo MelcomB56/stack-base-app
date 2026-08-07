@@ -1,15 +1,11 @@
 import { auth } from "@/auth";
 import { apiError } from "@/lib/server-utils";
-
-async function requireAdmin() {
-  const session = await auth();
-  const role = (session?.user as { role?: string } | undefined)?.role;
-  if (!session?.user || (role !== "ADMIN" && role !== "SUPER_ADMIN")) return null;
-  return session;
-}
+import { guard } from "@/lib/rbac";
 
 export async function POST(req: Request) {
-  if (!(await requireAdmin())) return apiError("Nicht autorisiert", 403);
+  const session = await auth();
+  const err = await guard(session, "settings.update");
+  if (err) return err;
 
   const { issuer } = await req.json().catch(() => ({}));
   if (!issuer || typeof issuer !== "string") return apiError("Issuer fehlt");

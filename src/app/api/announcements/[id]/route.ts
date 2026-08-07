@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
+import { guard } from "@/lib/rbac";
 import { apiError } from "@/lib/server-utils";
 import { z } from "zod";
 
@@ -15,7 +16,8 @@ const updateSchema = z.object({
 
 export async function PATCH(req: NextRequest, { params }: Params) {
   const session = await auth();
-  if (!session?.user?.id) return apiError("Nicht authentifiziert", 401);
+  const err = await guard(session, "announcements.update");
+  if (err) return err;
 
   const { id } = await params;
   const exists = await db.announcement.findUnique({ where: { id } });
@@ -31,7 +33,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
 export async function DELETE(_req: NextRequest, { params }: Params) {
   const session = await auth();
-  if (!session?.user?.id) return apiError("Nicht authentifiziert", 401);
+  const errD = await guard(session, "announcements.delete");
+  if (errD) return errD;
 
   const { id } = await params;
   await db.announcement.delete({ where: { id } }).catch(() => null);

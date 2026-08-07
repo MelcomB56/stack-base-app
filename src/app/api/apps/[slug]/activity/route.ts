@@ -1,11 +1,16 @@
 import "server-only";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { auth } from "@/auth";
+import { guard } from "@/lib/rbac";
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+  const session = await auth();
+  const err = await guard(session, "activity_log.read");
+  if (err) return err;
   const { slug } = await params;
   const app = await db.app.findUnique({ where: { slug, deletedAt: null }, select: { id: true } });
   if (!app) return NextResponse.json({ error: "Not found" }, { status: 404 });

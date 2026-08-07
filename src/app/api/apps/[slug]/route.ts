@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { apiError, uniqueAppSlug } from "@/lib/server-utils";
 import { updateAppSchema } from "@/lib/validations/app";
 import { auth } from "@/auth";
+import { guard } from "@/lib/rbac";
 
 const APP_INCLUDE = {
   categories: { include: { category: true } },
@@ -20,6 +21,9 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+  const session = await auth();
+  const err = await guard(session, "apps.read");
+  if (err) return err;
   const { slug } = await params;
   const app = await db.app.findFirst({
     where: { slug, deletedAt: null },
@@ -34,8 +38,9 @@ export async function PATCH(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const session = await auth();
-  const userId = session?.user?.id;
-  if (!userId) return apiError("Nicht authentifiziert", 401);
+  const err = await guard(session, "apps.update");
+  if (err) return err;
+  const userId = session!.user!.id as string;
 
   const { slug } = await params;
   const app = await findApp(slug);
@@ -94,8 +99,9 @@ export async function DELETE(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const session = await auth();
-  const userId = session?.user?.id;
-  if (!userId) return apiError("Nicht authentifiziert", 401);
+  const err = await guard(session, "apps.delete");
+  if (err) return err;
+  const userId = session!.user!.id as string;
 
   const { slug } = await params;
   const app = await findApp(slug);

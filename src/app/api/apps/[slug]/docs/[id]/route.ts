@@ -2,6 +2,7 @@ import "server-only";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
+import { guard } from "@/lib/rbac";
 import { z } from "zod";
 import { logActivity } from "@/lib/activity";
 
@@ -9,6 +10,9 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ slug: string; id: string }> }
 ) {
+  const session = await auth();
+  const err = await guard(session, "app_docs.read");
+  if (err) return err;
   const { slug, id } = await params;
   const app = await db.app.findUnique({ where: { slug, deletedAt: null }, select: { id: true } });
   if (!app) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -35,7 +39,8 @@ export async function PUT(
   { params }: { params: Promise<{ slug: string; id: string }> }
 ) {
   const session = await auth();
-  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const errP = await guard(session, "app_docs.update");
+  if (errP) return errP;
 
   const { slug, id } = await params;
   const app = await db.app.findUnique({ where: { slug, deletedAt: null }, select: { id: true } });
@@ -52,7 +57,7 @@ export async function PUT(
     include: { createdBy: { select: { name: true } } },
   });
 
-  await logActivity({ appId: app.id, userId: session.user?.id, action: "doc.updated", entityType: "doc", entityId: doc.id, metadata: { title: doc.title } });
+  await logActivity({ appId: app.id, userId: session!.user?.id, action: "doc.updated", entityType: "doc", entityId: doc.id, metadata: { title: doc.title } });
   return NextResponse.json(doc);
 }
 
@@ -61,7 +66,8 @@ export async function DELETE(
   { params }: { params: Promise<{ slug: string; id: string }> }
 ) {
   const session = await auth();
-  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const errD = await guard(session, "app_docs.delete");
+  if (errD) return errD;
 
   const { slug, id } = await params;
   const app = await db.app.findUnique({ where: { slug, deletedAt: null }, select: { id: true } });
@@ -71,6 +77,6 @@ export async function DELETE(
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   await db.docPage.delete({ where: { id } });
-  await logActivity({ appId: app.id, userId: session.user?.id, action: "doc.deleted", entityType: "doc", entityId: id, metadata: { title: existing.title } });
+  await logActivity({ appId: app.id, userId: session!.user?.id, action: "doc.deleted", entityType: "doc", entityId: id, metadata: { title: existing.title } });
   return NextResponse.json({ ok: true });
 }

@@ -2,10 +2,15 @@ import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { apiError, slugify } from "@/lib/server-utils";
 import { updateTechnologySchema } from "@/lib/validations/stack";
+import { auth } from "@/auth";
+import { guard } from "@/lib/rbac";
 
 type Params = { params: Promise<{ id: string }> };
 
 export async function PATCH(req: NextRequest, { params }: Params) {
+  const session = await auth();
+  const err = await guard(session, "technologies.update");
+  if (err) return err;
   const { id } = await params;
   const tech = await db.technology.findUnique({ where: { id } });
   if (!tech) return apiError("Technologie nicht gefunden", 404);
@@ -28,6 +33,9 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 }
 
 export async function DELETE(_req: NextRequest, { params }: Params) {
+  const session = await auth();
+  const errD = await guard(session, "technologies.delete");
+  if (errD) return errD;
   const { id } = await params;
   const count = await db.appTechnology.count({ where: { technologyId: id } });
   if (count > 0)

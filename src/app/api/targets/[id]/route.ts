@@ -2,6 +2,7 @@ import "server-only";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
+import { guard } from "@/lib/rbac";
 import { z } from "zod";
 
 const schema = z.object({
@@ -16,7 +17,8 @@ const schema = z.object({
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
-  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const err = await guard(session, "targets.update");
+  if (err) return err;
 
   const { id } = await params;
   const body = await req.json().catch(() => null);
@@ -45,7 +47,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
-  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const errD = await guard(session, "targets.delete");
+  if (errD) return errD;
 
   const { id } = await params;
   await db.deploymentTarget.delete({ where: { id } }).catch(() => {});
