@@ -5,6 +5,23 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [0.7.7] – 2026-08-07
+
+### Hinzugefügt
+- **PermissionsContext** (`src/lib/permissions-context.tsx`) — Client-seitiger Provider + `useCan()` Hook macht `allowedPerms` app-weit per React Context verfügbar
+
+### Geändert
+- **AppDetailActions:** "Bearbeiten"-Link nur sichtbar wenn `apps.update`
+- **AnnouncementsClient:** Erstellen-Button nur bei `announcements.create`, Pin/Unpin nur bei `announcements.update`, Löschen-Menü nur bei `announcements.delete`
+- **CategoriesManager:** Neue/Bearbeiten/Löschen-Buttons nur bei entsprechenden `categories.*`-Permissions
+- **StacksManager:** Neue/Bearbeiten/Löschen-Buttons nur bei `stacks.*`
+- **TagsManager:** Neue/Bearbeiten/Löschen-Buttons nur bei `tags.*`
+- **TechnologiesManager:** Neue/Bearbeiten/Löschen-Buttons nur bei `technologies.*`
+- **TargetsClient:** Status-Toggle, Bearbeiten, Löschen nur bei `targets.update/delete`, Neues-Target-Block nur bei `targets.create`
+- **Apps-Seite:** "Neue App"-Button nur bei `apps.create` (serverseitig geprüft)
+
+---
+
 ## [0.7.6] – 2026-08-07
 
 ### Geändert
