@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useState, useEffect } from "react";
 import { LogOut, ChevronLeft, ChevronRight } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 // Exakte SVG-Icons aus dem Artifact
 const Icons = {
@@ -64,14 +63,6 @@ const Icons = {
   ),
 };
 
-const NAV = [
-  { href: "/dashboard",   label: "Dashboard",    icon: Icons.dashboard },
-  { href: "/apps",        label: "Apps",         icon: Icons.apps },
-  { href: "/favorites",   label: "Favoriten",    icon: Icons.heart },
-  { href: "/search",      label: "Suche",        icon: Icons.search },
-  { href: "/docs",        label: "Docs",         icon: Icons.docs },
-] as const;
-
 const Icons_tag = (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
     <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/>
@@ -101,21 +92,48 @@ const Icons_shield = (
   </svg>
 );
 
-const NAV_ADMIN = [
-  { href: "/dependency-graph", label: "Dep. Graph",    icon: Icons_graph },
-  { href: "/categories",       label: "Kategorien",    icon: Icons.categories },
-  { href: "/stacks",           label: "Stacks",        icon: Icons.stacks },
-  { href: "/technologies",     label: "Technologien",  icon: Icons.technologies },
-  { href: "/tags",             label: "Tags",          icon: Icons_tag },
-  { href: "/targets",          label: "Targets",       icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg> },
-  { href: "/announcements",    label: "Ankündigungen", icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg> },
-  { href: "/settings",         label: "Einstellungen", icon: Icons.settings },
-] as const;
+const Icons_target = (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
+  </svg>
+);
 
-const NAV_ADMIN_RESTRICTED = [
-  { href: "/admin/users", label: "Nutzer", icon: Icons_users },
-  { href: "/admin/roles", label: "Rollen", icon: Icons_shield },
-] as const;
+const Icons_announce = (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <path d="M3 11l19-9-9 19-2-8-8-2z"/>
+  </svg>
+);
+
+type NavItem = { href: string; label: string; icon: React.ReactNode; permission?: string };
+
+const NAV: NavItem[] = [
+  { href: "/dashboard",   label: "Dashboard",    icon: Icons.dashboard,     permission: "apps.read" },
+  { href: "/apps",        label: "Apps",         icon: Icons.apps,          permission: "apps.read" },
+  { href: "/favorites",   label: "Favoriten",    icon: Icons.heart },
+  { href: "/search",      label: "Suche",        icon: Icons.search,        permission: "apps.read" },
+  { href: "/docs",        label: "Docs",         icon: Icons.docs,          permission: "platform_docs.read" },
+];
+
+const NAV_ADMIN: NavItem[] = [
+  { href: "/dependency-graph", label: "Dep. Graph",    icon: Icons_graph,       permission: "apps.read" },
+  { href: "/categories",       label: "Kategorien",    icon: Icons.categories,  permission: "categories.read" },
+  { href: "/stacks",           label: "Stacks",        icon: Icons.stacks,      permission: "stacks.read" },
+  { href: "/technologies",     label: "Technologien",  icon: Icons.technologies, permission: "technologies.read" },
+  { href: "/tags",             label: "Tags",          icon: Icons_tag,         permission: "tags.read" },
+  { href: "/targets",          label: "Targets",       icon: Icons_target,      permission: "targets.read" },
+  { href: "/announcements",    label: "Ankündigungen", icon: Icons_announce,    permission: "announcements.read" },
+  { href: "/settings",         label: "Einstellungen", icon: Icons.settings,    permission: "settings.read" },
+];
+
+const NAV_ADMIN_RESTRICTED: NavItem[] = [
+  { href: "/admin/users", label: "Nutzer", icon: Icons_users, permission: "users.read" },
+  { href: "/admin/roles", label: "Rollen", icon: Icons_shield, permission: "roles.read" },
+];
+
+function hasPermission(allowedPerms: string[], permission?: string) {
+  if (!permission) return true;
+  return allowedPerms.includes("*") || allowedPerms.includes(permission);
+}
 
 function LogoFull() {
   return (
@@ -137,7 +155,52 @@ function LogoIcon() {
   );
 }
 
-export function Sidebar() {
+function NavLink({ item, collapsed, active }: { item: NavItem; collapsed: boolean; active: boolean }) {
+  return (
+    <Link
+      href={item.href}
+      title={collapsed ? item.label : undefined}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: collapsed ? 0 : 10,
+        padding: collapsed ? "9px 10px" : "9px 12px",
+        borderRadius: 8,
+        fontSize: 13,
+        fontWeight: 500,
+        textDecoration: "none",
+        border: "1px solid",
+        borderColor: active ? "rgba(37,99,232,0.2)" : "transparent",
+        background: active ? "rgba(37,99,232,0.15)" : "transparent",
+        color: active ? "#2563E8" : "#8FA3BE",
+        transition: "all 150ms",
+        justifyContent: collapsed ? "center" : "flex-start",
+      }}
+      onMouseEnter={(e) => {
+        if (!active) {
+          e.currentTarget.style.background = "#1A2640";
+          e.currentTarget.style.color = "#EDF2F7";
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!active) {
+          e.currentTarget.style.background = "transparent";
+          e.currentTarget.style.color = "#8FA3BE";
+        }
+      }}
+    >
+      <span style={{ width: 16, height: 16, flexShrink: 0, opacity: active ? 1 : 0.7, display: "flex" }}>
+        {item.icon}
+      </span>
+      {!collapsed && <span style={{ flex: 1 }}>{item.label}</span>}
+      {!collapsed && active && (
+        <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#2563E8" }} />
+      )}
+    </Link>
+  );
+}
+
+export function Sidebar({ allowedPerms }: { allowedPerms: string[] }) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [collapsed, setCollapsed] = useState(false);
@@ -150,8 +213,10 @@ export function Sidebar() {
     ? session.user.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
     : "??";
 
-  const userRole = (session?.user as { role?: string } | undefined)?.role ?? "GUEST";
-  const isAdminUser = userRole === "ADMIN" || userRole === "SUPER_ADMIN";
+  const visibleNav = NAV.filter((item) => hasPermission(allowedPerms, item.permission));
+  const visibleAdmin = [...NAV_ADMIN, ...NAV_ADMIN_RESTRICTED].filter((item) =>
+    hasPermission(allowedPerms, item.permission)
+  );
 
   return (
     <aside
@@ -183,108 +248,25 @@ export function Sidebar() {
 
       {/* Nav */}
       <nav style={{ flex: 1, padding: "12px 8px", display: "flex", flexDirection: "column", gap: 2, overflowY: "auto" }}>
-        {NAV.map((item) => {
+        {visibleNav.map((item) => {
           const active = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              title={collapsed ? item.label : undefined}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: collapsed ? 0 : 10,
-                padding: collapsed ? "9px 10px" : "9px 12px",
-                borderRadius: 8,
-                fontSize: 13,
-                fontWeight: 500,
-                textDecoration: "none",
-                border: "1px solid",
-                borderColor: active ? "rgba(37,99,232,0.2)" : "transparent",
-                background: active ? "rgba(37,99,232,0.15)" : "transparent",
-                color: active ? "#2563E8" : "#8FA3BE",
-                transition: "all 150ms",
-                justifyContent: collapsed ? "center" : "flex-start",
-              }}
-              onMouseEnter={(e) => {
-                if (!active) {
-                  e.currentTarget.style.background = "#1A2640";
-                  e.currentTarget.style.color = "#EDF2F7";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!active) {
-                  e.currentTarget.style.background = "transparent";
-                  e.currentTarget.style.color = "#8FA3BE";
-                }
-              }}
-            >
-              <span style={{ width: 16, height: 16, flexShrink: 0, opacity: active ? 1 : 0.7, display: "flex" }}>
-                {item.icon}
-              </span>
-              {!collapsed && <span style={{ flex: 1 }}>{item.label}</span>}
-              {!collapsed && active && (
-                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#2563E8" }} />
-              )}
-            </Link>
-          );
+          return <NavLink key={item.href} item={item} collapsed={collapsed} active={active} />;
         })}
 
-        {/* Separator */}
-        <div style={{ borderTop: "1px solid #1E3050", margin: "10px 4px" }} />
-
-        {!collapsed && (
-          <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: ".15em", textTransform: "uppercase", color: "#7A8BA6", padding: "0 12px 4px" }}>
-            Verwaltung
-          </p>
+        {visibleAdmin.length > 0 && (
+          <>
+            <div style={{ borderTop: "1px solid #1E3050", margin: "10px 4px" }} />
+            {!collapsed && (
+              <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: ".15em", textTransform: "uppercase", color: "#7A8BA6", padding: "0 12px 4px" }}>
+                Verwaltung
+              </p>
+            )}
+            {visibleAdmin.map((item) => {
+              const active = pathname.startsWith(item.href);
+              return <NavLink key={item.href} item={item} collapsed={collapsed} active={active} />;
+            })}
+          </>
         )}
-
-        {[...NAV_ADMIN, ...(isAdminUser ? NAV_ADMIN_RESTRICTED : [])].map((item) => {
-          const active = pathname.startsWith(item.href);
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              title={collapsed ? item.label : undefined}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: collapsed ? 0 : 10,
-                padding: collapsed ? "9px 10px" : "9px 12px",
-                borderRadius: 8,
-                fontSize: 13,
-                fontWeight: 500,
-                textDecoration: "none",
-                border: "1px solid",
-                borderColor: active ? "rgba(37,99,232,0.2)" : "transparent",
-                background: active ? "rgba(37,99,232,0.15)" : "transparent",
-                color: active ? "#2563E8" : "#8FA3BE",
-                transition: "all 150ms",
-                justifyContent: collapsed ? "center" : "flex-start",
-              }}
-              onMouseEnter={(e) => {
-                if (!active) {
-                  e.currentTarget.style.background = "#1A2640";
-                  e.currentTarget.style.color = "#EDF2F7";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!active) {
-                  e.currentTarget.style.background = "transparent";
-                  e.currentTarget.style.color = "#8FA3BE";
-                }
-              }}
-            >
-              <span style={{ width: 16, height: 16, flexShrink: 0, opacity: active ? 1 : 0.7, display: "flex" }}>
-                {item.icon}
-              </span>
-              {!collapsed && <span style={{ flex: 1 }}>{item.label}</span>}
-              {!collapsed && active && (
-                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#2563E8" }} />
-              )}
-            </Link>
-          );
-        })}
       </nav>
 
       {/* Footer */}
