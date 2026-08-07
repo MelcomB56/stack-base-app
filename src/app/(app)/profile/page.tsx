@@ -1,16 +1,15 @@
-import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { ProfileClient } from "@/components/profile/ProfileClient";
+import { requireAuth } from "@/lib/page-guard";
 
 export const metadata = { title: "Mein Profil – Stack-Base" };
 
 export default async function ProfilePage() {
-  const session = await auth();
-  if (!session?.user?.id) redirect("/login");
+  const session = await requireAuth();
 
   const user = await db.user.findUnique({
-    where: { id: session.user.id },
+    where: { id: session.user!.id },
     select: {
       id:          true,
       name:        true,

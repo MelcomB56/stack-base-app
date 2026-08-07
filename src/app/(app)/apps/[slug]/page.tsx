@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
+import { requirePermission } from "@/lib/page-guard";
 import { notFound } from "next/navigation";
 import { AppStatusBadge } from "@/components/apps/AppStatusBadge";
 import { AppStatus } from "@/generated/prisma/client";
@@ -96,7 +97,7 @@ const CRITICALITY_COLORS: Record<string, string> = {
 export default async function AppDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 
-  const [app, session] = await Promise.all([getApp(slug), auth()]);
+  const [app, session] = await Promise.all([getApp(slug), requirePermission("apps.read")]);
   if (!app) notFound();
 
   const userId = session?.user?.id;

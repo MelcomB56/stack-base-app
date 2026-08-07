@@ -1,11 +1,11 @@
-import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { Settings } from "lucide-react";
 import { SettingsTabs } from "@/components/settings/SettingsTabs";
+import { requirePermission } from "@/lib/page-guard";
 
 export default async function SettingsPage() {
-  const session = await auth();
-  const userId = session?.user?.id;
+  const session = await requirePermission("settings.read");
+  const userId = session.user!.id;
 
   const smtpRows = await db.systemSetting.findMany({
     where: { key: { in: ["smtp_host", "smtp_port", "smtp_user", "smtp_pass", "smtp_from", "smtp_secure"] } },

@@ -1,14 +1,10 @@
-import { auth } from "@/auth";
-import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { isAdmin } from "@/lib/rbac";
 import { Users } from "lucide-react";
 import { UsersManager } from "@/components/admin/UsersManager";
+import { requirePermission } from "@/lib/page-guard";
 
 export default async function AdminUsersPage() {
-  const session = await auth();
-  if (!session) redirect("/login");
-  if (!isAdmin(session)) redirect("/dashboard");
+  const session = await requirePermission("users.read");
 
   const [users, roles] = await Promise.all([
     db.user.findMany({

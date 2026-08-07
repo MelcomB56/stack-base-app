@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
-import { auth } from "@/auth";
-import { redirect } from "next/navigation";
+import { requirePermission } from "@/lib/page-guard";
 import Link from "next/link";
 import { Server, Cloud, Container, Layers, Globe, AlertTriangle, WifiOff, ArrowLeft, ExternalLink, Euro } from "lucide-react";
 import { AppStatusBadge } from "@/components/apps/AppStatusBadge";
@@ -89,9 +88,7 @@ async function getTarget(id: string) {
 }
 
 export default async function TargetDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const session = await auth();
-  if (!session) redirect("/login");
-
+  await requirePermission("targets.read");
   const { id } = await params;
   const data = await getTarget(id);
   if (!data) notFound();

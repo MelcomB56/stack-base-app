@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { DashboardClient } from "@/components/dashboard/DashboardClient";
+import { requirePermission } from "@/lib/page-guard";
 
 function dailyBuckets(items: { createdAt: Date }[], days = 7): number[] {
   const now = new Date();
@@ -12,6 +13,7 @@ function dailyBuckets(items: { createdAt: Date }[], days = 7): number[] {
 }
 
 export default async function DashboardPage() {
+  await requirePermission("apps.read");
   const currentMonth  = new Date().toISOString().slice(0, 7);
   const sevenDaysAgo  = new Date(Date.now() - 7  * 24 * 60 * 60 * 1000);
   const oneDayAgo     = new Date(Date.now() - 24 * 60 * 60 * 1000);

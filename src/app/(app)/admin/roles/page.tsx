@@ -1,15 +1,11 @@
-import { auth } from "@/auth";
-import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { isAdmin } from "@/lib/rbac";
 import { ShieldCheck } from "lucide-react";
 import { RolesManager } from "@/components/admin/RolesManager";
 import { PERMISSION_GROUPS, ACTION_ORDER, ACTION_LABELS } from "@/lib/permissions";
+import { requirePermission } from "@/lib/page-guard";
 
 export default async function AdminRolesPage() {
-  const session = await auth();
-  if (!session) redirect("/login");
-  if (!isAdmin(session)) redirect("/dashboard");
+  await requirePermission("roles.read");
 
   const roles = await db.customRole.findMany({
     orderBy: { createdAt: "asc" },

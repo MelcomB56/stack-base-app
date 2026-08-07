@@ -3,6 +3,7 @@ import { AppCard } from "@/components/apps/AppCard";
 import { AppStatus } from "@/generated/prisma/client";
 import { Plus, Search } from "lucide-react";
 import Link from "next/link";
+import { requirePermission } from "@/lib/page-guard";
 
 interface SearchParams {
   q?: string;
@@ -68,6 +69,7 @@ const STATUS_OPTIONS = [
 ];
 
 export default async function AppsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  await requirePermission("apps.read");
   const params = await searchParams;
   const { apps, total, page, limit, categories, healthMap } = await getApps(params);
   const pages = Math.ceil(total / limit);

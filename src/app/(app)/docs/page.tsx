@@ -1,12 +1,10 @@
-import { auth } from "@/auth";
-import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { PlatformDocsPage } from "@/components/docs/PlatformDocsPage";
 import { PLATFORM_DOCS } from "@/lib/platform-docs";
+import { requirePermission } from "@/lib/page-guard";
 
 export default async function DocsPage() {
-  const session = await auth();
-  if (!session) redirect("/login");
+  const session = await requirePermission("platform_docs.read");
 
   // Sync platform docs: create missing, update content of existing seeded docs
   const existing = await db.docPage.findMany({ where: { appId: null }, select: { id: true, title: true, content: true } });

@@ -1,10 +1,12 @@
 import { db } from "@/lib/db";
 import { AppCard } from "@/components/apps/AppCard";
 import { Search } from "lucide-react";
+import { requirePermission } from "@/lib/page-guard";
 
 interface SearchParams { q?: string }
 
 export default async function SearchPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  await requirePermission("apps.read");
   const { q } = await searchParams;
   const query = q?.trim();
 

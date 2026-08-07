@@ -1,23 +1,21 @@
-import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { AppCard } from "@/components/apps/AppCard";
 import { Heart } from "lucide-react";
+import { requireAuth } from "@/lib/page-guard";
 
 export default async function FavoritesPage() {
-  const session = await auth();
-  const userId = session?.user?.id;
+  const session = await requireAuth();
+  const userId = session.user!.id;
 
-  const favorites = userId
-    ? await db.userFavorite.findMany({
-        where: { userId },
-        orderBy: { createdAt: "desc" },
-        include: {
-          app: {
-            include: { categories: { include: { category: true } } },
-          },
-        },
-      })
-    : [];
+  const favorites = await db.userFavorite.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+    include: {
+      app: {
+        include: { categories: { include: { category: true } } },
+      },
+    },
+  });
 
   const apps = favorites.map((f) => f.app).filter((app) => !app.deletedAt);
 

@@ -1,10 +1,12 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { EditAppForm } from "@/components/apps/EditAppForm";
+import { requirePermission } from "@/lib/page-guard";
 
 type Props = { params: Promise<{ slug: string }> };
 
 export default async function EditAppPage({ params }: Props) {
+  await requirePermission("apps.update");
   const { slug } = await params;
 
   const [app, categories, stacks, technologies, tags, targets] = await Promise.all([

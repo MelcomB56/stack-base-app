@@ -1,11 +1,9 @@
-import { auth } from "@/auth";
-import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { TargetsClient } from "@/components/targets/TargetsClient";
+import { requirePermission } from "@/lib/page-guard";
 
 export default async function TargetsPage() {
-  const session = await auth();
-  if (!session) redirect("/login");
+  await requirePermission("targets.read");
 
   const targets = await db.deploymentTarget.findMany({
     orderBy: { name: "asc" },

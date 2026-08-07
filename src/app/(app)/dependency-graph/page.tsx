@@ -1,13 +1,11 @@
 import { db } from "@/lib/db";
-import { auth } from "@/auth";
-import { redirect } from "next/navigation";
 import { DependencyGraph } from "@/components/dependency-graph/DependencyGraph";
+import { requirePermission } from "@/lib/page-guard";
 
 export const metadata = { title: "Dependency Graph — Stack-Base" };
 
 export default async function DependencyGraphPage() {
-  const session = await auth();
-  if (!session) redirect("/login");
+  await requirePermission("apps.read");
 
   const [apps, dependencies] = await Promise.all([
     db.app.findMany({
