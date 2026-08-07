@@ -52,21 +52,28 @@ if (typeof _timer === "object" && typeof (_timer as NodeJS.Timeout).unref === "f
   (_timer as NodeJS.Timeout).unref();
 }
 
-// Wenn SSO aktiv (live.enabled): OIDC-Discovery via issuer (→ kein authorization-Stub nötig).
-// Wenn SSO inaktiv: issuer = undefined, authorization-Stub → assertConfig-Fehler bleibt aus.
-//
-// WICHTIG: Authentik({}) mit leeren options, damit merge() die Getter-Werte NICHT überschreibt.
-// next-auth mergt userOptions über defaults — mit befüllten options würden clientId/issuer
-// immer die Stub-Werte liefern, egal was die Getter zurückgeben.
+// next-auth ruft Provider-Funktionen in parseProviders per Request auf:
+//   typeof p === "function" ? p() : p
+// So wird der Provider mit den aktuellen live-Werten gebaut — keine Getter-Hackery nötig.
+// Wenn SSO inaktiv: fester authorization-Stub → Server macht kein OIDC-Discovery-Fetch.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const _authentikProvider = Authentik({} as any);
-// eslint-disable-next-line @typescript-eslint/no-empty-function
-const noop = () => {};
-Object.defineProperty(_authentikProvider, "clientId",     { get: () => live.clientId || "_",                   set: noop, enumerable: true, configurable: true });
-Object.defineProperty(_authentikProvider, "clientSecret", { get: () => live.clientSecret || "_",               set: noop, enumerable: true, configurable: true });
-Object.defineProperty(_authentikProvider, "issuer",       { get: () => live.enabled ? live.issuer : undefined,  set: noop, enumerable: true, configurable: true });
-Object.defineProperty(_authentikProvider, "wellKnown",    { get: () => live.enabled ? `${live.issuer}.well-known/openid-configuration` : undefined, set: noop, enumerable: true, configurable: true });
-Object.defineProperty(_authentikProvider, "authorization",{ get: () => live.enabled ? undefined : { url: "https://sso.example.com/authorize", params: {} }, set: noop, enumerable: true, configurable: true });
+function buildAuthentikProvider(): any {
+  if (live.enabled) {
+    return Authentik({
+      clientId:     live.clientId,
+      clientSecret: live.clientSecret,
+      issuer:       live.issuer,
+    });
+  }
+  // Inaktiv: authorization-String verhindert Discovery-Fetch; clientId/Secret sind Platzhalter.
+  return Authentik({
+    clientId:     "_",
+    clientSecret: "_",
+    issuer:       "https://sso.example.com/",
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    authorization: "https://sso.example.com/authorize" as any,
+  });
+}
 
 // ─── NextAuth ──────────────────────────────────────────────────────────────
 
@@ -94,7 +101,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return { id: user.id, email: user.email, name: user.name, role: user.role };
       },
     }),
-    _authentikProvider,
+    buildAuthentikProvider,
   ],
   session: { strategy: "jwt" },
   callbacks: {
