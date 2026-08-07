@@ -65,6 +65,9 @@ function buildAuthentikProvider(): any {
       clientId:     live.clientId,
       clientSecret: live.clientSecret,
       issuer:       live.issuer,
+      // Authentik erwartet Credentials im Request-Body, nicht als Basic-Auth-Header
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      client: { token_endpoint_auth_method: "client_secret_post" } as any,
     });
   }
   // Inaktiv: authorization-String verhindert Discovery-Fetch; clientId/Secret sind Platzhalter.
