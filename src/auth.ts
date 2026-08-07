@@ -52,12 +52,16 @@ if (typeof _timer === "object" && typeof (_timer as NodeJS.Timeout).unref === "f
   (_timer as NodeJS.Timeout).unref();
 }
 
-// Authentik-Provider immer registrieren, Werte kommen per Getter live aus `live`
-// → next-auth liest clientId/clientSecret/issuer bei jedem Request neu
-const _authentikProvider = Authentik({ clientId: "_init_", clientSecret: "_init_", issuer: "https://localhost" });
-Object.defineProperty(_authentikProvider, "clientId",     { get: () => live.clientId,     enumerable: true, configurable: true });
-Object.defineProperty(_authentikProvider, "clientSecret", { get: () => live.clientSecret, enumerable: true, configurable: true });
-Object.defineProperty(_authentikProvider, "issuer",       { get: () => live.issuer,       enumerable: true, configurable: true });
+// Authentik als OAuth2-Provider mit expliziten Endpoints konfigurieren.
+// Getter auf dem Provider-Objekt lesen live-Werte bei jedem Request neu —
+// kein Neustart nötig. Explizite Endpoints vermeiden OIDC-Discovery-Fehler
+// wenn kein Authentik konfiguriert ist (live.issuer = Fallback-URL).
+const _authentikProvider = Authentik({ clientId: "_", clientSecret: "_", issuer: "https://sso.example.com/" });
+// Endpoints werden aus dem Issuer abgeleitet; Getter liefern stets aktuelle Werte.
+Object.defineProperty(_authentikProvider, "clientId",     { get: () => live.clientId  || "_",                               enumerable: true, configurable: true });
+Object.defineProperty(_authentikProvider, "clientSecret", { get: () => live.clientSecret || "_",                            enumerable: true, configurable: true });
+Object.defineProperty(_authentikProvider, "issuer",       { get: () => live.issuer   || "https://sso.example.com/",         enumerable: true, configurable: true });
+Object.defineProperty(_authentikProvider, "wellKnown",    { get: () => live.issuer   ? `${live.issuer}.well-known/openid-configuration` : undefined, enumerable: true, configurable: true });
 
 // ─── NextAuth ──────────────────────────────────────────────────────────────
 

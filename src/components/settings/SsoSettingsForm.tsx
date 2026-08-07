@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import {
   Eye, EyeOff, Check, X, Loader2,
-  ExternalLink, RefreshCw, Info,
+  ExternalLink, RefreshCw, Info, Copy,
 } from "lucide-react";
 
 const ROLE_OPTIONS = [
@@ -38,6 +38,80 @@ const inputStyle: React.CSSProperties = {
   width: "100%", boxSizing: "border-box", fontFamily: "inherit",
   transition: "border-color 150ms",
 };
+
+function CopyUrlRow({ label, url, note }: { label: string; url: string; note?: string }) {
+  const [copied, setCopied] = useState(false);
+
+  function copy() {
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    });
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+      <span style={{ fontSize: 11, fontWeight: 600, color: "#7A8BA6", textTransform: "uppercase", letterSpacing: ".09em" }}>
+        {label}
+      </span>
+      <div style={{ display: "flex", alignItems: "center", gap: 0, background: "#0B1220", border: "1px solid #1E3050", borderRadius: 8, overflow: "hidden" }}>
+        <span style={{
+          flex: 1, fontFamily: "monospace", fontSize: 12, color: "#93C5FD",
+          padding: "8px 12px", overflowX: "auto", whiteSpace: "nowrap",
+          scrollbarWidth: "none",
+        }}>
+          {url}
+        </span>
+        <button
+          type="button"
+          onClick={copy}
+          title="Kopieren"
+          style={{
+            display: "flex", alignItems: "center", gap: 5, padding: "8px 12px",
+            background: copied ? "rgba(52,211,153,0.12)" : "rgba(37,99,232,0.1)",
+            border: "none", borderLeft: "1px solid #1E3050",
+            cursor: "pointer", color: copied ? "#34D399" : "#5B87C5",
+            fontSize: 11, fontWeight: 600, whiteSpace: "nowrap",
+            transition: "background 150ms, color 150ms",
+          }}
+        >
+          {copied ? <Check size={12} /> : <Copy size={12} />}
+          {copied ? "Kopiert" : "Kopieren"}
+        </button>
+      </div>
+      {note && <p style={{ margin: 0, fontSize: 11, color: "#4A5B6F", lineHeight: 1.5 }}>{note}</p>}
+    </div>
+  );
+}
+
+function UrlReferenceBox() {
+  const origin = typeof window !== "undefined" ? window.location.origin : "https://stack-base.de";
+
+  return (
+    <div style={{
+      display: "flex", flexDirection: "column", gap: 14,
+      padding: "14px 16px", borderRadius: 8,
+      background: "rgba(37,99,232,0.06)", border: "1px solid rgba(37,99,232,0.18)",
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+        <Info size={13} style={{ color: "#2563E8", flexShrink: 0 }} />
+        <span style={{ fontSize: 11, fontWeight: 700, color: "#7A8BA6", textTransform: "uppercase", letterSpacing: ".1em" }}>
+          URLs für Authentik-Konfiguration
+        </span>
+      </div>
+      <CopyUrlRow
+        label='Redirect URI — Typ "Authorization"'
+        url={`${origin}/api/auth/callback/authentik`}
+        note="Login-Callback — in Authentik unter Redirect URIs/Origins (RegEx) mit Typ Authorization eintragen."
+      />
+      <CopyUrlRow
+        label='Redirect URI — Typ "Post Logout"'
+        url={`${origin}/login`}
+        note="Weiterleitung nach Abmeldung — gleiche Feld-Gruppe, Typ Post Logout."
+      />
+    </div>
+  );
+}
 
 export function SsoSettingsForm() {
   const [state, setState] = useState<SsoState>(DEFAULT);
@@ -305,20 +379,8 @@ export function SsoSettingsForm() {
         </div>
       </div>
 
-      {/* Hinweis-Box */}
-      <div style={{
-        display: "flex", alignItems: "flex-start", gap: 10,
-        padding: "10px 14px", borderRadius: 8,
-        background: "rgba(37,99,232,0.07)", border: "1px solid rgba(37,99,232,0.2)",
-      }}>
-        <Info size={13} style={{ color: "#2563E8", flexShrink: 0, marginTop: 1 }} />
-        <p style={{ margin: 0, fontSize: 12, color: "#7A8BA6", lineHeight: 1.5 }}>
-          Die <strong style={{ color: "#A0B4C8" }}>Callback-URL</strong> für Authentik lautet:{" "}
-          <code style={{ fontFamily: "monospace", fontSize: 11, background: "#0B1220", padding: "2px 6px", borderRadius: 4, color: "#93C5FD" }}>
-            {typeof window !== "undefined" ? window.location.origin : "https://app.stack-base.de"}/api/auth/callback/authentik
-          </code>
-        </p>
-      </div>
+      {/* Redirect-URL-Box */}
+      <UrlReferenceBox />
 
       {/* Aktionen */}
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
