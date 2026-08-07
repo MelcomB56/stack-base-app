@@ -52,15 +52,19 @@ if (typeof _timer === "object" && typeof (_timer as NodeJS.Timeout).unref === "f
   (_timer as NodeJS.Timeout).unref();
 }
 
-// Wenn SSO aktiv (live.enabled): OIDC-Discovery via wellKnown + Issuer.
-// Wenn SSO inaktiv: wellKnown + issuer = undefined → kein Discovery-Fetch.
-//   authorization-Stub verhindert assertConfig-Fehler ("missing both issuer and authorization").
-const _authentikProvider = Authentik({ clientId: "_", clientSecret: "_", issuer: "https://sso.example.com/" });
+// Wenn SSO aktiv (live.enabled): OIDC-Discovery via issuer (→ kein authorization-Stub nötig).
+// Wenn SSO inaktiv: issuer = undefined, authorization-Stub → assertConfig-Fehler bleibt aus.
+//
+// WICHTIG: Authentik({}) mit leeren options, damit merge() die Getter-Werte NICHT überschreibt.
+// next-auth mergt userOptions über defaults — mit befüllten options würden clientId/issuer
+// immer die Stub-Werte liefern, egal was die Getter zurückgeben.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const _authentikProvider = Authentik({} as any);
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 const noop = () => {};
-Object.defineProperty(_authentikProvider, "clientId",     { get: () => live.clientId || "_",                 set: noop, enumerable: true, configurable: true });
-Object.defineProperty(_authentikProvider, "clientSecret", { get: () => live.clientSecret || "_",             set: noop, enumerable: true, configurable: true });
-Object.defineProperty(_authentikProvider, "issuer",       { get: () => live.enabled ? live.issuer : undefined, set: noop, enumerable: true, configurable: true });
+Object.defineProperty(_authentikProvider, "clientId",     { get: () => live.clientId || "_",                   set: noop, enumerable: true, configurable: true });
+Object.defineProperty(_authentikProvider, "clientSecret", { get: () => live.clientSecret || "_",               set: noop, enumerable: true, configurable: true });
+Object.defineProperty(_authentikProvider, "issuer",       { get: () => live.enabled ? live.issuer : undefined,  set: noop, enumerable: true, configurable: true });
 Object.defineProperty(_authentikProvider, "wellKnown",    { get: () => live.enabled ? `${live.issuer}.well-known/openid-configuration` : undefined, set: noop, enumerable: true, configurable: true });
 Object.defineProperty(_authentikProvider, "authorization",{ get: () => live.enabled ? undefined : { url: "https://sso.example.com/authorize", params: {} }, set: noop, enumerable: true, configurable: true });
 
