@@ -5,6 +5,16 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [0.7.6] – 2026-08-07
+
+### Geändert
+- **Sidebar:** Nav-Items ohne Berechtigung werden ausgeblendet (permission-basierte Filterung)
+- **Sidebar:** Verwaltungs-Sektion wird komplett ausgeblendet wenn der User keine einzige Verwaltungs-Permission hat
+- **Layout (app):** Server Component lädt Permissions einmalig pro Request, gibt `allowedPerms` als Prop an Sidebar — kein Client-seitiger DB-Zugriff nötig
+- ADMIN/SUPER_ADMIN erhalten Wildcard `*` und sehen alle Items
+
+---
+
 ## [0.7.5] – 2026-08-06
 
 ### Geändert

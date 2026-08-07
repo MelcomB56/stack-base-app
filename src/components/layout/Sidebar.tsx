@@ -371,7 +371,7 @@ export function Sidebar({ allowedPerms }: { allowedPerms: string[] }) {
         </button>
 
         {!collapsed && (
-          <p style={{ padding: "4px 12px 2px", fontSize: 10, color: "#7A8BA6", margin: 0 }}>v0.7.5</p>
+          <p style={{ padding: "4px 12px 2px", fontSize: 10, color: "#7A8BA6", margin: 0 }}>v0.7.6</p>
         )}
       </div>
     </aside>
