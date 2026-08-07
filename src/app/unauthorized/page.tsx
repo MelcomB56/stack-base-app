@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { signOut } from "@/auth";
 
 export default function UnauthorizedPage() {
   return (
@@ -9,9 +10,19 @@ export default function UnauthorizedPage() {
         Du hast nicht die erforderlichen Berechtigungen für diese Seite.
         Wende dich an einen Administrator, um Zugriff zu erhalten.
       </p>
-      <Link href="/dashboard" style={{ marginTop: "0.5rem", color: "#3b82f6", textDecoration: "underline" }}>
-        Zur Startseite
-      </Link>
+      <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.5rem" }}>
+        <Link href="/dashboard" style={{ padding: "0.5rem 1rem", borderRadius: 6, background: "#1e293b", color: "#94a3b8", textDecoration: "none", fontSize: "0.875rem" }}>
+          Startseite
+        </Link>
+        <form action={async () => {
+          "use server";
+          await signOut({ redirectTo: "/login" });
+        }}>
+          <button type="submit" style={{ padding: "0.5rem 1rem", borderRadius: 6, background: "#ef4444", color: "#fff", border: "none", cursor: "pointer", fontSize: "0.875rem" }}>
+            Abmelden
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
