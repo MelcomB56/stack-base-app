@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import {
   Eye, EyeOff, Check, X, Loader2,
-  ExternalLink, RefreshCw, Info, Copy,
+  ExternalLink, RefreshCw, Info, Copy, Wifi, WifiOff,
 } from "lucide-react";
 
 const ROLE_OPTIONS = [
@@ -113,6 +113,12 @@ function UrlReferenceBox() {
   );
 }
 
+type SsoStatusState =
+  | { phase: "idle" }
+  | { phase: "checking" }
+  | { phase: "online"; latencyMs: number; issuer: string }
+  | { phase: "offline"; error: string };
+
 export function SsoSettingsForm() {
   const [state, setState] = useState<SsoState>(DEFAULT);
   const [showSecret, setShowSecret] = useState(false);
@@ -122,22 +128,48 @@ export function SsoSettingsForm() {
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [testResult, setTestResult] = useState<{ ok: boolean; text: string } | null>(null);
   const [dirty, setDirty] = useState(false);
+  const [ssoStatus, setSsoStatus] = useState<SsoStatusState>({ phase: "idle" });
   const secretRef = useRef<HTMLInputElement>(null);
+
+  async function checkSsoReachability(issuer: string) {
+    if (!issuer.trim()) { setSsoStatus({ phase: "idle" }); return; }
+    setSsoStatus({ phase: "checking" });
+    const t0 = performance.now();
+    try {
+      const res = await fetch("/api/settings/sso/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ issuer }),
+      });
+      const latencyMs = Math.round(performance.now() - t0);
+      const d = await res.json();
+      if (d.ok) {
+        setSsoStatus({ phase: "online", latencyMs, issuer: d.issuer });
+      } else {
+        setSsoStatus({ phase: "offline", error: d.error ?? "Verbindung fehlgeschlagen" });
+      }
+    } catch {
+      setSsoStatus({ phase: "offline", error: "Netzwerkfehler" });
+    }
+  }
 
   useEffect(() => {
     fetch("/api/settings/sso")
       .then((r) => r.json())
       .then((d) => {
+        const issuer = d.authentik_issuer ?? "";
         setState({
           authentik_enabled: d.authentik_enabled === "true",
-          authentik_issuer: d.authentik_issuer ?? "",
+          authentik_issuer: issuer,
           authentik_client_id: d.authentik_client_id ?? "",
           authentik_client_secret: d.authentik_client_secret ?? "",
           authentik_label: d.authentik_label ?? DEFAULT.authentik_label,
           authentik_default_role: d.authentik_default_role ?? DEFAULT.authentik_default_role,
         });
+        if (issuer) checkSsoReachability(issuer);
       })
       .finally(() => setLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function patch<K extends keyof SsoState>(key: K, value: SsoState[K]) {
@@ -378,6 +410,103 @@ export function SsoSettingsForm() {
           </a>
         </div>
       </div>
+
+      {/* SSO-Server-Status-Indikator */}
+      {state.authentik_issuer && (
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "10px 14px", borderRadius: 8,
+          background: ssoStatus.phase === "online"
+            ? "rgba(16,185,129,0.07)"
+            : ssoStatus.phase === "offline"
+              ? "rgba(239,68,68,0.07)"
+              : "rgba(30,48,80,0.5)",
+          border: `1px solid ${
+            ssoStatus.phase === "online"
+              ? "rgba(16,185,129,0.25)"
+              : ssoStatus.phase === "offline"
+                ? "rgba(239,68,68,0.25)"
+                : "#1E3050"
+          }`,
+          transition: "all 300ms",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {/* Pulsierender Dot */}
+            <div style={{ position: "relative", width: 10, height: 10, flexShrink: 0 }}>
+              <div style={{
+                width: 10, height: 10, borderRadius: "50%",
+                background: ssoStatus.phase === "online"
+                  ? "#10B981"
+                  : ssoStatus.phase === "offline"
+                    ? "#EF4444"
+                    : "#4A5B6F",
+              }} />
+              {ssoStatus.phase === "online" && (
+                <div style={{
+                  position: "absolute", inset: 0, borderRadius: "50%",
+                  background: "#10B981", opacity: 0.4,
+                  animation: "ping 2s cubic-bezier(0,0,0.2,1) infinite",
+                }} />
+              )}
+            </div>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12, fontWeight: 600 }}>
+                {ssoStatus.phase === "checking" && (
+                  <><Loader2 size={12} style={{ color: "#7A8BA6", animation: "spin 1s linear infinite" }} />
+                  <span style={{ color: "#7A8BA6" }}>SSO-Server wird geprüft…</span></>
+                )}
+                {ssoStatus.phase === "online" && (
+                  <><Wifi size={12} style={{ color: "#10B981" }} />
+                  <span style={{ color: "#10B981" }}>SSO-Server erreichbar</span>
+                  <span style={{ fontSize: 11, fontWeight: 400, color: "#10B981", opacity: 0.7 }}>· {ssoStatus.latencyMs} ms</span></>
+                )}
+                {ssoStatus.phase === "offline" && (
+                  <><WifiOff size={12} style={{ color: "#EF4444" }} />
+                  <span style={{ color: "#EF4444" }}>SSO-Server nicht erreichbar</span></>
+                )}
+                {ssoStatus.phase === "idle" && (
+                  <span style={{ color: "#7A8BA6" }}>SSO-Status unbekannt</span>
+                )}
+              </div>
+              {ssoStatus.phase === "offline" && (
+                <p style={{ margin: "2px 0 0", fontSize: 11, color: "#F87171", opacity: 0.8 }}>
+                  {ssoStatus.error}
+                </p>
+              )}
+              {ssoStatus.phase === "online" && (
+                <p style={{ margin: "2px 0 0", fontSize: 11, color: "#10B981", opacity: 0.7 }}>
+                  {ssoStatus.issuer}
+                </p>
+              )}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => checkSsoReachability(state.authentik_issuer)}
+            disabled={ssoStatus.phase === "checking"}
+            title="Status neu prüfen"
+            style={{
+              display: "flex", alignItems: "center", gap: 5, padding: "5px 10px",
+              background: "transparent", border: "1px solid #1E3050", borderRadius: 6,
+              cursor: ssoStatus.phase === "checking" ? "not-allowed" : "pointer",
+              color: "#7A8BA6", fontSize: 11,
+            }}
+          >
+            <RefreshCw size={11} style={{ animation: ssoStatus.phase === "checking" ? "spin 1s linear infinite" : "none" }} />
+            Prüfen
+          </button>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes ping {
+          75%, 100% { transform: scale(2); opacity: 0; }
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
 
       {/* Redirect-URL-Box */}
       <UrlReferenceBox />

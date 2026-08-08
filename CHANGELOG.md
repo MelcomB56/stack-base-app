@@ -5,6 +5,13 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [0.8.2] – 2026-08-08
+
+### Hinzugefügt
+- **SSO-Server-Status-Indikator** — Unter den SSO-Einstellungen wird automatisch beim Laden geprüft ob der Authentik-Server erreichbar ist. Zeigt grünen pulsierenden Indikator + Latenz (ms) wenn online, roten Indikator + Fehlermeldung wenn offline. Manuelles Neu-Prüfen per "Prüfen"-Button möglich.
+
+---
+
 ## [0.8.1] – 2026-08-08
 
 ### Geändert
