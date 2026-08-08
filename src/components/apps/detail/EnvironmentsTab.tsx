@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Plus, ExternalLink, Trash2, Pencil, Check, X } from "lucide-react";
+import { useCan } from "@/lib/permissions-context";
 
 type EnvType = "DEVELOPMENT" | "STAGING" | "PRODUCTION" | "CUSTOM";
 type EnvStatus = "ONLINE" | "OFFLINE" | "DEGRADED" | "UNKNOWN" | "MAINTENANCE";
@@ -82,6 +83,10 @@ export function EnvironmentsTab({ appSlug, initialEnvironments }: {
   appSlug: string;
   initialEnvironments: AppEnvironment[];
 }) {
+  const canCreate = useCan("app_environments.create");
+  const canEdit   = useCan("app_environments.update");
+  const canDelete = useCan("app_environments.delete");
+
   const [environments, setEnvironments] = useState<AppEnvironment[]>(initialEnvironments);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<Partial<AppEnvironment>>({});
@@ -169,17 +174,19 @@ export function EnvironmentsTab({ appSlug, initialEnvironments }: {
             Deployment-Umgebungen dieser App mit individuellem Status
           </p>
         </div>
-        <button
-          onClick={() => { setShowAdd(true); setError(""); }}
-          style={{
-            display: "flex", alignItems: "center", gap: 6,
-            padding: "6px 12px", borderRadius: 6, fontSize: 12, fontWeight: 500,
-            background: "#2563E8", color: "#fff", border: "none", cursor: "pointer",
-          }}
-        >
-          <Plus size={13} />
-          Environment hinzufügen
-        </button>
+        {canCreate && (
+          <button
+            onClick={() => { setShowAdd(true); setError(""); }}
+            style={{
+              display: "flex", alignItems: "center", gap: 6,
+              padding: "6px 12px", borderRadius: 6, fontSize: 12, fontWeight: 500,
+              background: "#2563E8", color: "#fff", border: "none", cursor: "pointer",
+            }}
+          >
+            <Plus size={13} />
+            Environment hinzufügen
+          </button>
+        )}
       </div>
 
       {error && (
@@ -189,7 +196,7 @@ export function EnvironmentsTab({ appSlug, initialEnvironments }: {
       )}
 
       {/* Add form */}
-      {showAdd && (
+      {canCreate && showAdd && (
         <div style={{ padding: 16, borderRadius: 8, border: "1px solid #2563E840", background: "rgba(37,99,232,0.06)", display: "flex", flexDirection: "column", gap: 12 }}>
           <p style={{ fontSize: 12, fontWeight: 600, color: "#EDF2F7", margin: 0 }}>Neue Umgebung</p>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 120px 1fr", gap: 10 }}>
@@ -361,22 +368,28 @@ export function EnvironmentsTab({ appSlug, initialEnvironments }: {
                       <p style={{ fontSize: 11, color: "#7A8BA6", margin: "4px 0 0" }}>{env.statusNote}</p>
                     )}
                   </div>
-                  <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-                    <button
-                      onClick={() => startEdit(env)}
-                      style={{ padding: "5px 8px", borderRadius: 6, background: "transparent", border: "1px solid #1E3050", color: "#7A8BA6", cursor: "pointer", display: "flex", alignItems: "center" }}
-                      title="Bearbeiten"
-                    >
-                      <Pencil size={13} />
-                    </button>
-                    <button
-                      onClick={() => deleteEnvironment(env.id)}
-                      style={{ padding: "5px 8px", borderRadius: 6, background: "transparent", border: "1px solid #1E3050", color: "#7A8BA6", cursor: "pointer", display: "flex", alignItems: "center" }}
-                      title="Löschen"
-                    >
-                      <Trash2 size={13} />
-                    </button>
-                  </div>
+                  {(canEdit || canDelete) && (
+                    <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                      {canEdit && (
+                        <button
+                          onClick={() => startEdit(env)}
+                          style={{ padding: "5px 8px", borderRadius: 6, background: "transparent", border: "1px solid #1E3050", color: "#7A8BA6", cursor: "pointer", display: "flex", alignItems: "center" }}
+                          title="Bearbeiten"
+                        >
+                          <Pencil size={13} />
+                        </button>
+                      )}
+                      {canDelete && (
+                        <button
+                          onClick={() => deleteEnvironment(env.id)}
+                          style={{ padding: "5px 8px", borderRadius: 6, background: "transparent", border: "1px solid #1E3050", color: "#7A8BA6", cursor: "pointer", display: "flex", alignItems: "center" }}
+                          title="Löschen"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

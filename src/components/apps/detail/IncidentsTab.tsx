@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { AlertTriangle, CheckCircle, Clock, Plus, X, Loader2 } from "lucide-react";
+import { useCan } from "@/lib/permissions-context";
 
 type Incident = {
   id: string;
@@ -38,6 +39,9 @@ function duration(start: string | Date, end: string | Date | null) {
 }
 
 export function IncidentsTab({ appSlug, initial }: { appSlug: string; initial: Incident[] }) {
+  const canCreate = useCan("app_incidents.create");
+  const canUpdate = useCan("app_incidents.update");
+
   const [incidents, setIncidents] = useState<Incident[]>(initial);
   const [showNew, setShowNew] = useState(false);
   const [newTitle, setNewTitle] = useState("");
@@ -101,15 +105,17 @@ export function IncidentsTab({ appSlug, initial }: { appSlug: string; initial: I
             {resolved.length} behoben
           </span>
         </div>
-        <button
-          onClick={() => setShowNew(true)}
-          style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 12px", background: "#2563E8", color: "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
-          <Plus size={12} /> Incident melden
-        </button>
+        {canCreate && (
+          <button
+            onClick={() => setShowNew(true)}
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 12px", background: "#2563E8", color: "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+            <Plus size={12} /> Incident melden
+          </button>
+        )}
       </div>
 
       {/* Neues Incident Formular */}
-      {showNew && (
+      {canCreate && showNew && (
         <div style={{ background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12, padding: 16, display: "flex", flexDirection: "column", gap: 10 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <p style={{ fontSize: 12, fontWeight: 600, color: "#EDF2F7", margin: 0 }}>Neues Incident</p>
@@ -181,18 +187,20 @@ export function IncidentsTab({ appSlug, initial }: { appSlug: string; initial: I
                 <span>Dauer: {duration(inc.startedAt, null)}</span>
               </div>
             </div>
-            <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-              {inc.status === "OPEN" && (
-                <button onClick={() => setInvestigating(inc.id)}
-                  style={{ padding: "4px 10px", background: "#1A2640", border: "1px solid #1E3050", borderRadius: 7, fontSize: 11, color: "#EDF2F7", cursor: "pointer" }}>
-                  Analysieren
+            {canUpdate && (
+              <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                {inc.status === "OPEN" && (
+                  <button onClick={() => setInvestigating(inc.id)}
+                    style={{ padding: "4px 10px", background: "#1A2640", border: "1px solid #1E3050", borderRadius: 7, fontSize: 11, color: "#EDF2F7", cursor: "pointer" }}>
+                    Analysieren
+                  </button>
+                )}
+                <button onClick={() => resolve(inc.id)}
+                  style={{ padding: "4px 10px", background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 7, fontSize: 11, color: "#34D399", cursor: "pointer" }}>
+                  Beheben
                 </button>
-              )}
-              <button onClick={() => resolve(inc.id)}
-                style={{ padding: "4px 10px", background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 7, fontSize: 11, color: "#34D399", cursor: "pointer" }}>
-                Beheben
-              </button>
-            </div>
+              </div>
+            )}
           </div>
         </div>
       ))}

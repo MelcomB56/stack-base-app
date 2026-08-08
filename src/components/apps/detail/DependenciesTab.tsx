@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ArrowRight, ArrowLeft, Plus, X, Trash2, Loader2, Link2, List, Share2 } from "lucide-react";
+import { useCan } from "@/lib/permissions-context";
 import Link from "next/link";
 import { AppDepGraph } from "./AppDepGraph";
 
@@ -45,6 +46,9 @@ export function DependenciesTab({
   initial: { outgoing: Dependency[]; incoming: Dependent[] };
   availableApps: { id: string; name: string; slug: string }[];
 }) {
+  const canCreate = useCan("app_dependencies.create");
+  const canDelete = useCan("app_dependencies.delete");
+
   const [outgoing, setOutgoing] = useState<Dependency[]>(initial.outgoing);
   const [incoming] = useState<Dependent[]>(initial.incoming);
   const [view, setView] = useState<"list" | "graph">("list");
@@ -106,10 +110,12 @@ export function DependenciesTab({
             </button>
           ))}
         </div>
-        <button onClick={() => setShowNew(true)}
-          style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 12px", background: "#2563E8", color: "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
-          <Plus size={12} /> Abhängigkeit hinzufügen
-        </button>
+        {canCreate && (
+          <button onClick={() => setShowNew(true)}
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 12px", background: "#2563E8", color: "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+            <Plus size={12} /> Abhängigkeit hinzufügen
+          </button>
+        )}
       </div>
 
       {/* Graph-View */}
@@ -132,7 +138,7 @@ export function DependenciesTab({
       )}
 
       {/* Formular */}
-      {showNew && (
+      {canCreate && showNew && (
         <div style={{ background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12, padding: 16, display: "flex", flexDirection: "column", gap: 10 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <p style={{ fontSize: 12, fontWeight: 600, color: "#EDF2F7", margin: 0 }}>Neue Abhängigkeit</p>
@@ -224,10 +230,12 @@ export function DependenciesTab({
                     </span>
                     {dep.description && <span style={{ fontSize: 11, color: "#7A8BA6" }}>{dep.description}</span>}
                   </div>
-                  <button onClick={() => removeDep(dep.id)} disabled={removing === dep.id}
-                    style={{ background: "none", border: "none", color: "#7A8BA6", cursor: "pointer", padding: 4, flexShrink: 0, opacity: removing === dep.id ? 0.5 : 1 }}>
-                    {removing === dep.id ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
-                  </button>
+                  {canDelete && (
+                    <button onClick={() => removeDep(dep.id)} disabled={removing === dep.id}
+                      style={{ background: "none", border: "none", color: "#7A8BA6", cursor: "pointer", padding: 4, flexShrink: 0, opacity: removing === dep.id ? 0.5 : 1 }}>
+                      {removing === dep.id ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+                    </button>
+                  )}
                 </div>
               );
             })}

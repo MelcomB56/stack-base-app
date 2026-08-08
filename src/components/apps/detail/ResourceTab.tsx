@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Activity, Cpu, MemoryStick, RefreshCw, ArrowDownUp, AlertCircle, Settings, Copy, Check } from "lucide-react";
+import { useCan } from "@/lib/permissions-context";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
 interface Reading {
@@ -90,6 +91,8 @@ const tooltipStyle = {
 type AgentStatus = "unknown" | "ok" | "error";
 
 export function ResourceTab({ slug }: { slug: string }) {
+  const canRefresh = useCan("app_monitoring.update");
+
   const [data, setData] = useState<ResourceData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -246,19 +249,21 @@ SB_API_KEY=mein-token ./stackbase-agent`} />
           )}
           <AgentStatusBadge status={agentStatus} latency={agentLatency} />
         </div>
-        <button
-          onClick={() => refresh()}
-          disabled={refreshing}
-          style={{
-            display: "flex", alignItems: "center", gap: 6,
-            padding: "6px 14px", borderRadius: 8, fontSize: 13,
-            background: "rgba(37,99,232,0.15)", border: "1px solid rgba(37,99,232,0.3)",
-            color: "#2563E8", cursor: refreshing ? "wait" : "pointer",
-          }}
-        >
-          <RefreshCw size={13} style={{ animation: refreshing ? "spin 1s linear infinite" : "none" }} />
-          {refreshing ? "Prüfe…" : "Jetzt abfragen"}
-        </button>
+        {canRefresh && (
+          <button
+            onClick={() => refresh()}
+            disabled={refreshing}
+            style={{
+              display: "flex", alignItems: "center", gap: 6,
+              padding: "6px 14px", borderRadius: 8, fontSize: 13,
+              background: "rgba(37,99,232,0.15)", border: "1px solid rgba(37,99,232,0.3)",
+              color: "#2563E8", cursor: refreshing ? "wait" : "pointer",
+            }}
+          >
+            <RefreshCw size={13} style={{ animation: refreshing ? "spin 1s linear infinite" : "none" }} />
+            {refreshing ? "Prüfe…" : "Jetzt abfragen"}
+          </button>
+        )}
       </div>
 
       {error && (

@@ -5,6 +5,21 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [0.7.9] – 2026-08-08
+
+### Geändert
+- **Permission-gesteuerte Tab-Aktionen** — Alle 8 App-Detail-Tabs haben nun vollständige Permission-Checks:
+  - **ReleasesTab:** "Neues Release" nur mit `app_releases.create`, Bearbeiten/Löschen nur mit `app_releases.update`/`.delete`
+  - **ChangelogTab:** "Neuer Eintrag" nur mit `app_changelog.create`, Bearbeiten/Löschen nur mit `app_changelog.update`/`.delete`
+  - **EnvironmentsTab:** "Environment hinzufügen" nur mit `app_environments.create`, Bearbeiten/Löschen nur mit entsprechenden Rechten
+  - **IncidentsTab:** "Incident melden" + Formular nur mit `app_incidents.create`, Analysieren/Beheben nur mit `app_incidents.update`
+  - **CertTab:** "Jetzt prüfen" nur mit `app_certs.update`
+  - **DependenciesTab:** "Abhängigkeit hinzufügen" nur mit `app_dependencies.create`, Löschen nur mit `app_dependencies.delete`
+  - **ResourceTab:** "Jetzt abfragen" nur mit `app_monitoring.update`
+  - **MonitorTab:** Endpoint hinzufügen nur mit `app_monitoring.create`, Bearbeiten/Löschen nur mit `app_monitoring.update`/`.delete`
+
+---
+
 ## [0.7.8] – 2026-08-08
 
 ### Hinzugefügt

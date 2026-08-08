@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { RefreshCw, ShieldCheck, ShieldAlert, ShieldX, Shield, AlertTriangle, ExternalLink } from "lucide-react";
+import { useCan } from "@/lib/permissions-context";
 
 interface CertCheck {
   id: string;
@@ -59,6 +60,8 @@ function DaysBar({ daysLeft }: { daysLeft: number | null }) {
 }
 
 export function CertTab({ appSlug, urlProd }: { appSlug: string; urlProd: string | null }) {
+  const canCheck = useCan("app_certs.update");
+
   const [data, setData] = useState<{ latest: CertCheck | null; history: HistoryEntry[]; urlProd: string | null } | null>(null);
   const [loading, setLoading] = useState(false);
   const [checking, startCheck] = useTransition();
@@ -104,20 +107,22 @@ export function CertTab({ appSlug, urlProd }: { appSlug: string; urlProd: string
             </a>
           )}
         </div>
-        <button
-          onClick={triggerCheck}
-          disabled={checking || !urlProd}
-          title={!urlProd ? "Keine Production-URL konfiguriert" : undefined}
-          style={{
-            display: "flex", alignItems: "center", gap: 6, padding: "7px 14px",
-            background: checking ? "#1A2640" : "#2563E8",
-            border: "none", borderRadius: 7, color: checking ? "#7A8BA6" : "#fff",
-            fontSize: 12, fontWeight: 600, cursor: urlProd ? "pointer" : "not-allowed",
-          }}
-        >
-          <RefreshCw size={12} style={{ animation: checking ? "spin 1s linear infinite" : "none" }} />
-          {checking ? "Prüfe..." : "Jetzt prüfen"}
-        </button>
+        {canCheck && (
+          <button
+            onClick={triggerCheck}
+            disabled={checking || !urlProd}
+            title={!urlProd ? "Keine Production-URL konfiguriert" : undefined}
+            style={{
+              display: "flex", alignItems: "center", gap: 6, padding: "7px 14px",
+              background: checking ? "#1A2640" : "#2563E8",
+              border: "none", borderRadius: 7, color: checking ? "#7A8BA6" : "#fff",
+              fontSize: 12, fontWeight: 600, cursor: urlProd ? "pointer" : "not-allowed",
+            }}
+          >
+            <RefreshCw size={12} style={{ animation: checking ? "spin 1s linear infinite" : "none" }} />
+            {checking ? "Prüfe..." : "Jetzt prüfen"}
+          </button>
+        )}
       </div>
 
       <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>

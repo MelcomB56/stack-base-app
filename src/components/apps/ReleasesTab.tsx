@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { Plus, Calendar, Pencil, Trash2, X, Check, Loader2, AlertCircle } from "lucide-react";
+import { useCan } from "@/lib/permissions-context";
 
 export type ReleaseItem = {
   id: string;
@@ -240,6 +241,10 @@ function DeleteDialog({ label, onClose, onConfirm }: { label: string; onClose: (
 // ─── Haupt-Komponente ───────────────────────────────────────────────────────
 
 export function ReleasesTab({ appSlug, initial }: { appSlug: string; initial: ReleaseItem[] }) {
+  const canCreate = useCan("app_releases.create");
+  const canEdit   = useCan("app_releases.update");
+  const canDelete = useCan("app_releases.delete");
+
   const [releases, setReleases]         = useState<ReleaseItem[]>(initial);
   const [modalOpen, setModalOpen]       = useState(false);
   const [editTarget, setEditTarget]     = useState<ReleaseItem | null>(null);
@@ -284,15 +289,17 @@ export function ReleasesTab({ appSlug, initial }: { appSlug: string; initial: Re
     <>
       <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
         {/* Toolbar */}
-        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 4 }}>
-          <button
-            onClick={openCreate}
-            style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 13px", background: "#2563E8", color: "#fff", borderRadius: 8, fontSize: 12, fontWeight: 500, border: "none", cursor: "pointer" }}
-          >
-            <Plus size={13} />
-            Neues Release
-          </button>
-        </div>
+        {canCreate && (
+          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 4 }}>
+            <button
+              onClick={openCreate}
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 13px", background: "#2563E8", color: "#fff", borderRadius: 8, fontSize: 12, fontWeight: 500, border: "none", cursor: "pointer" }}
+            >
+              <Plus size={13} />
+              Neues Release
+            </button>
+          </div>
+        )}
 
         {/* Liste */}
         {releases.length === 0 ? (
@@ -325,20 +332,26 @@ export function ReleasesTab({ appSlug, initial }: { appSlug: string; initial: Re
                     </p>
                     <p style={{ fontSize: 10, color: "#4A5A72", margin: "2px 0 0" }}>{release.createdBy.name}</p>
                   </div>
-                  <div style={{ display: "flex", gap: 4 }}>
-                    <button onClick={() => openEdit(release)} title="Bearbeiten"
-                      style={{ width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", background: "#1A2640", border: "1px solid #1E3050", borderRadius: 7, cursor: "pointer", color: "#7A8BA6", transition: "color 150ms, border-color 150ms" }}
-                      onMouseEnter={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.color = "#EDF2F7"; b.style.borderColor = "#2563E8"; }}
-                      onMouseLeave={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.color = "#7A8BA6"; b.style.borderColor = "#1E3050"; }}>
-                      <Pencil size={12} />
-                    </button>
-                    <button onClick={() => setDeleteTarget(release)} title="Löschen"
-                      style={{ width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", background: "#1A2640", border: "1px solid #1E3050", borderRadius: 7, cursor: "pointer", color: "#7A8BA6", transition: "color 150ms, border-color 150ms" }}
-                      onMouseEnter={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.color = "#EF4444"; b.style.borderColor = "rgba(239,68,68,0.4)"; }}
-                      onMouseLeave={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.color = "#7A8BA6"; b.style.borderColor = "#1E3050"; }}>
-                      <Trash2 size={12} />
-                    </button>
-                  </div>
+                  {(canEdit || canDelete) && (
+                    <div style={{ display: "flex", gap: 4 }}>
+                      {canEdit && (
+                        <button onClick={() => openEdit(release)} title="Bearbeiten"
+                          style={{ width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", background: "#1A2640", border: "1px solid #1E3050", borderRadius: 7, cursor: "pointer", color: "#7A8BA6", transition: "color 150ms, border-color 150ms" }}
+                          onMouseEnter={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.color = "#EDF2F7"; b.style.borderColor = "#2563E8"; }}
+                          onMouseLeave={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.color = "#7A8BA6"; b.style.borderColor = "#1E3050"; }}>
+                          <Pencil size={12} />
+                        </button>
+                      )}
+                      {canDelete && (
+                        <button onClick={() => setDeleteTarget(release)} title="Löschen"
+                          style={{ width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", background: "#1A2640", border: "1px solid #1E3050", borderRadius: 7, cursor: "pointer", color: "#7A8BA6", transition: "color 150ms, border-color 150ms" }}
+                          onMouseEnter={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.color = "#EF4444"; b.style.borderColor = "rgba(239,68,68,0.4)"; }}
+                          onMouseLeave={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.color = "#7A8BA6"; b.style.borderColor = "#1E3050"; }}>
+                          <Trash2 size={12} />
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 

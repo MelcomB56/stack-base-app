@@ -5,6 +5,7 @@ import {
   Activity, CheckCircle, AlertCircle, XCircle, HelpCircle,
   Plus, Trash2, Loader2, Save, ToggleLeft, ToggleRight, RefreshCw, X,
 } from "lucide-react";
+import { useCan } from "@/lib/permissions-context";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 // ─── Typen ─────────────────────────────────────────────────────────────────
@@ -100,6 +101,9 @@ function EndpointCard({
   onUpdate: (updated: MonitorConfig) => void;
   onDelete: (id: string) => void;
 }) {
+  const canEdit   = useCan("app_monitoring.update");
+  const canDelete = useCan("app_monitoring.delete");
+
   const [editing, setEditing] = useState(false);
   const [checking, setChecking] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -183,26 +187,32 @@ function EndpointCard({
         </div>
         {/* Aktionen */}
         <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
-          <button
-            onClick={runCheck}
-            disabled={checking || !config.checkUrl}
-            title="Jetzt prüfen"
-            style={{ padding: 6, background: "none", border: "1px solid #1E3050", borderRadius: 6, color: checking ? "#7A8BA6" : "#2563E8", cursor: checking || !config.checkUrl ? "not-allowed" : "pointer", opacity: !config.checkUrl ? 0.4 : 1 }}>
-            {checking ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
-          </button>
-          <button
-            onClick={() => setEditing((e) => !e)}
-            title="Bearbeiten"
-            style={{ padding: 6, background: editing ? "#1A2640" : "none", border: "1px solid #1E3050", borderRadius: 6, color: "#EDF2F7", cursor: "pointer" }}>
-            <Save size={12} />
-          </button>
-          <button
-            onClick={remove}
-            disabled={deleting}
-            title="Löschen"
-            style={{ padding: 6, background: "none", border: "1px solid #1E3050", borderRadius: 6, color: "#EF4444", cursor: "pointer" }}>
-            {deleting ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
-          </button>
+          {canEdit && (
+            <button
+              onClick={runCheck}
+              disabled={checking || !config.checkUrl}
+              title="Jetzt prüfen"
+              style={{ padding: 6, background: "none", border: "1px solid #1E3050", borderRadius: 6, color: checking ? "#7A8BA6" : "#2563E8", cursor: checking || !config.checkUrl ? "not-allowed" : "pointer", opacity: !config.checkUrl ? 0.4 : 1 }}>
+              {checking ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+            </button>
+          )}
+          {canEdit && (
+            <button
+              onClick={() => setEditing((e) => !e)}
+              title="Bearbeiten"
+              style={{ padding: 6, background: editing ? "#1A2640" : "none", border: "1px solid #1E3050", borderRadius: 6, color: "#EDF2F7", cursor: "pointer" }}>
+              <Save size={12} />
+            </button>
+          )}
+          {canDelete && (
+            <button
+              onClick={remove}
+              disabled={deleting}
+              title="Löschen"
+              style={{ padding: 6, background: "none", border: "1px solid #1E3050", borderRadius: 6, color: "#EF4444", cursor: "pointer" }}>
+              {deleting ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+            </button>
+          )}
         </div>
       </div>
 
@@ -392,6 +402,8 @@ export function MonitorTab({
   initial: MonitorConfig[];
   appUrls: { label: string; url: string }[];
 }) {
+  const canCreate = useCan("app_monitoring.create");
+
   const [configs, setConfigs] = useState<MonitorConfig[]>(initial);
   const [showAdd, setShowAdd] = useState(false);
   const [checkingAll, setCheckingAll] = useState(false);
@@ -454,16 +466,18 @@ export function MonitorTab({
             {checkingAll ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
             Alle prüfen
           </button>
-          <button
-            onClick={() => setShowAdd(true)}
-            style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 12px", background: "#2563E8", color: "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
-            <Plus size={12} /> Endpoint hinzufügen
-          </button>
+          {canCreate && (
+            <button
+              onClick={() => setShowAdd(true)}
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 12px", background: "#2563E8", color: "#fff", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+              <Plus size={12} /> Endpoint hinzufügen
+            </button>
+          )}
         </div>
       </div>
 
       {/* Formular für neuen Endpoint */}
-      {showAdd && (
+      {canCreate && showAdd && (
         <AddEndpointForm
           appSlug={appSlug}
           suggestedUrls={appUrls}
