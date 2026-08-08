@@ -2,7 +2,7 @@
 
 > Zentrale WebApp-Management-Plattform für eigene Anwendungen — vergleichbar mit dem Azure Portal, aber für selbst entwickelte Apps.
 
-**Version:** v0.8.2 | **Live:** [www.stack-base.de](https://www.stack-base.de)
+**Version:** v0.8.3 | **Live:** [www.stack-base.de](https://www.stack-base.de)
 
 ---
 

@@ -5,6 +5,14 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [0.8.3] – 2026-08-08
+
+### Behoben
+- **MinIO / media.stack-base.de:** MinIO fehlte im `traefik-public`-Netzwerk — Profilbilder und App-Logos waren nicht über `https://media.stack-base.de` erreichbar
+- **Traefik:** Router `minio-media` für `media.stack-base.de` → MinIO Port 9000 hinzugefügt
+
+---
+
 ## [0.8.2] – 2026-08-08
 
 ### Hinzugefügt
