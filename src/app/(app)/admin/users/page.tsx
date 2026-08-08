@@ -11,7 +11,7 @@ export default async function AdminUsersPage() {
       orderBy: { createdAt: "asc" },
       select: {
         id: true, name: true, email: true, role: true,
-        avatarUrl: true, lastLoginAt: true, createdAt: true,
+        avatarUrl: true, lastLoginAt: true, createdAt: true, passwordHash: true,
         roleAssignments: { select: { role: { select: { id: true, name: true, color: true } } } },
       },
     }),
@@ -35,6 +35,8 @@ export default async function AdminUsersPage() {
       <UsersManager
         initialUsers={users.map((u) => ({
           ...u,
+          isLocalUser: !!u.passwordHash,
+          passwordHash: undefined,
           lastLoginAt: u.lastLoginAt?.toISOString() ?? null,
           createdAt: u.createdAt.toISOString(),
           customRoles: u.roleAssignments.map((a) => a.role),
