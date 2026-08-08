@@ -5,6 +5,16 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [0.8.1] – 2026-08-08
+
+### Geändert
+- **Nutzerverwaltung:** Passwort-Feld im "Bearbeiten"-Dialog nur noch für lokale User sichtbar
+- **Nutzerverwaltung:** Authentik-User erhalten Hinweis-Box "Passwort wird in Authentik verwaltet" statt des Passwort-Feldes
+- **Nutzerverwaltung:** Authentik-User in der Liste mit lila "AUTHENTIK"-Badge gekennzeichnet
+- **API `/api/admin/users`:** Gibt `isLocalUser` zurück (true = lokaler Credentials-User, false = Authentik/SSO)
+
+---
+
 ## [0.8.0] – 2026-08-08
 
 ### Geändert

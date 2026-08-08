@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Pencil, Trash2, Loader2, X, Check, Eye, EyeOff, AlertCircle, ChevronDown } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, X, Check, Eye, EyeOff, AlertCircle, ChevronDown, Shield } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -15,6 +15,7 @@ interface UserRow {
   avatarUrl: string | null;
   lastLoginAt: string | null;
   createdAt: string;
+  isLocalUser: boolean;
   customRoles: CustomRoleRef[];
 }
 
@@ -177,24 +178,31 @@ function UserModal({ user, availableRoles, isSuperAdmin, currentUserId, onClose,
               onBlur={(e) => { e.currentTarget.style.borderColor = "#1E3050"; }} />
           </div>
 
-          {/* Passwort */}
-          <div>
-            <label style={{ fontSize: 11, fontWeight: 600, color: "#7A8BA6", textTransform: "uppercase", letterSpacing: ".1em", display: "block", marginBottom: 5 }}>
-              {isEdit ? "Neues Passwort (leer = unverändert)" : "Passwort *"}
-            </label>
-            <div style={{ position: "relative" }}>
-              <input style={{ ...inputStyle, paddingRight: 38 }} type={showPw ? "text" : "password"}
-                value={password} onChange={(e) => setPassword(e.target.value)}
-                placeholder={isEdit ? "Leer lassen um nicht zu ändern" : "Mindestens 8 Zeichen"}
-                autoComplete="new-password"
-                onFocus={(e) => { e.currentTarget.style.borderColor = "#2563E8"; }}
-                onBlur={(e) => { e.currentTarget.style.borderColor = "#1E3050"; }} />
-              <button type="button" onClick={() => setShowPw((v) => !v)} tabIndex={-1}
-                style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#7A8BA6", display: "flex" }}>
-                {showPw ? <EyeOff size={14} /> : <Eye size={14} />}
-              </button>
+          {/* Passwort — nur für lokale User oder Neu-Anlage */}
+          {(!isEdit || user?.isLocalUser) ? (
+            <div>
+              <label style={{ fontSize: 11, fontWeight: 600, color: "#7A8BA6", textTransform: "uppercase", letterSpacing: ".1em", display: "block", marginBottom: 5 }}>
+                {isEdit ? "Neues Passwort (leer = unverändert)" : "Passwort *"}
+              </label>
+              <div style={{ position: "relative" }}>
+                <input style={{ ...inputStyle, paddingRight: 38 }} type={showPw ? "text" : "password"}
+                  value={password} onChange={(e) => setPassword(e.target.value)}
+                  placeholder={isEdit ? "Leer lassen um nicht zu ändern" : "Mindestens 8 Zeichen"}
+                  autoComplete="new-password"
+                  onFocus={(e) => { e.currentTarget.style.borderColor = "#2563E8"; }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = "#1E3050"; }} />
+                <button type="button" onClick={() => setShowPw((v) => !v)} tabIndex={-1}
+                  style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#7A8BA6", display: "flex" }}>
+                  {showPw ? <EyeOff size={14} /> : <Eye size={14} />}
+                </button>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 12px", borderRadius: 8, background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.25)", fontSize: 12, color: "#A78BFA" }}>
+              <Shield size={13} style={{ flexShrink: 0 }} />
+              Authentik-Nutzer — Passwort wird in Authentik verwaltet
+            </div>
+          )}
 
           {/* System-Rolle */}
           <div>
@@ -348,12 +356,17 @@ export function UsersManager({ initialUsers, availableRoles, currentUserId, isSu
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <Avatar user={user} />
                       <div>
-                        <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "#EDF2F7" }}>
-                          {user.name}
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: "#EDF2F7" }}>{user.name}</span>
                           {user.id === currentUserId && (
-                            <span style={{ marginLeft: 6, fontSize: 10, color: "#2563E8", fontWeight: 400 }}>(Du)</span>
+                            <span style={{ fontSize: 10, color: "#2563E8", fontWeight: 400 }}>(Du)</span>
                           )}
-                        </p>
+                          {!user.isLocalUser && (
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: 3, padding: "1px 6px", borderRadius: 99, fontSize: 9, fontWeight: 700, letterSpacing: ".06em", background: "rgba(124,58,237,0.12)", color: "#A78BFA", border: "1px solid rgba(124,58,237,0.25)" }}>
+                              <Shield size={8} /> AUTHENTIK
+                            </span>
+                          )}
+                        </div>
                         <p style={{ margin: 0, fontSize: 11, color: "#4A5B6F" }}>{user.email}</p>
                       </div>
                     </div>

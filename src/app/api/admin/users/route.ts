@@ -18,6 +18,7 @@ export async function GET() {
       avatarUrl: true,
       lastLoginAt: true,
       createdAt: true,
+      passwordHash: true,
       roleAssignments: {
         select: {
           role: { select: { id: true, name: true, color: true } },
@@ -28,6 +29,8 @@ export async function GET() {
 
   return Response.json(users.map((u) => ({
     ...u,
+    isLocalUser: !!u.passwordHash,
+    passwordHash: undefined,
     customRoles: u.roleAssignments.map((a) => a.role),
     roleAssignments: undefined,
   })));
