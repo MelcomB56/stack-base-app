@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
+import pkg from "../../../package.json";
 import { useState, useEffect } from "react";
 import { LogOut, ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -371,7 +372,7 @@ export function Sidebar({ allowedPerms }: { allowedPerms: string[] }) {
         </button>
 
         {!collapsed && (
-          <p style={{ padding: "4px 12px 2px", fontSize: 10, color: "#7A8BA6", margin: 0 }}>v0.7.7</p>
+          <p style={{ padding: "4px 12px 2px", fontSize: 10, color: "#7A8BA6", margin: 0 }}>v{pkg.version}</p>
         )}
       </div>
     </aside>
