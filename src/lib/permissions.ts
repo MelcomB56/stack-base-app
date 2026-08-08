@@ -126,6 +126,16 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
     },
   },
   {
+    resource: "app_notifications",
+    label: "Benachrichtigungen",
+    actions: {
+      create: "Empfänger hinzufügen",
+      read:   "Benachrichtigungen anzeigen",
+      update: "Benachrichtigungs-Trigger ändern",
+      delete: "Empfänger entfernen",
+    },
+  },
+  {
     resource: "app_github",
     label: "GitHub-Integration",
     actions: {

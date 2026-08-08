@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { BookOpen, HelpCircle, Code2, FileText, Plus, Pencil, Trash2, X, Save, Eye, EyeOff, ChevronRight } from "lucide-react";
 import { marked } from "marked";
+import { useCan } from "@/lib/permissions-context";
 
 type DocPageType = "MANUAL" | "FAQ" | "API" | "OTHER";
 
@@ -43,6 +44,10 @@ function renderMarkdown(md: string): string {
 }
 
 export function DocsTab({ appSlug, initial }: Props) {
+  const canCreate = useCan("app_docs.create");
+  const canUpdate = useCan("app_docs.update");
+  const canDelete = useCan("app_docs.delete");
+
   const [docs, setDocs] = useState<DocPage[]>(initial);
   const [selected, setSelected] = useState<DocPage | null>(initial[0] ?? null);
   const [mode, setMode] = useState<"view" | "edit" | "new">("view");
@@ -154,13 +159,15 @@ export function DocsTab({ appSlug, initial }: Props) {
       }}>
         <div style={{ padding: "10px 12px", borderBottom: "1px solid #1E3050", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: ".08em", textTransform: "uppercase", color: "#7A8BA6" }}>Dokumente</span>
-          <button
-            onClick={startNew}
-            title="Neues Dokument"
-            style={{ display: "flex", alignItems: "center", gap: 4, padding: "3px 8px", borderRadius: 6, background: "rgba(37,99,232,0.15)", border: "1px solid rgba(37,99,232,0.3)", color: "#2563E8", fontSize: 11, cursor: "pointer" }}
-          >
-            <Plus size={11} /> Neu
-          </button>
+          {canCreate && (
+            <button
+              onClick={startNew}
+              title="Neues Dokument"
+              style={{ display: "flex", alignItems: "center", gap: 4, padding: "3px 8px", borderRadius: 6, background: "rgba(37,99,232,0.15)", border: "1px solid rgba(37,99,232,0.3)", color: "#2563E8", fontSize: 11, cursor: "pointer" }}
+            >
+              <Plus size={11} /> Neu
+            </button>
+          )}
         </div>
 
         <nav style={{ flex: 1, overflowY: "auto", padding: "8px 0" }}>
@@ -221,9 +228,11 @@ export function DocsTab({ appSlug, initial }: Props) {
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", gap: 12, color: "#7A8BA6", paddingTop: 60 }}>
             <BookOpen size={36} style={{ opacity: 0.3 }} />
             <p style={{ margin: 0, fontSize: 14 }}>Kein Dokument ausgewählt</p>
-            <button onClick={startNew} style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 8, background: "rgba(37,99,232,0.12)", border: "1px solid rgba(37,99,232,0.3)", color: "#2563E8", fontSize: 13, cursor: "pointer" }}>
-              <Plus size={14} /> Erstes Dokument erstellen
-            </button>
+            {canCreate && (
+              <button onClick={startNew} style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 8, background: "rgba(37,99,232,0.12)", border: "1px solid rgba(37,99,232,0.3)", color: "#2563E8", fontSize: 13, cursor: "pointer" }}>
+                <Plus size={14} /> Erstes Dokument erstellen
+              </button>
+            )}
           </div>
         )}
 
@@ -241,19 +250,23 @@ export function DocsTab({ appSlug, initial }: Props) {
                 </h2>
               </div>
               <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
-                <button
-                  onClick={() => startEdit(selected)}
-                  style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 12px", borderRadius: 7, background: "#1A2640", border: "1px solid #1E3050", color: "#EDF2F7", fontSize: 12, cursor: "pointer" }}
-                >
-                  <Pencil size={11} /> Bearbeiten
-                </button>
-                <button
-                  onClick={() => deleteDoc(selected)}
-                  disabled={deleting}
-                  style={{ display: "flex", alignItems: "center", padding: "5px 10px", borderRadius: 7, background: "transparent", border: "1px solid rgba(239,68,68,0.3)", color: "#F87171", fontSize: 12, cursor: "pointer" }}
-                >
-                  <Trash2 size={11} />
-                </button>
+                {canUpdate && (
+                  <button
+                    onClick={() => startEdit(selected)}
+                    style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 12px", borderRadius: 7, background: "#1A2640", border: "1px solid #1E3050", color: "#EDF2F7", fontSize: 12, cursor: "pointer" }}
+                  >
+                    <Pencil size={11} /> Bearbeiten
+                  </button>
+                )}
+                {canDelete && (
+                  <button
+                    onClick={() => deleteDoc(selected)}
+                    disabled={deleting}
+                    style={{ display: "flex", alignItems: "center", padding: "5px 10px", borderRadius: 7, background: "transparent", border: "1px solid rgba(239,68,68,0.3)", color: "#F87171", fontSize: 12, cursor: "pointer" }}
+                  >
+                    <Trash2 size={11} />
+                  </button>
+                )}
               </div>
             </div>
 
@@ -278,7 +291,7 @@ export function DocsTab({ appSlug, initial }: Props) {
         )}
 
         {/* Editor (neu oder bearbeiten) */}
-        {(mode === "edit" || mode === "new") && (
+        {((mode === "edit" && canUpdate) || (mode === "new" && canCreate)) && (
           <div style={{ background: "#111C2D", border: "1px solid #1E3050", borderRadius: 10, overflow: "hidden" }}>
             {/* Editor-Header */}
             <div style={{ padding: "10px 16px", borderBottom: "1px solid #1E3050", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>

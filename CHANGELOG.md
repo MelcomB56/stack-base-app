@@ -5,6 +5,20 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [0.8.0] – 2026-08-08
+
+### Geändert
+- **Permission-gesteuerte Tabs (Runde 2)** — Kosten, Dokumentation, Screenshots, Benachrichtigungen:
+  - **CostsTab:** "Kosten hinzufügen" + Formular nur mit `app_costs.create`, Bearbeiten/Löschen nur mit `app_costs.update`/`.delete`
+  - **DocsTab:** "Neu" + Editor nur mit `app_docs.create`, Bearbeiten/Löschen nur mit `app_docs.update`/`.delete`
+  - **ScreenshotsTab:** Upload-Zone nur mit `app_screenshots.create`, Löschen-Button nur mit `app_screenshots.delete`
+  - **NotificationsTab:** Empfänger hinzufügen nur mit `app_notifications.create`, Trigger-Toggles nur mit `app_notifications.update`, Löschen nur mit `app_notifications.delete`
+- **permissions.ts:** Neue Ressource `app_notifications` (create/read/update/delete) hinzugefügt
+- **Sidebar:** Versionsnummer dynamisch aus `package.json` — nie mehr hardcodiert
+- **Deploy:** Saubere Routine via `git archive` statt manuellem SCP
+
+---
+
 ## [0.7.9] – 2026-08-08
 
 ### Geändert

@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Plus, Pencil, Trash2, Check, X, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { useCan } from "@/lib/permissions-context";
 
 interface AppCost {
   id: string;
@@ -50,6 +51,10 @@ function groupByMonth(costs: AppCost[]) {
 }
 
 export function CostsTab({ appSlug, initialCosts }: { appSlug: string; initialCosts: AppCost[] }) {
+  const canCreate = useCan("app_costs.create");
+  const canUpdate = useCan("app_costs.update");
+  const canDelete = useCan("app_costs.delete");
+
   const [costs, setCosts] = useState<AppCost[]>(initialCosts);
   const [adding, setAdding] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -160,6 +165,7 @@ export function CostsTab({ appSlug, initialCosts }: { appSlug: string; initialCo
       </div>
 
       {/* Add button */}
+      {canCreate && (
       <div style={{ display: "flex", justifyContent: "flex-end" }}>
         <button onClick={() => setAdding(true)} style={{
           display: "flex", alignItems: "center", gap: 6, padding: "7px 14px",
@@ -169,9 +175,10 @@ export function CostsTab({ appSlug, initialCosts }: { appSlug: string; initialCo
           <Plus size={13} /> Kosten hinzufügen
         </button>
       </div>
+      )}
 
       {/* Add form */}
-      {adding && (
+      {canCreate && adding && (
         <div style={{ background: "#111C2D", border: "1px solid #2563E8", borderRadius: 10, padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
           <p style={{ fontSize: 12, fontWeight: 600, color: "#EDF2F7", margin: 0 }}>Neuer Kosten-Eintrag</p>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
@@ -246,6 +253,8 @@ export function CostsTab({ appSlug, initialCosts }: { appSlug: string; initialCo
                     cost={cost}
                     cat={cat}
                     isEditing={isEditing}
+                    canUpdate={canUpdate}
+                    canDelete={canDelete}
                     onEdit={() => setEditId(cost.id)}
                     onCancel={() => setEditId(null)}
                     onSave={(patch) => update(cost.id, patch)}
@@ -263,10 +272,12 @@ export function CostsTab({ appSlug, initialCosts }: { appSlug: string; initialCo
 
 // ── Editable row ──────────────────────────────
 
-function EditableRow({ cost, cat, isEditing, onEdit, onCancel, onSave, onDelete }: {
+function EditableRow({ cost, cat, isEditing, canUpdate, canDelete, onEdit, onCancel, onSave, onDelete }: {
   cost: AppCost;
   cat: { value: string; label: string; color: string };
   isEditing: boolean;
+  canUpdate: boolean;
+  canDelete: boolean;
   onEdit: () => void;
   onCancel: () => void;
   onSave: (patch: Partial<AppCost>) => void;
@@ -309,12 +320,14 @@ function EditableRow({ cost, cat, isEditing, onEdit, onCancel, onSave, onDelete 
       </span>
       {cost.note && <span style={{ fontSize: 11, color: "#7A8BA6", flex: 1 }}>{cost.note}</span>}
       {!cost.note && <span style={{ flex: 1 }} />}
+      {(canUpdate || canDelete) && (
       <div style={{ display: "flex", gap: 6, opacity: 0 }} className="row-actions"
         onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}
         onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0"; }}>
-        <button onClick={onEdit} style={actionBtn("#1E3050")}><Pencil size={11} /></button>
-        <button onClick={onDelete} style={actionBtn("#1E3050", "#EF4444")}><Trash2 size={11} /></button>
+        {canUpdate && <button onClick={onEdit} style={actionBtn("#1E3050")}><Pencil size={11} /></button>}
+        {canDelete && <button onClick={onDelete} style={actionBtn("#1E3050", "#EF4444")}><Trash2 size={11} /></button>}
       </div>
+      )}
     </div>
   );
 }

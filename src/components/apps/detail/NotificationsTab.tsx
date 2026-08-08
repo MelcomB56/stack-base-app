@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { Bell, Trash2, Plus, Mail, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { useCan } from "@/lib/permissions-context";
 
 type NotificationSetting = {
   id: string;
@@ -24,6 +25,10 @@ const TRIGGER_META = [
 ];
 
 export function NotificationsTab({ appSlug, initial, emailConfigured }: Props) {
+  const canCreate = useCan("app_notifications.create");
+  const canUpdate = useCan("app_notifications.update");
+  const canDelete = useCan("app_notifications.delete");
+
   const [settings, setSettings] = useState<NotificationSetting[]>(initial);
   const [newEmail, setNewEmail] = useState("");
   const [adding, setAdding] = useState(false);
@@ -99,7 +104,7 @@ export function NotificationsTab({ appSlug, initial, emailConfigured }: Props) {
       )}
 
       {/* Empfänger hinzufügen */}
-      <div style={{ background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12, padding: 18 }}>
+      {canCreate && <div style={{ background: "#111C2D", border: "1px solid #1E3050", borderRadius: 12, padding: 18 }}>
         <p style={{ margin: "0 0 12px", fontSize: 13, fontWeight: 600, color: "#EDF2F7", display: "flex", alignItems: "center", gap: 6 }}>
           <Plus size={14} style={{ color: "#2563E8" }} />
           Empfänger hinzufügen
@@ -131,7 +136,7 @@ export function NotificationsTab({ appSlug, initial, emailConfigured }: Props) {
           </button>
         </div>
         {error && <p style={{ margin: "8px 0 0", fontSize: 12, color: "#F87171" }}>{error}</p>}
-      </div>
+      </div>}
 
       {/* Empfänger-Liste */}
       {settings.length === 0 ? (
@@ -148,12 +153,14 @@ export function NotificationsTab({ appSlug, initial, emailConfigured }: Props) {
                   <Mail size={14} style={{ color: "#2563E8" }} />
                   <span style={{ fontSize: 14, fontWeight: 600, color: "#EDF2F7" }}>{s.email}</span>
                 </div>
-                <button
-                  onClick={() => remove(s.id, s.email)}
-                  style={{ background: "none", border: "none", color: "#7A8BA6", cursor: "pointer", padding: 4, display: "flex" }}
-                >
-                  <Trash2 size={14} />
-                </button>
+                {canDelete && (
+                  <button
+                    onClick={() => remove(s.id, s.email)}
+                    style={{ background: "none", border: "none", color: "#7A8BA6", cursor: "pointer", padding: 4, display: "flex" }}
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                )}
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {TRIGGER_META.map((t) => {
@@ -170,12 +177,12 @@ export function NotificationsTab({ appSlug, initial, emailConfigured }: Props) {
                           style={{ display: "none" }}
                         />
                         <div
-                          onClick={() => !saving && toggleTrigger(s.id, t.key, !active)}
+                          onClick={() => canUpdate && !saving && toggleTrigger(s.id, t.key, !active)}
                           style={{
                             width: 36, height: 20, borderRadius: 10, transition: "background 150ms",
                             background: active ? "#2563E8" : "#1A2640",
                             border: `1px solid ${active ? "#2563E8" : "#2A3D5A"}`,
-                            position: "relative", cursor: saving ? "not-allowed" : "pointer",
+                            position: "relative", cursor: !canUpdate || saving ? "not-allowed" : "pointer",
                           }}
                         >
                           <div style={{

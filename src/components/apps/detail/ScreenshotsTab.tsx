@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Upload, Trash2, X, ChevronLeft, ChevronRight, ImageIcon, Loader2 } from "lucide-react";
+import { useCan } from "@/lib/permissions-context";
 
 type Screenshot = {
   id: string;
@@ -26,6 +27,9 @@ function formatBytes(b: number | null): string {
 }
 
 export function ScreenshotsTab({ appSlug, initial }: Props) {
+  const canUpload = useCan("app_screenshots.create");
+  const canDelete = useCan("app_screenshots.delete");
+
   const [screenshots, setScreenshots] = useState<Screenshot[]>(initial);
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -89,7 +93,7 @@ export function ScreenshotsTab({ appSlug, initial }: Props) {
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
       {/* Upload-Zone */}
-      <div
+      {canUpload && <div
         onDrop={onDrop}
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
@@ -126,7 +130,7 @@ export function ScreenshotsTab({ appSlug, initial }: Props) {
           style={{ display: "none" }}
           onChange={(e) => e.target.files && upload(e.target.files)}
         />
-      </div>
+      </div>}
 
       {error && (
         <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 14px", borderRadius: 8, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", fontSize: 12, color: "#F87171" }}>
@@ -172,7 +176,7 @@ export function ScreenshotsTab({ appSlug, initial }: Props) {
                 )}
               </div>
               {/* Löschen-Button */}
-              <button
+              {canDelete && <button
                 className="screenshot-delete"
                 onClick={(e) => { e.stopPropagation(); deleteScreenshot(s); }}
                 style={{
@@ -184,7 +188,7 @@ export function ScreenshotsTab({ appSlug, initial }: Props) {
                 }}
               >
                 <Trash2 size={13} />
-              </button>
+              </button>}
             </div>
           ))}
         </div>
