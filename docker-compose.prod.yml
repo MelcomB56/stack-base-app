@@ -58,6 +58,7 @@ services:
       - minio_data:/data
     networks:
       - internal
+      - traefik-public
 
 volumes:
   postgres_data:
