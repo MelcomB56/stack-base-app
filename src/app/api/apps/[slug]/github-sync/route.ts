@@ -139,7 +139,7 @@ function parseReadmeVersions(content: string): ReadmeVersion[] {
 export async function POST(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   try {
     const session = await auth();
-    const err = await guard(session, "apps.update");
+    const err = await guard(session, "app_github.update");
     if (err) return err;
 
     const { slug } = await params;

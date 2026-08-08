@@ -26,7 +26,8 @@ const ITEM: React.CSSProperties = {
 export function AppDetailActions({ appId, appSlug, urlProd, repoUrl, isFavorited }: Props) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const canEdit = useCan("apps.update");
+  const canEdit       = useCan("apps.update");
+  const canGithubSync = useCan("app_github.update");
 
   useEffect(() => {
     function onOutsideClick(e: MouseEvent) {
@@ -93,7 +94,7 @@ export function AppDetailActions({ appId, appSlug, urlProd, repoUrl, isFavorited
               </a>
             )}
 
-            {hasGithub && (
+            {hasGithub && canGithubSync && (
               <div
                 onMouseEnter={(e) => (e.currentTarget.style.background = "#1A2640")}
                 onMouseLeave={(e) => (e.currentTarget.style.background = "none")}

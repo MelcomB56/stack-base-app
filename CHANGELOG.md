@@ -5,6 +5,17 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [0.7.8] – 2026-08-08
+
+### Hinzugefügt
+- **Permission `app_github.update`** — "GitHub-Sync ausführen" ist jetzt ein eigenständiges Recht das explizit vergeben werden muss (in `src/lib/permissions.ts`, Gruppe "GitHub-Integration")
+
+### Geändert
+- **AppDetailActions:** GitHub-Sync-Button nur sichtbar wenn User `app_github.update` hat (vorher nur an `hasGithub` geknüpft)
+- **API `/api/apps/[slug]/github-sync`:** Guard geändert von `apps.update` → `app_github.update`
+
+---
+
 ## [0.7.7] – 2026-08-07
 
 ### Hinzugefügt

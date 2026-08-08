@@ -125,6 +125,13 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
       update: "Zertifikat-Check auslösen",
     },
   },
+  {
+    resource: "app_github",
+    label: "GitHub-Integration",
+    actions: {
+      update: "GitHub-Sync ausführen",
+    },
+  },
   // ── Plattform ─────────────────────────────────────────────────────────────
   {
     resource: "platform_docs",
