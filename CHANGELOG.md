@@ -5,6 +5,13 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [0.8.5] – 2026-08-25
+
+### Behoben
+- **Worker: Healthchecks extern nicht erreichbar** — Worker war nur im `internal`-Netz (`internal: true` blockiert ausgehenden Traffic). Worker ist jetzt auch im `traefik-public`-Netz und kann externe URLs für Healthchecks erreichen.
+
+---
+
 ## [0.8.4] – 2026-08-25
 
 ### Behoben
