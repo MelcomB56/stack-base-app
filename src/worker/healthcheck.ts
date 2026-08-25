@@ -1,4 +1,4 @@
-import { PrismaClient, HealthStatus } from "../../generated/prisma/client";
+import { PrismaClient, HealthStatus } from "../generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
