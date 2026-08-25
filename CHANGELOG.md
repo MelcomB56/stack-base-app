@@ -5,6 +5,18 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [0.8.4] – 2026-08-25
+
+### Behoben
+- **Worker DNS-Fehler (`EAI_AGAIN base`):** `docker run --env-file` entfernt Anführungszeichen aus `.env`-Werten nicht — `pg` hat dann die falsche DATABASE_URL geparst. Worker ist jetzt in `docker-compose.prod.yml` integriert, wo `env_file` korrekt die Anführungszeichen strippt.
+- **Worker-Deployment:** Worker-Service in `docker-compose.prod.yml` als eigener Service mit korrekten `depends_on` (postgres + redis healthy)
+
+### Geändert
+- **Worker-Image:** Von 1,53 GB auf 348 MB reduziert — esbuild-Bundle (ESM-Format für Prisma 7 `import.meta.url`), minimale externe Deps, npm-Cache geleert
+- **Worker-Startmethode:** Von manuellem `docker run` auf `docker compose up -d worker` umgestellt
+
+---
+
 ## [0.8.3] – 2026-08-08
 
 ### Behoben
