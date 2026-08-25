@@ -23,7 +23,7 @@ COPY --from=builder /app/dist/worker.js ./dist/worker.js
 
 # Nur die 3 externen Deps installieren (~50 MB statt 1,5 GB)
 COPY worker-deps.json ./package.json
-RUN npm install --omit=dev
+RUN npm install --omit=dev && npm cache clean --force
 
 CMD ["node", "dist/worker.js"]
 
