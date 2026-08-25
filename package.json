@@ -11,7 +11,7 @@
     "seed": "dotenv -e .env -- npx tsx prisma/seed.ts",
     "worker": "dotenv -e .env -- npx tsx src/worker/index.ts",
     "worker:watch": "dotenv -e .env -- npx tsx --watch src/worker/index.ts",
-    "build:worker": "esbuild src/worker/index.ts --bundle --platform=node --target=node22 --outfile=dist/worker.js --alias:@/=./src/ --external:@prisma/client --external:@prisma/adapter-pg --external:pg --external:*.node"
+    "build:worker": "esbuild src/worker/index.ts --bundle --platform=node --target=node22 --outfile=dist/worker.js --external:@prisma/client --external:@prisma/adapter-pg --external:pg --external:*.node"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",

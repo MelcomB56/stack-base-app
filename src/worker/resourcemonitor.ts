@@ -1,6 +1,6 @@
 import http from "http";
 import https from "https";
-import type { PrismaClient } from "@/generated/prisma/client";
+import type { PrismaClient } from "../../generated/prisma/client";
 
 // ─── Stack-Base Agent (primäre Quelle) ───────────────────────────────────────
 interface AgentMetricsResponse {

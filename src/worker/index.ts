@@ -1,5 +1,5 @@
 import cron from "node-cron";
-import { PrismaClient } from "@/generated/prisma/client";
+import { PrismaClient } from "../../generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { runHealthchecks } from "./healthcheck";
 import { runCertChecks } from "./certcheck";

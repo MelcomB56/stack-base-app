@@ -1,5 +1,5 @@
 import * as tls from "tls";
-import { PrismaClient } from "@/generated/prisma/client";
+import { PrismaClient } from "../../generated/prisma/client";
 
 interface CertInfo {
   domain: string;
