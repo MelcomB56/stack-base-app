@@ -19,13 +19,13 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 # Gebündelter Worker (node-cron und generierter Prisma-Client sind drin)
-COPY --from=builder /app/dist/worker.js ./dist/worker.js
+COPY --from=builder /app/dist/worker.mjs ./dist/worker.mjs
 
 # Nur die 3 externen Deps installieren (~50 MB statt 1,5 GB)
 COPY worker-deps.json ./package.json
 RUN npm install --omit=dev && npm cache clean --force
 
-CMD ["node", "dist/worker.js"]
+CMD ["node", "dist/worker.mjs"]
 
 FROM node:22-alpine AS runner
 WORKDIR /app
