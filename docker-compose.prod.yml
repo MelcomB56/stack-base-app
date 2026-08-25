@@ -48,6 +48,23 @@ services:
     networks:
       - internal
 
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: worker-runner
+    image: stack-base-worker:latest
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - internal
+
   minio:
     image: minio/minio:latest
     restart: unless-stopped
